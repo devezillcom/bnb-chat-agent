@@ -1,0 +1,48 @@
+---
+name: list-items
+description: Requirements for building list item panels with real API data, filters, and infinite loading.
+---
+
+# List Items Component Rules
+
+Apply this when creating or replacing a list UI such as `ListCategories`, `ListPosts`, or similar item browsers.
+
+## Data Flow
+
+- Prefer real API data over fixtures. Fixtures are only acceptable for short-lived prototypes and should be removed when the list becomes functional.
+- Client list panels must use TanStack Query. Use `useInfiniteQuery` for paginated lists and `useQuery` only when the full result is intentionally loaded at once.
+- If the list is inside the dashboard, read the API key from `useDashboard()` and send it to API routes with the `x-api-key` header.
+- Keep route URLs, query params, and fetch helpers typed. Reuse result and item types from `lib/{name}/types.ts`.
+
+## Service and API Shape
+
+- Put list services in `lib/{name}/services/list-{name}.ts` and shared params/results in `lib/{name}/types.ts`.
+- Expose list APIs through `app/api/{name}/route.ts` with `createApiHandler`; route files define API-only Zod schemas for query params.
+- Scope API-key routes to `session.id` from `createApiHandler`; do not trust a client-provided `userId`.
+- List service params should include `userId`, `limit`, `offset`, `sortKey`, `sortDirection`, and optional filters/search fields.
+- List service results should use `{ items, nextOffset, total }`; return ISO strings for dates crossing the API boundary.
+
+## Filtering, Search, and Sorting
+
+- Support server-side filtering and sorting whenever the API is the source of truth; do not sort/page only in the component after fetching a partial page.
+- Keyword search may start as a simple placeholder (`ilike` on obvious text columns), but the API and UI should already pass the `keyword` param.
+- Validate filters with Zod in the route. Coerce numeric params and bound `limit` to a reasonable maximum.
+- Keep ordering deterministic by adding a stable secondary sort such as `id`.
+
+## Infinite Scroll UI
+
+- Use an `IntersectionObserver` sentinel and `fetchNextPage()` when `hasNextPage` is true.
+- Include visible states for missing API key, initial loading, loading more, empty results, error, and end of results.
+- Reset list pages naturally through the query key when filters, search, sort, or API key changes.
+- Display the server `total` count, not just the number of currently loaded items.
+
+## Component Boundaries
+
+- Keep the panel responsible for UI state and query orchestration. Keep database access in services only.
+- Extract item cards or filter groups inside the panel file unless they become reusable across multiple lists.
+- Avoid local-only archive/delete state unless the action is intentionally UI-only; persistent changes should use mutations and query invalidation.
+
+## Verification
+
+- After implementing a list, run ESLint on the edited files.
+- If type checking fails because of unrelated existing errors, report those separately from list-related issues.
