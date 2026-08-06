@@ -6,10 +6,17 @@ export function isPublicPage(pathname: string): boolean {
   );
 }
 
+function matchesProtectedPrefix(pathname: string, prefix: string): boolean {
+  if (prefix === "/") return pathname === "/";
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
 export function isProtected(pathname: string): boolean {
   if (isPublicPage(pathname)) return false;
-  if (PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))) return true;
-  return false;
+  if (isAuthPage(pathname)) return false;
+  return PROTECTED_PREFIXES.some((prefix) =>
+    matchesProtectedPrefix(pathname, prefix),
+  );
 }
 
 export function isAuthPage(pathname: string): boolean {
