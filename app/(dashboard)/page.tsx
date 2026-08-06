@@ -1,5 +1,5 @@
-import { DashboardHome } from "@/components/dashboard/dashboard-home";
+import { WorkspaceIndexRedirect } from "@/components/workspace/workspace-index-redirect";
 
 export default function DashboardPage() {
-  return <DashboardHome />;
+  return <WorkspaceIndexRedirect />;
 }

@@ -9,7 +9,7 @@ import {
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { SettingsMenu } from "@/components/dashboard/settings-menu";
 import { ThemeModeToggle } from "@/components/dashboard/theme-mode-toggle";
-import { WorkspaceSwitcher } from "@/components/dashboard/workspace-switcher";
+import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
@@ -29,12 +29,27 @@ import {
   PLACEHOLDER_CHATS,
   PLACEHOLDER_TEAM_PROJECTS,
 } from "@/lib/dashboard/placeholder-data";
+import type { WorkspaceListItem } from "@/lib/workspaces/types";
 
-export function DashboardSidebar() {
+type DashboardSidebarProps = {
+  workspace: WorkspaceListItem;
+  workspaces: WorkspaceListItem[];
+  workspaceIndex: number;
+};
+
+export function DashboardSidebar({
+  workspace,
+  workspaces,
+  workspaceIndex,
+}: DashboardSidebarProps) {
   return (
     <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader className="border-b border-sidebar-border">
-        <WorkspaceSwitcher />
+        <WorkspaceSwitcher
+          activeWorkspace={workspace}
+          workspaces={workspaces}
+          workspaceIndex={workspaceIndex}
+        />
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="New chat">
@@ -112,7 +127,7 @@ export function DashboardSidebar() {
 
       <SidebarFooter className="border-t border-sidebar-border p-2">
         <div className="flex items-center justify-center gap-1">
-          <SettingsMenu />
+          <SettingsMenu workspaceIndex={workspaceIndex} />
           <ThemeModeToggle />
           <LogoutButton />
         </div>

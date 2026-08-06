@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  BellIcon,
-  CreditCardIcon,
-  PlugIcon,
-  SettingsIcon,
-  UserIcon,
-} from "lucide-react";
+import { Building2Icon, SettingsIcon, UserIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,13 +14,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const SETTINGS_ITEMS = [
-  { label: "Profile", icon: UserIcon },
-  { label: "Notifications", icon: BellIcon },
-  { label: "Billing", icon: CreditCardIcon },
-  { label: "Integrations", icon: PlugIcon },
+  {
+    label: "Profile",
+    icon: UserIcon,
+    href: (workspaceIndex: number) =>
+      `/w/${workspaceIndex}/settings/profile`,
+  },
+  {
+    label: "Settings",
+    icon: SettingsIcon,
+    href: (workspaceIndex: number) =>
+      `/w/${workspaceIndex}/settings/workspace`,
+  },
 ] as const;
 
-export function SettingsMenu() {
+type SettingsMenuProps = {
+  workspaceIndex: number;
+};
+
+export function SettingsMenu({ workspaceIndex }: SettingsMenuProps) {
+  const router = useRouter();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -43,8 +52,12 @@ export function SettingsMenu() {
       <DropdownMenuContent align="end" className="min-w-40">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Settings</DropdownMenuLabel>
-          {SETTINGS_ITEMS.map(({ label, icon: Icon }) => (
-            <DropdownMenuItem key={label}>
+          {SETTINGS_ITEMS.map(({ label, icon: Icon, href }) => (
+            <DropdownMenuItem
+              key={label}
+              className="whitespace-nowrap"
+              onClick={() => router.push(href(workspaceIndex))}
+            >
               <Icon className="size-4" />
               {label}
             </DropdownMenuItem>

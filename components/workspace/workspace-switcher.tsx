@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronsUpDownIcon, PlusIcon } from "lucide-react";
 
+import { CreateWorkspaceDialog } from "@/components/workspace/create-workspace-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,24 +21,30 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { Workspace } from "@/lib/dashboard/placeholder-data";
-import { PLACEHOLDER_WORKSPACES } from "@/lib/dashboard/placeholder-data";
+import type { WorkspaceListItem } from "@/lib/workspaces/types";
 import { cn } from "@/lib/utils";
 
 type WorkspaceSwitcherProps = {
-  workspaces?: Workspace[];
+  activeWorkspace: WorkspaceListItem;
+  workspaces: WorkspaceListItem[];
+  workspaceIndex: number;
 };
 
 export function WorkspaceSwitcher({
-  workspaces = PLACEHOLDER_WORKSPACES,
+  activeWorkspace,
+  workspaces,
+  workspaceIndex,
 }: WorkspaceSwitcherProps) {
+  const router = useRouter();
   const { isMobile } = useSidebar();
-  const [activeWorkspace, setActiveWorkspace] = useState(workspaces[0]);
+  const [open, setOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   return (
+    <>
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
+        <DropdownMenu open={open} onOpenChange={setOpen}>
           <DropdownMenuTrigger
             render={
               <SidebarMenuButton
@@ -53,7 +61,7 @@ export function WorkspaceSwitcher({
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{activeWorkspace.name}</span>
               <span className="truncate text-xs capitalize text-muted-foreground">
-                {activeWorkspace.role}
+                {activeWorkspace.permission}
               </span>
             </div>
             <ChevronsUpDownIcon className="ml-auto size-4 text-muted-foreground" />
@@ -68,19 +76,24 @@ export function WorkspaceSwitcher({
               <DropdownMenuLabel className="text-xs text-muted-foreground">
                 Workspaces
               </DropdownMenuLabel>
-              {workspaces.map((workspace) => (
+              {workspaces.map((workspace, index) => (
                 <DropdownMenuItem
                   key={workspace.id}
-                  onClick={() => setActiveWorkspace(workspace)}
+                  onClick={() => {
+                    setOpen(false);
+                    if (index !== workspaceIndex) {
+                      router.push(`/w/${index}`);
+                    }
+                  }}
                   className="gap-2 p-2"
                 >
                   <div className="flex size-6 items-center justify-center rounded-md border bg-background text-xs font-medium">
                     {workspace.name.charAt(0)}
                   </div>
-                  <div className="flex flex-col">
-                    <span>{workspace.name}</span>
-                    <span className="text-xs capitalize text-muted-foreground">
-                      {workspace.role}
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate">{workspace.name}</span>
+                    <span className="block truncate text-xs capitalize text-muted-foreground">
+                      {workspace.permission}
                     </span>
                   </div>
                   <span
@@ -94,7 +107,13 @@ export function WorkspaceSwitcher({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem className="gap-2 p-2">
+              <DropdownMenuItem
+                className="gap-2 p-2"
+                onClick={() => {
+                  setOpen(false);
+                  setCreateDialogOpen(true);
+                }}
+              >
                 <div className="flex size-6 items-center justify-center rounded-md border bg-background">
                   <PlusIcon className="size-4" />
                 </div>
@@ -105,16 +124,25 @@ export function WorkspaceSwitcher({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
+    <CreateWorkspaceDialog
+      open={createDialogOpen}
+      onOpenChange={setCreateDialogOpen}
+      workspaceCount={workspaces.length}
+    />
+    </>
   );
 }
 
 export function WorkspaceSwitcherCompact({
-  workspaces = PLACEHOLDER_WORKSPACES,
+  activeWorkspace,
+  workspaces,
+  workspaceIndex,
 }: WorkspaceSwitcherProps) {
-  const [activeWorkspace, setActiveWorkspace] = useState(workspaces[0]);
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
         render={
           <Button
@@ -134,12 +162,18 @@ export function WorkspaceSwitcherCompact({
           <DropdownMenuLabel className="text-xs text-muted-foreground">
             Workspaces
           </DropdownMenuLabel>
-          {workspaces.map((workspace) => (
+          {workspaces.map((workspace, index) => (
             <DropdownMenuItem
               key={workspace.id}
-              onClick={() => setActiveWorkspace(workspace)}
+              onClick={() => {
+                setOpen(false);
+                if (index !== workspaceIndex) {
+                  router.push(`/w/${index}`);
+                }
+              }}
+              className="min-w-0"
             >
-              {workspace.name}
+              <span className="truncate">{workspace.name}</span>
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>

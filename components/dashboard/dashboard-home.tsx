@@ -11,20 +11,35 @@ import {
 } from "lucide-react";
 
 import { AssistantGrid } from "@/components/dashboard/assistant-grid";
-import { WorkspaceSwitcherCompact } from "@/components/dashboard/workspace-switcher";
+import { WorkspaceSwitcherCompact } from "@/components/workspace/workspace-switcher";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   PLACEHOLDER_TOOL_CHIPS,
 } from "@/lib/dashboard/placeholder-data";
+import type { WorkspaceListItem } from "@/lib/workspaces/types";
 import { cn } from "@/lib/utils";
 
-export function DashboardHome() {
+type DashboardHomeProps = {
+  workspace: WorkspaceListItem;
+  workspaces: WorkspaceListItem[];
+  workspaceIndex: number;
+};
+
+export function DashboardHome({
+  workspace,
+  workspaces,
+  workspaceIndex,
+}: DashboardHomeProps) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="flex flex-wrap items-start justify-between gap-4 px-4 py-6 md:px-8 md:py-8">
         <div className="space-y-1">
-          <WorkspaceSwitcherCompact />
+          <WorkspaceSwitcherCompact
+            activeWorkspace={workspace}
+            workspaces={workspaces}
+            workspaceIndex={workspaceIndex}
+          />
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
             Hi, what&apos;s your plan for today?
           </h1>

@@ -14,8 +14,17 @@ export type WorkspaceListItem = {
   name: string;
   slug: string | null;
   ownerUserId: string;
+  permission: WorkspacePermission;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ListWorkspacesForUserParams = {
+  userId: string;
+};
+
+export type ListWorkspacesForUserResult = {
+  items: WorkspaceListItem[];
 };
 
 export type CreateWorkspaceParams = {
@@ -28,5 +37,14 @@ export type CreateWorkspaceResult = {
   id: string;
   name: string;
   slug: string | null;
+  message: string;
+};
+
+export type DeleteWorkspaceParams = {
+  userId: string;
+  workspaceId: string;
+};
+
+export type DeleteWorkspaceResult = {
   message: string;
 };

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import "./globals.css";
@@ -28,6 +29,7 @@ export default function RootLayout({
           <TooltipProvider>
             <QueryProvider>
               <AuthProvider>{children}</AuthProvider>
+              <Toaster />
             </QueryProvider>
           </TooltipProvider>
         </ThemeProvider>
