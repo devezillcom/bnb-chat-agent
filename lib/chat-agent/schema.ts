@@ -1,0 +1,42 @@
+import { z } from "zod";
+
+import { CHAT_AGENT_IMAGE_MAX_COUNT } from "./constants/chat-agent-image-upload-rules";
+
+export const chatAgentImageAttachmentSchema = z.object({
+  url: z.string().url(),
+  key: z.string().optional(),
+  mimeType: z.string().optional(),
+  fileName: z.string().optional(),
+});
+
+export const chatAgentMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string(),
+  images: z.array(chatAgentImageAttachmentSchema).optional(),
+});
+
+export const chatWithAgentRequestSchema = z
+  .object({
+    sessionId: z.string().uuid().optional(),
+    message: z.string().trim(),
+    images: z
+      .array(chatAgentImageAttachmentSchema)
+      .max(CHAT_AGENT_IMAGE_MAX_COUNT)
+      .optional(),
+  })
+  .refine(
+    (data) => data.message.length > 0 || (data.images?.length ?? 0) > 0,
+    { message: "Message or at least one image is required." },
+  );
+
+export const chatAgentContextSchema = z.object({
+  userId: z.uuid(),
+  workspaceId: z.uuid(),
+});
+
+export type ChatAgentImageAttachment = z.infer<
+  typeof chatAgentImageAttachmentSchema
+>;
+export type ChatAgentMessage = z.infer<typeof chatAgentMessageSchema>;
+export type ChatWithAgentRequest = z.infer<typeof chatWithAgentRequestSchema>;
+export type ChatAgentContext = z.infer<typeof chatAgentContextSchema>;

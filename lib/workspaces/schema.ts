@@ -1,0 +1,8 @@
+import { z } from "zod";
+
+export const workspaceFormSchema = z.object({
+  name: z.string().trim().min(1, { error: "Workspace name is required." }),
+  slug: z.string().trim().optional(),
+});
+
+export type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;
