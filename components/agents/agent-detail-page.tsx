@@ -1,0 +1,383 @@
+"use client";
+
+import { ArrowLeftIcon, Loader2Icon, PencilIcon, PlusIcon } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { EditAgentInfoSheet } from "@/components/agents/edit-agent-info-sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "@/components/ui/toast";
+import type { AgentListItem } from "@/lib/agents/types";
+import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
+import {
+  PLACEHOLDER_CONNECTIONS,
+  PLACEHOLDER_SKILLS,
+  PLACEHOLDER_TOOLS,
+} from "@/lib/dashboard/placeholder-data";
+import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
+import { cn } from "@/lib/utils";
+import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
+
+type AgentDetailPageProps = {
+  agent: AgentListItem;
+  workspaceId: string;
+  workspaceIndex: number;
+};
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+export function AgentDetailPage({
+  agent,
+  workspaceId,
+  workspaceIndex,
+}: AgentDetailPageProps) {
+  const router = useRouter();
+  const [infoEditOpen, setInfoEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const agentsHref = getDashboardNavHref(workspaceIndex, "agents");
+  const leading = getAgentListLeading(agent.name);
+  const placeholderSkills = PLACEHOLDER_SKILLS.slice(0, 3);
+  const placeholderTools = PLACEHOLDER_TOOLS.slice(0, 3);
+  const placeholderConnections = PLACEHOLDER_CONNECTIONS.slice(0, 2);
+
+  async function handleDelete() {
+    setDeleting(true);
+
+    try {
+      const res = await workspaceFetch(
+        workspaceId,
+        `/api/agents/${agent.id}`,
+        { method: "DELETE" },
+      );
+      const data = (await res.json()) as { message?: string; error?: string };
+
+      if (!res.ok) {
+        toast.add({
+          title: data.message ?? data.error ?? "Could not delete agent.",
+          type: "error",
+        });
+        return;
+      }
+
+      toast.add({
+        title: data.message ?? "Agent deleted.",
+        type: "success",
+      });
+      setDeleteOpen(false);
+      router.push(agentsHref);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="mx-auto w-full max-w-2xl px-4 py-8 md:px-8">
+        <div className="mb-6 space-y-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            nativeButton={false}
+            render={<Link href={agentsHref} />}
+          >
+            <ArrowLeftIcon data-icon="inline-start" />
+            Back to agents
+          </Button>
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                "flex size-12 shrink-0 items-center justify-center rounded-full text-base font-semibold",
+                leading.className,
+              )}
+            >
+              {leading.initials}
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-semibold tracking-tight">
+                {agent.name}
+              </h1>
+              {agent.description ? (
+                <p className="text-sm text-muted-foreground">
+                  {agent.description}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Info</CardTitle>
+              <CardDescription>Core agent configuration.</CardDescription>
+              <CardAction>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setInfoEditOpen(true)}
+                >
+                  <PencilIcon data-icon="inline-start" />
+                  Edit
+                </Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <dl className="divide-y divide-border">
+                <div className="flex flex-col gap-1 py-3 first:pt-0 sm:flex-row sm:items-start sm:justify-between">
+                  <dt className="text-sm text-muted-foreground">Name</dt>
+                  <dd className="text-sm font-medium sm:max-w-sm sm:text-right">
+                    {agent.name}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between">
+                  <dt className="text-sm text-muted-foreground">Description</dt>
+                  <dd className="text-sm font-medium sm:max-w-sm sm:text-right">
+                    {agent.description ?? "—"}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between">
+                  <dt className="text-sm text-muted-foreground">
+                    System prompt
+                  </dt>
+                  <dd className="whitespace-pre-wrap text-sm font-medium sm:max-w-sm sm:text-right">
+                    {agent.systemPrompt}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <dt className="text-sm text-muted-foreground">Created</dt>
+                  <dd className="text-sm font-medium">
+                    {formatDate(agent.createdAt)}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <dt className="text-sm text-muted-foreground">Last updated</dt>
+                  <dd className="text-sm font-medium">
+                    {formatDate(agent.updatedAt)}
+                  </dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Skills</CardTitle>
+              <CardDescription>
+                Capabilities assigned to this agent. Placeholder data for now.
+              </CardDescription>
+              <CardAction>
+                <Button variant="outline" size="sm">
+                  <PlusIcon data-icon="inline-start" />
+                  Add
+                </Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <ul className="divide-y divide-border">
+                {placeholderSkills.map((skill) => (
+                  <li
+                    key={skill.id}
+                    className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{skill.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {skill.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {skill.category}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Edit ${skill.name}`}
+                    >
+                      <PencilIcon />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Tools</CardTitle>
+              <CardDescription>
+                External integrations available to this agent. Placeholder data
+                for now.
+              </CardDescription>
+              <CardAction>
+                <Button variant="outline" size="sm">
+                  <PlusIcon data-icon="inline-start" />
+                  Add
+                </Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <ul className="divide-y divide-border">
+                {placeholderTools.map((tool) => (
+                  <li
+                    key={tool.id}
+                    className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{tool.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {tool.description}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <span className="text-xs text-muted-foreground capitalize">
+                        {tool.type}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Edit ${tool.name}`}
+                      >
+                        <PencilIcon />
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Connections</CardTitle>
+              <CardDescription>
+                Channels linked to this agent. Placeholder data for now.
+              </CardDescription>
+              <CardAction>
+                <Button variant="outline" size="sm">
+                  <PlusIcon data-icon="inline-start" />
+                  Add
+                </Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <ul className="divide-y divide-border">
+                {placeholderConnections.map((connection) => (
+                  <li
+                    key={connection.id}
+                    className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{connection.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {connection.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {connection.channel} · {connection.status}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Edit ${connection.name}`}
+                    >
+                      <PencilIcon />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Delete agent</CardTitle>
+              <CardDescription>
+                Permanently remove this agent and its configuration. This action
+                cannot be undone.
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className="justify-end">
+              <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <AlertDialogTrigger
+                  render={
+                    <Button variant="destructive" disabled={deleting} />
+                  }
+                >
+                  Delete agent
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete agent?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete{" "}
+                      <span className="font-medium text-foreground">
+                        {agent.name}
+                      </span>
+                      . This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleting}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      disabled={deleting}
+                      onClick={handleDelete}
+                    >
+                      {deleting ? (
+                        <>
+                          <Loader2Icon
+                            className="animate-spin"
+                            data-icon="inline-start"
+                          />
+                          Deleting…
+                        </>
+                      ) : (
+                        "Delete agent"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+
+      <EditAgentInfoSheet
+        agent={agent}
+        workspaceId={workspaceId}
+        open={infoEditOpen}
+        onOpenChange={setInfoEditOpen}
+      />
+    </>
+  );
+}

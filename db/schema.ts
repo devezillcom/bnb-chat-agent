@@ -114,3 +114,26 @@ export const chatAgentSessions = pgTable(
 
 export type ChatAgentSession = typeof chatAgentSessions.$inferSelect;
 export type NewChatAgentSession = typeof chatAgentSessions.$inferInsert;
+
+export const agents = pgTable(
+  "agents",
+  {
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description"),
+    systemPrompt: text("system_prompt").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("agents_workspace_id_idx").on(table.workspaceId)],
+);
+
+export type Agent = typeof agents.$inferSelect;
+export type NewAgent = typeof agents.$inferInsert;

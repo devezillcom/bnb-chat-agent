@@ -1,4 +1,6 @@
 import type { ResourceListRowItem } from "@/components/dashboard/resource-list-page";
+import type { AgentListItem } from "@/lib/agents/types";
+import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
 import type {
   ChatAgent,
   Connection,
@@ -19,6 +21,18 @@ const CONNECTION_CHANNEL_LABELS: Record<Connection["channel"], string> = {
   whatsapp: "WhatsApp",
   telegram: "Telegram",
 };
+
+export function mapAgentsToListItems(
+  agents: AgentListItem[],
+): ResourceListRowItem[] {
+  return agents.map((agent) => ({
+    id: agent.id,
+    name: agent.name,
+    description: agent.description ?? undefined,
+    createdAt: agent.createdAt,
+    leading: getAgentListLeading(agent.name),
+  }));
+}
 
 export function mapChatAgentsToListItems(
   agents: ChatAgent[],

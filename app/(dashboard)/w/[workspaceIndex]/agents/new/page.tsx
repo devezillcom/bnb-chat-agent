@@ -1,19 +1,19 @@
-import { AgentsListPage } from "@/components/agents/agents-list-page";
+import { CreateAgentPage } from "@/components/agents/create-agent-page";
 import { getWorkspaceRouteContext } from "@/lib/workspaces/services/get-workspace-route-context";
 
-type ChatAgentsPageProps = {
+type CreateAgentRoutePageProps = {
   params: Promise<{ workspaceIndex: string }>;
 };
 
-export default async function ChatAgentsPage({
+export default async function CreateAgentRoutePage({
   params,
-}: ChatAgentsPageProps) {
+}: CreateAgentRoutePageProps) {
   const { workspaceIndex: workspaceIndexParam } = await params;
   const { workspace, workspaceIndex } =
     await getWorkspaceRouteContext(workspaceIndexParam);
 
   return (
-    <AgentsListPage
+    <CreateAgentPage
       workspaceId={workspace.id}
       workspaceIndex={workspaceIndex}
     />

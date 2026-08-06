@@ -71,6 +71,7 @@ Tenant container for members and chat sessions.
 - `owner_user_id` → `users.id` (ON DELETE CASCADE)
 - ← `workspace_members.workspace_id`
 - ← `chat_agent_sessions.workspace_id`
+- ← `agents.workspace_id`
 
 ---
 
@@ -123,3 +124,27 @@ Persisted chat/agent conversation sessions.
 
 - `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
 - `user_id` → `users.id` (ON DELETE CASCADE)
+
+---
+
+### `agents`
+
+Configured chat agents for a workspace.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | `gen_random_uuid()` | Primary key |
+| workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
+| name | text | NO | — | Display name |
+| description | text | YES | — | Short summary of the agent's purpose |
+| system_prompt | text | NO | — | Instructions that define agent behavior |
+| created_at | timestamptz | NO | `now()` | Row creation time |
+| updated_at | timestamptz | NO | `now()` | Last update time |
+
+**Indexes**
+
+- `agents_workspace_id_idx` — on `workspace_id`
+
+**Relations**
+
+- `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
