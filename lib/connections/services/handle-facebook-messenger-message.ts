@@ -1,68 +1,151 @@
 import type {
-  FacebookConnectionAuthData,
   FacebookIncomingMessage,
+  FacebookMessagingEvent,
+  FacebookPostback,
 } from "../types";
-import { decryptConnectionAuthData } from "../utils/encrypt-connection-auth-data";
-import { resolveFacebookConnectionPage } from "../utils/resolve-facebook-connection-page";
-import {
-  sendFacebookMessengerSenderAction,
-  sendFacebookMessengerTextMessage,
-} from "../utils/send-facebook-messenger-message";
 import { getFacebookConnectionByPageId } from "./get-facebook-connection-by-page-id";
+import { enqueueFacebookMessengerInboundJob } from "./enqueue-facebook-messenger-inbound-job";
+import { resolveFacebookInboundPageAccessToken } from "./resolve-facebook-inbound-page-access-token";
+import { sendFacebookMessengerSenderAction } from "../utils/send-facebook-messenger-message";
+import { isFacebookGetStartedPostback } from "../utils/is-facebook-get-started-postback";
+
+async function markFacebookParticipantSeen(params: {
+  pageAccessToken: string;
+  psid: string;
+}): Promise<void> {
+  await sendFacebookMessengerSenderAction({
+    pageAccessToken: params.pageAccessToken,
+    psid: params.psid,
+    action: "mark_seen",
+  });
+}
+
+async function handleFacebookMessagingEvent(
+  event: FacebookMessagingEvent,
+): Promise<void> {
+  const pageId = event.recipient.id;
+  const psid = event.sender.id;
+  const connection = await getFacebookConnectionByPageId(pageId);
+
+  if (!connection) {
+    console.warn(`[facebook-webhook] No connection found for page ${pageId}`);
+    return;
+  }
+
+  let pageAccessToken: string | null = null;
+
+  try {
+    pageAccessToken = await resolveFacebookInboundPageAccessToken({
+      metadata: connection.metadata,
+      encryptedAuthData: connection.encryptedAuthData,
+    });
+  } catch (error) {
+    console.error("[facebook-webhook] Failed to resolve page access token", {
+      connectionId: connection.id,
+      error,
+    });
+    return;
+  }
+
+  await markFacebookParticipantSeen({
+    pageAccessToken,
+    psid,
+  });
+
+  if (!connection.agentId) {
+    return;
+  }
+
+  if (event.message) {
+    await enqueueFacebookMessageEvent({
+      connection,
+      psid,
+      message: event.message,
+    });
+    return;
+  }
+
+  if (event.postback && isFacebookGetStartedPostback(event.postback)) {
+    await enqueueFacebookGetStartedPostback({
+      connection,
+      psid,
+      postback: event.postback,
+    });
+  }
+}
+
+async function enqueueFacebookMessageEvent(params: {
+  connection: NonNullable<Awaited<ReturnType<typeof getFacebookConnectionByPageId>>>;
+  psid: string;
+  message: FacebookIncomingMessage;
+}): Promise<void> {
+  const attachments = params.message.attachments ?? [];
+  const imageAttachments = attachments
+    .filter(
+      (attachment) =>
+        attachment.type === "image" && Boolean(attachment.payload.url),
+    )
+    .map((attachment) => ({
+      type: attachment.type,
+      url: attachment.payload.url!,
+    }));
+  const hasUnsupportedAttachments = attachments.some(
+    (attachment) => attachment.type !== "image",
+  );
+
+  await enqueueFacebookMessengerInboundJob({
+    userId: params.connection.userId,
+    payload: {
+      kind: "message",
+      connectionId: params.connection.id,
+      psid: params.psid,
+      mid: params.message.mid,
+      text: params.message.text,
+      imageAttachments:
+        imageAttachments.length > 0 ? imageAttachments : undefined,
+      hasUnsupportedAttachments: hasUnsupportedAttachments || undefined,
+    },
+  });
+}
+
+async function enqueueFacebookGetStartedPostback(params: {
+  connection: NonNullable<Awaited<ReturnType<typeof getFacebookConnectionByPageId>>>;
+  psid: string;
+  postback: FacebookPostback;
+}): Promise<void> {
+  await enqueueFacebookMessengerInboundJob({
+    userId: params.connection.userId,
+    payload: {
+      kind: "postback_get_started",
+      connectionId: params.connection.id,
+      psid: params.psid,
+      postbackPayload: params.postback.payload,
+    },
+  });
+}
 
 export async function handleFacebookMessengerMessage(params: {
   pageId: string;
   psid: string;
   message: FacebookIncomingMessage;
 }): Promise<void> {
-  const connection = await getFacebookConnectionByPageId(params.pageId);
-
-  if (!connection) {
-    console.warn(
-      `[facebook-webhook] No connection found for page ${params.pageId}`,
-    );
-    return;
-  }
-
-  const auth = decryptConnectionAuthData<FacebookConnectionAuthData>(
-    connection.encryptedAuthData,
-  );
-  const { auth: resolvedAuth } = await resolveFacebookConnectionPage({
-    pageId: params.pageId,
-    auth,
+  await handleFacebookMessagingEvent({
+    sender: { id: params.psid },
+    recipient: { id: params.pageId },
+    timestamp: Date.now(),
+    message: params.message,
   });
-  const pageAccessToken = resolvedAuth.access_token;
+}
 
-  await sendFacebookMessengerSenderAction({
-    pageAccessToken,
-    psid: params.psid,
-    action: "mark_seen",
-  });
-  await sendFacebookMessengerSenderAction({
-    pageAccessToken,
-    psid: params.psid,
-    action: "typing_on",
-  });
-
-  let replyText: string | null = null;
-
-  if (params.message.text) {
-    replyText = `Connection test OK — you said: "${params.message.text}"`;
-  } else if (params.message.attachments?.length) {
-    replyText = "Connection test OK — thanks for the attachment!";
-  }
-
-  if (replyText) {
-    await sendFacebookMessengerTextMessage({
-      pageAccessToken,
-      psid: params.psid,
-      text: replyText,
-    });
-  }
-
-  await sendFacebookMessengerSenderAction({
-    pageAccessToken,
-    psid: params.psid,
-    action: "typing_off",
+export async function handleFacebookMessengerPostback(params: {
+  pageId: string;
+  psid: string;
+  postback: FacebookPostback;
+}): Promise<void> {
+  await handleFacebookMessagingEvent({
+    sender: { id: params.psid },
+    recipient: { id: params.pageId },
+    timestamp: Date.now(),
+    postback: params.postback,
   });
 }

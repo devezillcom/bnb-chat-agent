@@ -51,6 +51,7 @@ export function EditAgentInfoSheet({
       name: agent.name,
       description: agent.description ?? "",
       systemPrompt: agent.systemPrompt,
+      firstMessage: agent.firstMessage ?? "",
     },
   });
 
@@ -60,6 +61,7 @@ export function EditAgentInfoSheet({
         name: agent.name,
         description: agent.description ?? "",
         systemPrompt: agent.systemPrompt,
+        firstMessage: agent.firstMessage ?? "",
       });
     }
   }, [open, agent, form]);
@@ -92,6 +94,7 @@ export function EditAgentInfoSheet({
   const nameError = form.formState.errors.name;
   const descriptionError = form.formState.errors.description;
   const systemPromptError = form.formState.errors.systemPrompt;
+  const firstMessageError = form.formState.errors.firstMessage;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -103,7 +106,8 @@ export function EditAgentInfoSheet({
           <SheetHeader>
             <SheetTitle>Edit info</SheetTitle>
             <SheetDescription>
-              Update the name, description, and system prompt for this agent.
+              Update the name, description, system prompt, and first message for
+              this agent.
             </SheetDescription>
           </SheetHeader>
 
@@ -148,6 +152,22 @@ export function EditAgentInfoSheet({
                   {...form.register("systemPrompt")}
                 />
                 <FieldError errors={[systemPromptError]} />
+              </Field>
+
+              <Field data-invalid={!!firstMessageError || undefined}>
+                <FieldLabel htmlFor="edit-agent-first-message">
+                  First message
+                </FieldLabel>
+                <textarea
+                  id="edit-agent-first-message"
+                  rows={3}
+                  placeholder="Hello! How can I help you today?"
+                  aria-invalid={!!firstMessageError}
+                  disabled={isSubmitting}
+                  className="flex min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  {...form.register("firstMessage")}
+                />
+                <FieldError errors={[firstMessageError]} />
               </Field>
             </FieldGroup>
           </div>

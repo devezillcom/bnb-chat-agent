@@ -4,6 +4,7 @@ import { APIError } from "@/lib/exposers/api-error";
 import { and, eq } from "drizzle-orm";
 
 import type { ConnectionMutationResult, UpdateConnectionParams } from "../types";
+import { deleteConnectionConversations } from "./delete-connection-conversations";
 
 export async function updateConnection(
   params: UpdateConnectionParams,
@@ -32,6 +33,24 @@ export async function updateConnection(
       throw new APIError("ERR_AGENT_NOT_FOUND", "Agent not found.", 404);
     }
   }
+
+  const [existing] = await db
+    .select({ agentId: connections.agentId })
+    .from(connections)
+    .where(
+      and(
+        eq(connections.id, params.id),
+        eq(connections.workspaceId, params.workspaceId),
+      ),
+    )
+    .limit(1);
+
+  if (!existing) {
+    throw new APIError("ERR_CONNECTION_NOT_FOUND", "Connection not found.", 404);
+  }
+
+  const agentIdChanging =
+    params.agentId !== undefined && params.agentId !== existing.agentId;
 
   const updates: {
     name?: string;
@@ -62,6 +81,10 @@ export async function updateConnection(
 
   if (!connection) {
     throw new APIError("ERR_CONNECTION_NOT_FOUND", "Connection not found.", 404);
+  }
+
+  if (agentIdChanging) {
+    await deleteConnectionConversations({ connectionId: connection.id });
   }
 
   return {

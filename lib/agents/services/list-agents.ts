@@ -45,6 +45,7 @@ export async function listAgents(
       name: agents.name,
       description: agents.description,
       systemPrompt: agents.systemPrompt,
+      firstMessage: agents.firstMessage,
       createdAt: agents.createdAt,
       updatedAt: agents.updatedAt,
     })
@@ -63,6 +64,7 @@ export async function listAgents(
       name: row.name,
       description: row.description,
       systemPrompt: row.systemPrompt,
+      firstMessage: row.firstMessage,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     })),

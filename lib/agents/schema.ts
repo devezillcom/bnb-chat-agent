@@ -7,6 +7,7 @@ export const createAgentFormSchema = z.object({
     .string()
     .trim()
     .min(1, { error: "System prompt is required." }),
+  firstMessage: z.string().trim().optional(),
 });
 
 export type CreateAgentFormValues = z.infer<typeof createAgentFormSchema>;

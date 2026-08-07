@@ -15,6 +15,7 @@ export async function updateAgent(
       name: params.name.trim(),
       description: params.description?.trim() || null,
       systemPrompt: params.systemPrompt.trim(),
+      firstMessage: params.firstMessage?.trim() || null,
       updatedAt: new Date(),
     })
     .where(

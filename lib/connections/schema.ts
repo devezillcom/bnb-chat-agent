@@ -27,6 +27,39 @@ export const refreshConnectionConnectQstashPayloadSchema = z.object({
   connectionId: z.uuid(),
 });
 
+export const facebookMessengerInboundQstashPayloadSchema = z.discriminatedUnion(
+  "kind",
+  [
+    z.object({
+      kind: z.literal("message"),
+      connectionId: z.uuid(),
+      psid: z.string().min(1),
+      mid: z.string().min(1),
+      text: z.string().optional(),
+      imageAttachments: z
+        .array(
+          z.object({
+            type: z.string(),
+            url: z.url(),
+          }),
+        )
+        .max(5)
+        .optional(),
+      hasUnsupportedAttachments: z.boolean().optional(),
+    }),
+    z.object({
+      kind: z.literal("postback_get_started"),
+      connectionId: z.uuid(),
+      psid: z.string().min(1),
+      postbackPayload: z.string().min(1),
+    }),
+  ],
+);
+
+export type FacebookMessengerInboundQstashPayload = z.infer<
+  typeof facebookMessengerInboundQstashPayloadSchema
+>;
+
 export type ConnectionFormValues = z.infer<typeof connectionFormSchema>;
 export type UpdateConnectionValues = z.infer<typeof updateConnectionSchema>;
 export type CompleteFacebookConnectValues = z.infer<

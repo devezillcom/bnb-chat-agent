@@ -5,6 +5,7 @@ export type AgentListItem = {
   name: string;
   description: string | null;
   systemPrompt: string;
+  firstMessage: string | null;
   createdAt: string;
   updatedAt: string;
 };

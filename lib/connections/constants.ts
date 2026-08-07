@@ -38,6 +38,16 @@ export const FACEBOOK_OAUTH_COOKIE_MAX_AGE_SECONDS = 15 * 60;
 export const REFRESH_CONNECTION_CONNECT_QSTASH_JOB_NAME =
   "refresh-connection-connect";
 
+export const FACEBOOK_MESSENGER_INBOUND_QSTASH_JOB_NAME =
+  "facebook-messenger-inbound";
+
+export const FACEBOOK_GET_STARTED_POSTBACK_PAYLOADS = [
+  "GET_STARTED",
+  "GET_STARTED_PAYLOAD",
+] as const;
+
+export const FACEBOOK_INBOUND_IMAGE_R2_PREFIX = "facebook-inbound";
+
 export const FACEBOOK_LONG_LIVED_TOKEN_REFRESH_WITHIN_MS =
   14 * 24 * 60 * 60 * 1000;
 

@@ -7,6 +7,9 @@ export async function getFacebookConnectionByPageId(pageId: string) {
   const [connection] = await db
     .select({
       id: connections.id,
+      workspaceId: connections.workspaceId,
+      userId: connections.userId,
+      agentId: connections.agentId,
       encryptedAuthData: connections.encryptedAuthData,
       metadata: connections.metadata,
     })

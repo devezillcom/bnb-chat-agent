@@ -25,10 +25,9 @@ async function callFacebookMessengerSendApi(
     const data = (await response.json().catch(() => null)) as {
       error?: { message?: string };
     } | null;
-    console.error(
-      "Facebook Send API error:",
-      data?.error?.message ?? response.statusText,
-    );
+    const message = data?.error?.message ?? response.statusText;
+    console.error("Facebook Send API error:", message);
+    throw new Error(`Facebook Send API failed (${response.status}): ${message}`);
   }
 }
 

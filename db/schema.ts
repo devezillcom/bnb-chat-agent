@@ -126,6 +126,8 @@ export const agents = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     systemPrompt: text("system_prompt").notNull(),
+    /** Greeting sent on Messenger Get Started (and similar channel openers). */
+    firstMessage: text("first_message"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -174,3 +176,72 @@ export const connections = pgTable(
 
 export type Connection = typeof connections.$inferSelect;
 export type NewConnection = typeof connections.$inferInsert;
+
+export const connectionConversations = pgTable(
+  "connection_conversations",
+  {
+    /** LangGraph thread id for this customer conversation. */
+    id: uuid("id").primaryKey().notNull(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    connectionId: uuid("connection_id")
+      .notNull()
+      .references(() => connections.id, { onDelete: "cascade" }),
+    agentId: uuid("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    /** Channel-specific participant id (e.g. Facebook PSID). */
+    externalParticipantId: text("external_participant_id").notNull(),
+    title: text("title").notNull(),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("connection_conversations_connection_participant_idx").on(
+      table.connectionId,
+      table.externalParticipantId,
+    ),
+    index("connection_conversations_workspace_id_idx").on(table.workspaceId),
+    index("connection_conversations_connection_id_idx").on(table.connectionId),
+    index("connection_conversations_last_message_at_idx").on(
+      table.lastMessageAt,
+    ),
+  ],
+);
+
+export type ConnectionConversation =
+  typeof connectionConversations.$inferSelect;
+export type NewConnectionConversation =
+  typeof connectionConversations.$inferInsert;
+
+export const connectionInboundDedup = pgTable(
+  "connection_inbound_dedup",
+  {
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+    connectionId: uuid("connection_id")
+      .notNull()
+      .references(() => connections.id, { onDelete: "cascade" }),
+    externalMessageId: text("external_message_id").notNull(),
+    processedAt: timestamp("processed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("connection_inbound_dedup_connection_message_idx").on(
+      table.connectionId,
+      table.externalMessageId,
+    ),
+  ],
+);
+
+export type ConnectionInboundDedup = typeof connectionInboundDedup.$inferSelect;
+export type NewConnectionInboundDedup =
+  typeof connectionInboundDedup.$inferInsert;

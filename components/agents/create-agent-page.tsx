@@ -48,6 +48,7 @@ export function CreateAgentPage({
       name: "",
       description: "",
       systemPrompt: "",
+      firstMessage: "",
     },
   });
 
@@ -78,6 +79,7 @@ export function CreateAgentPage({
   const nameError = form.formState.errors.name;
   const descriptionError = form.formState.errors.description;
   const systemPromptError = form.formState.errors.systemPrompt;
+  const firstMessageError = form.formState.errors.firstMessage;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 md:px-8">
@@ -152,6 +154,22 @@ export function CreateAgentPage({
                   {...form.register("systemPrompt")}
                 />
                 <FieldError errors={[systemPromptError]} />
+              </Field>
+
+              <Field data-invalid={!!firstMessageError || undefined}>
+                <FieldLabel htmlFor="agent-first-message">
+                  First message
+                </FieldLabel>
+                <textarea
+                  id="agent-first-message"
+                  rows={3}
+                  placeholder="Hello! How can I help you today?"
+                  aria-invalid={!!firstMessageError}
+                  disabled={isSubmitting}
+                  className="flex min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  {...form.register("firstMessage")}
+                />
+                <FieldError errors={[firstMessageError]} />
               </Field>
             </FieldGroup>
           </CardContent>

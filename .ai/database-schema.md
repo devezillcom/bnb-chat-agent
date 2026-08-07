@@ -139,6 +139,7 @@ Configured chat agents for a workspace.
 | name | text | NO | — | Display name |
 | description | text | YES | — | Short summary of the agent's purpose |
 | system_prompt | text | NO | — | Instructions that define agent behavior |
+| first_message | text | YES | — | Greeting for channel openers (e.g. Messenger Get Started) |
 | created_at | timestamptz | NO | `now()` | Row creation time |
 | updated_at | timestamptz | NO | `now()` | Last update time |
 
@@ -183,3 +184,55 @@ External channel connections for a workspace (Facebook pages, etc.). Each connec
 - `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
 - `user_id` → `users.id` (ON DELETE CASCADE)
 - `agent_id` → `agents.id` (ON DELETE SET NULL)
+
+---
+
+### `connection_conversations`
+
+Per-customer chat sessions for external channel connections (e.g. Facebook PSID). Each row maps to a LangGraph `thread_id`.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | — | LangGraph thread id |
+| workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
+| connection_id | uuid | NO | — | Channel connection (`connections.id`) |
+| agent_id | uuid | NO | — | Agent serving this conversation (`agents.id`) |
+| external_participant_id | text | NO | — | Channel participant id (e.g. Facebook PSID) |
+| title | text | NO | — | Preview label |
+| last_message_at | timestamptz | NO | `now()` | Last inbound/outbound activity |
+| created_at | timestamptz | NO | `now()` | Row creation time |
+| updated_at | timestamptz | NO | `now()` | Last update time |
+
+**Indexes**
+
+- `connection_conversations_connection_participant_idx` — UNIQUE on `(connection_id, external_participant_id)`
+- `connection_conversations_workspace_id_idx` — on `workspace_id`
+- `connection_conversations_connection_id_idx` — on `connection_id`
+- `connection_conversations_last_message_at_idx` — on `last_message_at`
+
+**Relations**
+
+- `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
+- `connection_id` → `connections.id` (ON DELETE CASCADE)
+- `agent_id` → `agents.id` (ON DELETE CASCADE)
+
+---
+
+### `connection_inbound_dedup`
+
+Tracks processed inbound message ids to avoid duplicate replies when Facebook retries webhooks.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | `gen_random_uuid()` | Primary key |
+| connection_id | uuid | NO | — | Connection (`connections.id`) |
+| external_message_id | text | NO | — | Channel message id (e.g. Facebook `mid`) |
+| processed_at | timestamptz | NO | `now()` | When the message was accepted |
+
+**Indexes**
+
+- `connection_inbound_dedup_connection_message_idx` — UNIQUE on `(connection_id, external_message_id)`
+
+**Relations**
+
+- `connection_id` → `connections.id` (ON DELETE CASCADE)

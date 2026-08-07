@@ -35,6 +35,7 @@ export const PATCH = createApiHandler(
       name: params.name,
       description: params.description,
       systemPrompt: params.systemPrompt,
+      firstMessage: params.firstMessage,
       workspaceId: ctx.workspaceId,
       agentId: params.agentId,
     }),
