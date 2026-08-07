@@ -72,6 +72,7 @@ Tenant container for members and chat sessions.
 - ← `workspace_members.workspace_id`
 - ← `chat_agent_sessions.workspace_id`
 - ← `agents.workspace_id`
+- ← `connections.workspace_id`
 
 ---
 
@@ -148,3 +149,37 @@ Configured chat agents for a workspace.
 **Relations**
 
 - `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
+- ← `connections.agent_id`
+
+---
+
+### `connections`
+
+External channel connections for a workspace (Facebook pages, etc.). Each connection is assigned to at most one chat agent.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | `gen_random_uuid()` | Primary key |
+| workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
+| user_id | uuid | NO | — | User who created the connection (`users.id`) |
+| agent_id | uuid | YES | — | Assigned chat agent (`agents.id`) |
+| channel_type | text | NO | — | Channel identifier (e.g. `facebook`) |
+| name | text | NO | — | Display name (e.g. Facebook page name) |
+| encrypted_auth_data | text | NO | — | AES-256-GCM encrypted OAuth tokens |
+| metadata | jsonb | YES | — | Non-sensitive channel metadata |
+| last_error | text | YES | — | Last refresh/connect failure message |
+| created_at | timestamptz | NO | `now()` | Row creation time |
+| updated_at | timestamptz | NO | `now()` | Last update time |
+
+**Indexes**
+
+- `connections_workspace_id_idx` — on `workspace_id`
+- `connections_user_id_idx` — on `user_id`
+- `connections_agent_id_idx` — on `agent_id`
+- `connections_channel_type_idx` — on `channel_type`
+
+**Relations**
+
+- `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
+- `user_id` → `users.id` (ON DELETE CASCADE)
+- `agent_id` → `agents.id` (ON DELETE SET NULL)

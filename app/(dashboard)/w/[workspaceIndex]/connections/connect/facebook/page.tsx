@@ -1,19 +1,19 @@
-import { ConnectionsListPage } from "@/components/connections/connections-list-page";
+import { ConnectFacebookPage } from "@/components/connections/connect-facebook-page";
 import { getWorkspaceRouteContext } from "@/lib/workspaces/services/get-workspace-route-context";
 
-type ConnectionsPageProps = {
+type ConnectFacebookRoutePageProps = {
   params: Promise<{ workspaceIndex: string }>;
 };
 
-export default async function ConnectionsPage({
+export default async function ConnectFacebookRoutePage({
   params,
-}: ConnectionsPageProps) {
+}: ConnectFacebookRoutePageProps) {
   const { workspaceIndex: workspaceIndexParam } = await params;
   const { workspace, workspaceIndex } =
     await getWorkspaceRouteContext(workspaceIndexParam);
 
   return (
-    <ConnectionsListPage
+    <ConnectFacebookPage
       workspaceId={workspace.id}
       workspaceIndex={workspaceIndex}
     />

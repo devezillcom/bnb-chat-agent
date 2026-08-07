@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { EditAgentInfoSheet } from "@/components/agents/edit-agent-info-sheet";
+import { AgentConnectionsCard } from "@/components/agents/agent-connections-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +32,6 @@ import { toast } from "@/components/ui/toast";
 import type { AgentListItem } from "@/lib/agents/types";
 import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
 import {
-  PLACEHOLDER_CONNECTIONS,
   PLACEHOLDER_SKILLS,
   PLACEHOLDER_TOOLS,
 } from "@/lib/dashboard/placeholder-data";
@@ -65,7 +65,6 @@ export function AgentDetailPage({
   const leading = getAgentListLeading(agent.name);
   const placeholderSkills = PLACEHOLDER_SKILLS.slice(0, 3);
   const placeholderTools = PLACEHOLDER_TOOLS.slice(0, 3);
-  const placeholderConnections = PLACEHOLDER_CONNECTIONS.slice(0, 2);
 
   async function handleDelete() {
     setDeleting(true);
@@ -277,41 +276,15 @@ export function AgentDetailPage({
             <CardHeader>
               <CardTitle>Connections</CardTitle>
               <CardDescription>
-                Channels linked to this agent. Placeholder data for now.
+                Channels assigned to this agent.
               </CardDescription>
-              <CardAction>
-                <Button variant="outline" size="sm">
-                  <PlusIcon data-icon="inline-start" />
-                  Add
-                </Button>
-              </CardAction>
             </CardHeader>
             <CardContent>
-              <ul className="divide-y divide-border">
-                {placeholderConnections.map((connection) => (
-                  <li
-                    key={connection.id}
-                    className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{connection.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {connection.description}
-                      </p>
-                      <p className="text-xs text-muted-foreground capitalize">
-                        {connection.channel} · {connection.status}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Edit ${connection.name}`}
-                    >
-                      <PencilIcon />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
+              <AgentConnectionsCard
+                agentId={agent.id}
+                workspaceId={workspaceId}
+                workspaceIndex={workspaceIndex}
+              />
             </CardContent>
           </Card>
 

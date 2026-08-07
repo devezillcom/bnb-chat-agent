@@ -1,5 +1,6 @@
 import {
   index,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -137,3 +138,39 @@ export const agents = pgTable(
 
 export type Agent = typeof agents.$inferSelect;
 export type NewAgent = typeof agents.$inferInsert;
+
+export const connections = pgTable(
+  "connections",
+  {
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    agentId: uuid("agent_id").references(() => agents.id, {
+      onDelete: "set null",
+    }),
+    channelType: text("channel_type").notNull(),
+    name: text("name").notNull(),
+    encryptedAuthData: text("encrypted_auth_data").notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("connections_workspace_id_idx").on(table.workspaceId),
+    index("connections_user_id_idx").on(table.userId),
+    index("connections_agent_id_idx").on(table.agentId),
+    index("connections_channel_type_idx").on(table.channelType),
+  ],
+);
+
+export type Connection = typeof connections.$inferSelect;
+export type NewConnection = typeof connections.$inferInsert;

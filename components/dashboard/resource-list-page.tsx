@@ -2,6 +2,7 @@
 
 import { ChevronDownIcon, PlusIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
 import { ResourceListEmpty } from "@/components/dashboard/resource-list-empty";
@@ -37,6 +38,7 @@ export type ResourceListRowItem = {
     initials: string;
     className: string;
   };
+  avatarUrl?: string;
 };
 
 type ResourceListPageProps = {
@@ -47,6 +49,7 @@ type ResourceListPageProps = {
   emptyDescription?: string;
   createHref?: string;
   createLabel?: string;
+  headerAction?: ReactNode;
   getItemHref?: (item: ResourceListRowItem) => string;
   isLoading?: boolean;
   errorMessage?: string;
@@ -68,14 +71,26 @@ function ResourceListRow({
   const content = (
     <>
       {item.leading ? (
-        <div
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-            item.leading.className,
-          )}
-        >
-          {item.leading.initials}
-        </div>
+        item.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.avatarUrl}
+            alt=""
+            className={cn(
+              "size-10 shrink-0 rounded-full object-cover",
+              item.leading.className,
+            )}
+          />
+        ) : (
+          <div
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
+              item.leading.className,
+            )}
+          >
+            {item.leading.initials}
+          </div>
+        )
       ) : null}
 
       <div className="min-w-0 flex-1">
@@ -135,6 +150,7 @@ export function ResourceListPage({
   emptyDescription = "Items will appear here once you add them.",
   createHref,
   createLabel = "Create",
+  headerAction,
   getItemHref,
   isLoading = false,
   errorMessage,
@@ -162,16 +178,17 @@ export function ResourceListPage({
             <p className="text-sm text-muted-foreground">{description}</p>
           ) : null}
         </div>
-        {createHref ? (
-          <Button
-            nativeButton={false}
-            render={<Link href={createHref} />}
-            className="shrink-0"
-          >
-            <PlusIcon data-icon="inline-start" />
-            {createLabel}
-          </Button>
-        ) : null}
+        {headerAction ??
+          (createHref ? (
+            <Button
+              nativeButton={false}
+              render={<Link href={createHref} />}
+              className="shrink-0"
+            >
+              <PlusIcon data-icon="inline-start" />
+              {createLabel}
+            </Button>
+          ) : null)}
       </div>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
