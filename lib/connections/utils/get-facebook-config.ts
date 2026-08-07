@@ -28,6 +28,20 @@ export function getFacebookAppSecret() {
   return appSecret;
 }
 
+export function getFacebookWebhookVerifyToken() {
+  const verifyToken = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN?.trim();
+
+  if (!verifyToken) {
+    throw new APIError(
+      "ERR_FACEBOOK_NOT_CONFIGURED",
+      "FACEBOOK_WEBHOOK_VERIFY_TOKEN must be set for Messenger webhooks.",
+      500,
+    );
+  }
+
+  return verifyToken;
+}
+
 export function getFacebookOAuthRedirectUri() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
 

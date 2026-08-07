@@ -18,6 +18,15 @@ export const FACEBOOK_GRAPH_VERSION = "v21.0";
 
 export const FACEBOOK_GRAPH_BASE = `https://graph.facebook.com/${FACEBOOK_GRAPH_VERSION}`;
 
+export const FACEBOOK_MESSENGER_SEND_API_URL = `${FACEBOOK_GRAPH_BASE}/me/messages`;
+
+export const FACEBOOK_WEBHOOK_SUBSCRIBED_FIELDS = [
+  "messages",
+  "messaging_postbacks",
+  "message_deliveries",
+  "message_reads",
+] as const;
+
 export const FACEBOOK_OAUTH_DIALOG_URL = `https://www.facebook.com/${FACEBOOK_GRAPH_VERSION}/dialog/oauth`;
 
 export const FACEBOOK_OAUTH_STATE_COOKIE = "facebook_oauth_state";

@@ -92,6 +92,21 @@ export type ConnectionMutationResult = {
   message: string;
 };
 
+export type FacebookConnectionWebhookStatusParams = {
+  connectionId: string;
+  workspaceId: string;
+};
+
+export type FacebookConnectionWebhookStatusResult = {
+  subscribed: boolean;
+  subscribedFields: string[];
+};
+
+export type FacebookConnectionWebhookMutationParams = {
+  connectionId: string;
+  workspaceId: string;
+};
+
 export type CompleteFacebookConnectionConnectResult = {
   message: string;
   connectedCount: number;
@@ -135,4 +150,40 @@ export type ListConnectionsForAgentParams = {
 
 export type ListConnectionsForAgentResult = {
   items: ConnectionListItem[];
+};
+
+export type FacebookWebhookEntry = {
+  id: string;
+  time: number;
+  messaging: FacebookMessagingEvent[];
+};
+
+export type FacebookWebhookBody = {
+  object: string;
+  entry: FacebookWebhookEntry[];
+};
+
+export type FacebookMessagingEvent = {
+  sender: { id: string };
+  recipient: { id: string };
+  timestamp: number;
+  message?: FacebookIncomingMessage;
+  postback?: FacebookPostback;
+  read?: { watermark: number };
+  delivery?: { mids: string[]; watermark: number };
+};
+
+export type FacebookIncomingMessage = {
+  mid: string;
+  is_echo?: boolean;
+  text?: string;
+  attachments?: Array<{
+    type: string;
+    payload: { url?: string };
+  }>;
+};
+
+export type FacebookPostback = {
+  title: string;
+  payload: string;
 };

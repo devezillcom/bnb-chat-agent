@@ -35,7 +35,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ListAgentsResult } from "@/lib/agents/types";
-import type { ConnectionDetail } from "@/lib/connections/types";
+import type {
+  ConnectionDetail,
+  FacebookConnectionWebhookStatusResult,
+} from "@/lib/connections/types";
 import {
   getConnectionAvatarUrl,
   getConnectionMetadataString,
@@ -197,6 +200,98 @@ export function ConnectionDetailPage({
   const pageUrl = getConnectionMetadataString(connection.metadata, "page_url");
   const agents = agentsData?.items ?? [];
   const agentsHref = getDashboardNavHref(workspaceIndex, "agents");
+  const isFacebookConnection = connection.channelType === "facebook";
+
+  const {
+    data: webhookStatus,
+    isLoading: isLoadingWebhookStatus,
+    isError: isWebhookStatusError,
+    error: webhookStatusError,
+  } = useQuery({
+    queryKey: ["connection-facebook-webhook", workspaceId, connectionId],
+    queryFn: async () => {
+      const res = await workspaceFetch(
+        workspaceId,
+        `/api/connections/${connectionId}/facebook-webhook`,
+      );
+      const data = (await res.json()) as FacebookConnectionWebhookStatusResult & {
+        error?: string;
+        message?: string;
+      };
+
+      if (!res.ok) {
+        throw new Error(
+          data.message ?? data.error ?? "Could not load webhook status.",
+        );
+      }
+
+      return data;
+    },
+    enabled: isFacebookConnection,
+  });
+
+  const subscribeWebhookMutation = useMutation({
+    mutationFn: async () => {
+      const res = await workspaceFetch(
+        workspaceId,
+        `/api/connections/${connectionId}/facebook-webhook`,
+        { method: "POST" },
+      );
+      const data = (await res.json()) as { message?: string; error?: string };
+
+      if (!res.ok) {
+        throw new Error(
+          data.message ?? data.error ?? "Unable to subscribe webhook.",
+        );
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message ?? "Facebook webhook subscribed.");
+      void queryClient.invalidateQueries({
+        queryKey: ["connection-facebook-webhook", workspaceId, connectionId],
+      });
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to subscribe webhook.",
+      );
+    },
+  });
+
+  const unsubscribeWebhookMutation = useMutation({
+    mutationFn: async () => {
+      const res = await workspaceFetch(
+        workspaceId,
+        `/api/connections/${connectionId}/facebook-webhook`,
+        { method: "DELETE" },
+      );
+      const data = (await res.json()) as { message?: string; error?: string };
+
+      if (!res.ok) {
+        throw new Error(
+          data.message ?? data.error ?? "Unable to unsubscribe webhook.",
+        );
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message ?? "Facebook webhook unsubscribed.");
+      void queryClient.invalidateQueries({
+        queryKey: ["connection-facebook-webhook", workspaceId, connectionId],
+      });
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to unsubscribe webhook.",
+      );
+    },
+  });
+
+  const isWebhookMutationPending =
+    subscribeWebhookMutation.isPending || unsubscribeWebhookMutation.isPending;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
@@ -330,6 +425,66 @@ export function ConnectionDetailPage({
           </div>
         </CardContent>
       </Card>
+
+      {isFacebookConnection ? (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Messenger webhook</CardTitle>
+            <CardDescription>
+              Subscribe this page to receive Messenger events at your app webhook.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isLoadingWebhookStatus ? (
+              <p className="text-sm text-muted-foreground">
+                Loading webhook status...
+              </p>
+            ) : isWebhookStatusError ? (
+              <p className="text-sm text-destructive">
+                {webhookStatusError instanceof Error
+                  ? webhookStatusError.message
+                  : "Could not load webhook status."}
+              </p>
+            ) : webhookStatus?.subscribed ? (
+              <div className="space-y-3">
+                <p className="text-sm">
+                  Subscribed to Messenger events for this page.
+                </p>
+                {webhookStatus.subscribedFields.length > 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Fields: {webhookStatus.subscribedFields.join(", ")}
+                  </p>
+                ) : null}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isWebhookMutationPending}
+                  onClick={() => unsubscribeWebhookMutation.mutate()}
+                >
+                  {unsubscribeWebhookMutation.isPending
+                    ? "Unsubscribing..."
+                    : "Unsubscribe webhook"}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  This page is not subscribed to Messenger webhooks yet.
+                </p>
+                <Button
+                  size="sm"
+                  disabled={isWebhookMutationPending}
+                  onClick={() => subscribeWebhookMutation.mutate()}
+                >
+                  {subscribeWebhookMutation.isPending
+                    ? "Subscribing..."
+                    : "Subscribe webhook"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="mt-6">
         <Button nativeButton={false} variant="ghost" render={<Link href={connectionsPath} />}>
