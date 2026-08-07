@@ -71,6 +71,8 @@ Tenant container for members and chat sessions.
 - `owner_user_id` → `users.id` (ON DELETE CASCADE)
 - ← `workspace_members.workspace_id`
 - ← `chat_agent_sessions.workspace_id`
+- ← `agents.workspace_id`
+- ← `connections.workspace_id`
 
 ---
 
@@ -123,3 +125,114 @@ Persisted chat/agent conversation sessions.
 
 - `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
 - `user_id` → `users.id` (ON DELETE CASCADE)
+
+---
+
+### `agents`
+
+Configured chat agents for a workspace.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | `gen_random_uuid()` | Primary key |
+| workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
+| name | text | NO | — | Display name |
+| description | text | YES | — | Short summary of the agent's purpose |
+| system_prompt | text | NO | — | Instructions that define agent behavior |
+| first_message | text | YES | — | Greeting for channel openers (e.g. Messenger Get Started) |
+| created_at | timestamptz | NO | `now()` | Row creation time |
+| updated_at | timestamptz | NO | `now()` | Last update time |
+
+**Indexes**
+
+- `agents_workspace_id_idx` — on `workspace_id`
+
+**Relations**
+
+- `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
+- ← `connections.agent_id`
+
+---
+
+### `connections`
+
+External channel connections for a workspace (Facebook pages, etc.). Each connection is assigned to at most one chat agent.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | `gen_random_uuid()` | Primary key |
+| workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
+| user_id | uuid | NO | — | User who created the connection (`users.id`) |
+| agent_id | uuid | YES | — | Assigned chat agent (`agents.id`) |
+| channel_type | text | NO | — | Channel identifier (e.g. `facebook`) |
+| name | text | NO | — | Display name (e.g. Facebook page name) |
+| encrypted_auth_data | text | NO | — | AES-256-GCM encrypted OAuth tokens |
+| metadata | jsonb | YES | — | Non-sensitive channel metadata |
+| last_error | text | YES | — | Last refresh/connect failure message |
+| created_at | timestamptz | NO | `now()` | Row creation time |
+| updated_at | timestamptz | NO | `now()` | Last update time |
+
+**Indexes**
+
+- `connections_workspace_id_idx` — on `workspace_id`
+- `connections_user_id_idx` — on `user_id`
+- `connections_agent_id_idx` — on `agent_id`
+- `connections_channel_type_idx` — on `channel_type`
+
+**Relations**
+
+- `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
+- `user_id` → `users.id` (ON DELETE CASCADE)
+- `agent_id` → `agents.id` (ON DELETE SET NULL)
+
+---
+
+### `connection_conversations`
+
+Per-customer chat sessions for external channel connections (e.g. Facebook PSID). Each row maps to a LangGraph `thread_id`.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | — | LangGraph thread id |
+| workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
+| connection_id | uuid | NO | — | Channel connection (`connections.id`) |
+| agent_id | uuid | NO | — | Agent serving this conversation (`agents.id`) |
+| external_participant_id | text | NO | — | Channel participant id (e.g. Facebook PSID) |
+| title | text | NO | — | Preview label |
+| last_message_at | timestamptz | NO | `now()` | Last inbound/outbound activity |
+| created_at | timestamptz | NO | `now()` | Row creation time |
+| updated_at | timestamptz | NO | `now()` | Last update time |
+
+**Indexes**
+
+- `connection_conversations_connection_participant_idx` — UNIQUE on `(connection_id, external_participant_id)`
+- `connection_conversations_workspace_id_idx` — on `workspace_id`
+- `connection_conversations_connection_id_idx` — on `connection_id`
+- `connection_conversations_last_message_at_idx` — on `last_message_at`
+
+**Relations**
+
+- `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
+- `connection_id` → `connections.id` (ON DELETE CASCADE)
+- `agent_id` → `agents.id` (ON DELETE CASCADE)
+
+---
+
+### `connection_inbound_dedup`
+
+Tracks processed inbound message ids to avoid duplicate replies when Facebook retries webhooks.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | `gen_random_uuid()` | Primary key |
+| connection_id | uuid | NO | — | Connection (`connections.id`) |
+| external_message_id | text | NO | — | Channel message id (e.g. Facebook `mid`) |
+| processed_at | timestamptz | NO | `now()` | When the message was accepted |
+
+**Indexes**
+
+- `connection_inbound_dedup_connection_message_idx` — UNIQUE on `(connection_id, external_message_id)`
+
+**Relations**
+
+- `connection_id` → `connections.id` (ON DELETE CASCADE)

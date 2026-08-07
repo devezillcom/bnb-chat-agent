@@ -1,3 +1,6 @@
+import { handleRefreshConnectionConnectQstashJob } from "@/lib/connections/services/handle-refresh-connection-connect-qstash-job";
+import { handleFacebookMessengerInboundQstashJob } from "@/lib/connections/services/handle-facebook-messenger-inbound-qstash-job";
+
 export type QstashJobHandlerContext = {
   userId?: string;
 };
@@ -15,4 +18,6 @@ export const qstashJobHandlers: Record<string, QstashJobHandler> = {
   "noop-job": async () => {
     // Placeholder handler for barebone setup.
   },
+  "refresh-connection-connect": handleRefreshConnectionConnectQstashJob,
+  "facebook-messenger-inbound": handleFacebookMessengerInboundQstashJob,
 };
