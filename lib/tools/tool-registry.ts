@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import type { DataShape } from "./utils/data-shape";
 import { dataShapeToJsonSchema } from "./utils/data-shape";
 
@@ -10,21 +12,31 @@ export type ToolConfigFieldDefinition = {
   required?: boolean;
 };
 
-export type ToolHandlerDefinition = {
-  handlerType: string;
+export type ToolDefinition = {
+  /** Stable registry identifier — all tools are defined in code. */
+  id: string;
   name: string;
   description: string;
-  configShape: ToolConfigFieldDefinition[];
+  /** Fixed input JSON Schema for the runtime AI agent. */
   inputShape: DataShape;
+  /** Fixed output JSON Schema for the runtime AI agent. */
   outputShape?: DataShape;
+  /** Validates workspace config when adding this tool. */
+  configSchema: z.ZodType<Record<string, string>>;
+  /** Form metadata for config fields (labels, secrets). */
+  configFields: ToolConfigFieldDefinition[];
 };
 
-export const TOOL_HANDLER_REGISTRY: ToolHandlerDefinition[] = [
+export const TOOL_REGISTRY: ToolDefinition[] = [
   {
-    handlerType: "http_api",
+    id: "http_api",
     name: "HTTP API",
     description: "Call an external HTTP API using a base URL and credentials.",
-    configShape: [
+    configSchema: z.object({
+      base_url: z.string().trim().min(1, { error: "Base URL is required." }),
+      api_key: z.string().trim().min(1, { error: "API key is required." }),
+    }),
+    configFields: [
       {
         key: "base_url",
         label: "Base URL",
@@ -79,10 +91,16 @@ export const TOOL_HANDLER_REGISTRY: ToolHandlerDefinition[] = [
     },
   },
   {
-    handlerType: "mcp",
+    id: "mcp",
     name: "MCP",
     description: "Connect to a Model Context Protocol server.",
-    configShape: [
+    configSchema: z.object({
+      server_url: z
+        .string()
+        .trim()
+        .min(1, { error: "Server URL is required." }),
+    }),
+    configFields: [
       {
         key: "server_url",
         label: "Server URL",
@@ -108,10 +126,11 @@ export const TOOL_HANDLER_REGISTRY: ToolHandlerDefinition[] = [
     },
   },
   {
-    handlerType: "builtin",
+    id: "builtin",
     name: "Built-in",
     description: "Platform-provided tool with no extra configuration.",
-    configShape: [],
+    configSchema: z.object({}),
+    configFields: [],
     inputShape: {
       fields: [
         {
@@ -125,28 +144,26 @@ export const TOOL_HANDLER_REGISTRY: ToolHandlerDefinition[] = [
   },
 ];
 
-export const TOOL_HANDLER_TYPES = TOOL_HANDLER_REGISTRY.map(
-  (entry) => entry.handlerType,
-);
+export const TOOL_REGISTRY_IDS = TOOL_REGISTRY.map((entry) => entry.id);
 
-export type ToolHandlerType = (typeof TOOL_HANDLER_TYPES)[number];
+export type ToolRegistryId = (typeof TOOL_REGISTRY_IDS)[number];
 
-export function getToolHandlerDefinition(
-  handlerType: string,
-): ToolHandlerDefinition | undefined {
-  return TOOL_HANDLER_REGISTRY.find((entry) => entry.handlerType === handlerType);
+export function getToolDefinition(
+  toolId: string,
+): ToolDefinition | undefined {
+  return TOOL_REGISTRY.find((entry) => entry.id === toolId);
 }
 
-export function isKnownToolHandlerType(
-  handlerType: string,
-): handlerType is ToolHandlerType {
-  return TOOL_HANDLER_REGISTRY.some((entry) => entry.handlerType === handlerType);
+export function isKnownToolRegistryId(
+  toolId: string,
+): toolId is ToolRegistryId {
+  return TOOL_REGISTRY.some((entry) => entry.id === toolId);
 }
 
-export function getHandlerInputSchema(
-  handlerType: string,
+export function getToolInputSchema(
+  toolId: string,
 ): Record<string, unknown> {
-  const definition = getToolHandlerDefinition(handlerType);
+  const definition = getToolDefinition(toolId);
   if (!definition) {
     return { type: "object", properties: {} };
   }
@@ -154,10 +171,10 @@ export function getHandlerInputSchema(
   return dataShapeToJsonSchema(definition.inputShape);
 }
 
-export function getHandlerOutputSchema(
-  handlerType: string,
+export function getToolOutputSchema(
+  toolId: string,
 ): Record<string, unknown> | null {
-  const definition = getToolHandlerDefinition(handlerType);
+  const definition = getToolDefinition(toolId);
   if (!definition?.outputShape?.fields.length) {
     return null;
   }

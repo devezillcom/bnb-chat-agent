@@ -1,24 +1,26 @@
 import { z } from "zod";
 
-import { isKnownToolHandlerType } from "./tool-handler-registry";
+import { isKnownToolRegistryId } from "./tool-registry";
 
-export const toolHandlerKeySchema = z
+export const toolKeySchema = z
   .string()
   .trim()
-  .min(1, { error: "Handler key is required." })
-  .regex(/^[a-z][a-z0-9_-]*$/, {
+  .min(1, { error: "Tool key is required." })
+  .regex(/^[a-z][a-z0-9_]*$/, {
     error:
-      "Use lowercase letters, numbers, hyphens, and underscores. Start with a letter.",
+      "Use lowercase letters, numbers, and underscores. Start with a letter.",
   });
 
 export const createToolFormSchema = z.object({
   name: z.string().trim().min(1, { error: "Tool name is required." }),
-  handlerKey: toolHandlerKeySchema,
-  handlerType: z
+  toolKey: toolKeySchema,
+  registryToolId: z
     .string()
     .trim()
-    .min(1, { error: "Handler type is required." })
-    .refine(isKnownToolHandlerType, { error: "Choose a supported handler type." }),
+    .min(1, { error: "Registry tool is required." })
+    .refine(isKnownToolRegistryId, {
+      error: "Choose a supported registry tool.",
+    }),
   description: z.string().trim().optional(),
   config: z.record(z.string(), z.string()),
 });

@@ -11,8 +11,8 @@ export async function createTool(
   params: CreateToolParams,
 ): Promise<CreateToolResult> {
   const trimmedName = params.name.trim();
-  const handlerKey = params.handlerKey.trim();
-  const handlerType = params.handlerType.trim();
+  const toolKey = params.toolKey.trim();
+  const registryToolId = params.registryToolId.trim();
 
   const [existing] = await db
     .select({ id: tools.id })
@@ -20,15 +20,15 @@ export async function createTool(
     .where(
       and(
         eq(tools.workspaceId, params.workspaceId),
-        eq(tools.handlerKey, handlerKey),
+        eq(tools.toolKey, toolKey),
       ),
     )
     .limit(1);
 
   if (existing) {
     throw new APIError(
-      "ERR_TOOL_HANDLER_KEY_EXISTS",
-      "A tool with this handler key already exists in the workspace.",
+      "ERR_TOOL_KEY_EXISTS",
+      "A tool with this tool key already exists in the workspace.",
       409,
     );
   }
@@ -36,7 +36,7 @@ export async function createTool(
   let config: Record<string, string>;
 
   try {
-    config = normalizeToolConfig(handlerType, params.config);
+    config = normalizeToolConfig(registryToolId, params.config);
   } catch (error) {
     throw new APIError(
       "ERR_TOOL_CONFIG_INVALID",
@@ -50,8 +50,8 @@ export async function createTool(
     .values({
       workspaceId: params.workspaceId,
       name: trimmedName,
-      handlerKey,
-      handlerType,
+      toolKey,
+      registryToolId,
       description: params.description?.trim() || null,
       config,
       locked: false,

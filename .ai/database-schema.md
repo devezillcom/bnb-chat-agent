@@ -157,17 +157,17 @@ Configured chat agents for a workspace.
 
 ### `tools`
 
-Workspace-scoped tools that agents can call at runtime. Handler input/output JSON Schema lives in the handler registry; each row stores user config for that handler.
+Workspace-scoped tool instances that agents can call at runtime. Each row references a code-defined registry tool and stores workspace-specific name, description, tool key, and config.
 
 | Column | Type | Nullable | Default | Description |
 | ------ | ---- | -------- | ------- | ----------- |
 | id | uuid | NO | `gen_random_uuid()` | Primary key |
 | workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
-| name | text | NO | — | Display name (not unique) |
-| handler_key | text | NO | — | User-chosen identifier unique per workspace; passed to handlers at runtime |
-| handler_type | text | NO | — | Registry key that selects the handler implementation (e.g. `http_api`, `mcp`) |
-| description | text | YES | — | Short summary shown in lists |
-| config | jsonb | NO | — | User-provided values matching the handler config shape |
+| name | text | NO | — | Display name override |
+| tool_id | text | NO | — | Code-defined registry tool id (e.g. `http_api`, `mcp`) |
+| tool_key | text | NO | — | Unique per workspace; referenced in agent prompts (e.g. `get_weather`) |
+| description | text | YES | — | Short summary override shown in lists |
+| config | jsonb | NO | — | Workspace config validated by the registry tool's `configSchema` |
 | locked | boolean | NO | `false` | When true, blocks user view/edit/delete (script-only) |
 | created_at | timestamptz | NO | `now()` | Row creation time |
 | updated_at | timestamptz | NO | `now()` | Last update time |
@@ -175,13 +175,26 @@ Workspace-scoped tools that agents can call at runtime. Handler input/output JSO
 **Indexes**
 
 - `tools_workspace_id_idx` — on `workspace_id`
-- `tools_handler_type_idx` — on `handler_type`
-- `tools_workspace_id_handler_key_idx` — UNIQUE on `(workspace_id, handler_key)`
+- `tools_tool_id_idx` — on `tool_id`
+- `tools_workspace_id_tool_key_idx` — UNIQUE on `(workspace_id, tool_key)` (same registry `tool_id` may appear multiple times with different keys)
 
 **Relations**
 
 - `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
 - ← `agent_tools.tool_id`
+
+**Tool registry (code-defined, not a DB table)**
+
+All tools are defined in code via `lib/tools/tool-registry.ts`. Each registry entry has:
+
+| Field | Description |
+| ----- | ----------- |
+| id | Stable identifier (e.g. `http_api`) |
+| name | Default display name (workspace may override) |
+| description | Default summary (workspace may override) |
+| inputShape / outputShape | Fixed JSON Schema shapes for the runtime AI agent |
+| configSchema | Zod schema validating workspace `config` when adding the tool |
+| configFields | Form metadata (labels, secrets) for the add-tool UI |
 
 ---
 

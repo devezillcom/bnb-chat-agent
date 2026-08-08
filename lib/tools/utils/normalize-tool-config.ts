@@ -1,25 +1,23 @@
-import { getToolHandlerDefinition } from "../tool-handler-registry";
+import { getToolDefinition } from "../tool-registry";
 
 export function normalizeToolConfig(
-  handlerType: string,
+  registryToolId: string,
   config: Record<string, string>,
 ): Record<string, string> {
-  const definition = getToolHandlerDefinition(handlerType);
+  const definition = getToolDefinition(registryToolId);
   if (!definition) {
     return {};
   }
 
-  const normalized: Record<string, string> = {};
+  const trimmed = Object.fromEntries(
+    Object.entries(config).map(([key, value]) => [key, value.trim()]),
+  );
 
-  for (const field of definition.configShape) {
-    const value = config[field.key]?.trim() ?? "";
-    if (field.required && !value) {
-      throw new Error(`${field.label} is required.`);
-    }
-    if (value) {
-      normalized[field.key] = value;
-    }
+  const result = definition.configSchema.safeParse(trimmed);
+  if (!result.success) {
+    const firstIssue = result.error.issues[0];
+    throw new Error(firstIssue?.message ?? "Invalid tool configuration.");
   }
 
-  return normalized;
+  return result.data;
 }

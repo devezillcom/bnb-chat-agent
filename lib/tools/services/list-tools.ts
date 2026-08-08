@@ -4,7 +4,7 @@ import { tools } from "@/db/schema";
 import { db } from "@/lib/db";
 
 import type { ListToolsParams, ListToolsResult } from "../types";
-import type { ToolHandlerType } from "../tool-handler-registry";
+import type { ToolRegistryId } from "../tool-registry";
 
 export async function listTools(
   params: ListToolsParams,
@@ -20,8 +20,8 @@ export async function listTools(
       or(
         ilike(tools.name, `%${keyword}%`),
         ilike(tools.description, `%${keyword}%`),
-        ilike(tools.handlerKey, `%${keyword}%`),
-        ilike(tools.handlerType, `%${keyword}%`),
+        ilike(tools.toolKey, `%${keyword}%`),
+        ilike(tools.registryToolId, `%${keyword}%`),
       )!,
     );
   }
@@ -46,8 +46,8 @@ export async function listTools(
     .select({
       id: tools.id,
       name: tools.name,
-      handlerKey: tools.handlerKey,
-      handlerType: tools.handlerType,
+      toolKey: tools.toolKey,
+      registryToolId: tools.registryToolId,
       description: tools.description,
       locked: tools.locked,
       createdAt: tools.createdAt,
@@ -66,8 +66,8 @@ export async function listTools(
     items: rows.map((row) => ({
       id: row.id,
       name: row.name,
-      handlerKey: row.handlerKey,
-      handlerType: row.handlerType as ToolHandlerType,
+      toolKey: row.toolKey,
+      registryToolId: row.registryToolId as ToolRegistryId,
       description: row.description,
       locked: row.locked,
       createdAt: row.createdAt.toISOString(),

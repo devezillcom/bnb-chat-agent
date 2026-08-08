@@ -1,11 +1,11 @@
 import type { CreateToolFormValues } from "./schema";
-import type { ToolHandlerType } from "./tool-handler-registry";
+import type { ToolRegistryId } from "./tool-registry";
 
 export type ToolListItem = {
   id: string;
   name: string;
-  handlerKey: string;
-  handlerType: ToolHandlerType;
+  toolKey: string;
+  registryToolId: ToolRegistryId;
   description: string | null;
   locked: boolean;
   createdAt: string;
@@ -14,6 +14,19 @@ export type ToolListItem = {
 
 export type ToolDetail = ToolListItem & {
   config: Record<string, string>;
+};
+
+export type ToolRegistryListItem = {
+  id: ToolRegistryId;
+  name: string;
+  description: string;
+  configFields: {
+    key: string;
+    label: string;
+    description?: string;
+    secret?: boolean;
+    required?: boolean;
+  }[];
 };
 
 export type ListToolsParams = {
@@ -29,6 +42,10 @@ export type ListToolsResult = {
   items: ToolListItem[];
   nextOffset: number | null;
   total: number;
+};
+
+export type ListToolRegistryResult = {
+  items: ToolRegistryListItem[];
 };
 
 export type GetToolParams = {

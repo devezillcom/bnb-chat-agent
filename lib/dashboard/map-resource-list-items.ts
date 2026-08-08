@@ -8,7 +8,7 @@ import type {
   Skill,
 } from "@/lib/dashboard/placeholder-data";
 import type { ToolListItem } from "@/lib/tools/types";
-import { getToolHandlerDefinition } from "@/lib/tools/tool-handler-registry";
+import { getToolDefinition } from "@/lib/tools/tool-registry";
 
 const CONNECTION_CHANNEL_LABELS: Record<Connection["channel"], string> = {
   facebook: "Facebook",
@@ -61,15 +61,15 @@ export function mapSkillsToListItems(skills: Skill[]): ResourceListRowItem[] {
 
 export function mapToolsToListItems(tools: ToolListItem[]): ResourceListRowItem[] {
   return tools.map((tool) => {
-    const handler = getToolHandlerDefinition(tool.handlerType);
+    const registryTool = getToolDefinition(tool.registryToolId);
 
     return {
       id: tool.id,
       name: tool.name,
       description: tool.description ?? undefined,
       createdAt: tool.createdAt,
-      subtitle: handler?.name ?? tool.handlerType,
-      meta: tool.handlerKey,
+      subtitle: registryTool?.name ?? tool.registryToolId,
+      meta: tool.toolKey,
       badge: tool.locked
         ? {
             label: "Locked",

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import type { CreateToolFormValues } from "@/lib/tools/schema";
-import type { ToolConfigFieldDefinition } from "@/lib/tools/tool-handler-registry";
+import type { ToolConfigFieldDefinition } from "@/lib/tools/tool-registry";
 
 type ToolConfigFieldsProps = {
   fields: ToolConfigFieldDefinition[];
@@ -35,7 +35,7 @@ export function ToolConfigFields({
       <Field>
         <FieldLabel>Configuration</FieldLabel>
         <FieldDescription>
-          Values required by this handler. They are resolved when an agent runs
+          Values required by this tool. They are resolved when an agent runs
           the tool.
         </FieldDescription>
       </Field>

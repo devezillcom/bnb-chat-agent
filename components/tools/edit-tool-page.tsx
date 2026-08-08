@@ -26,24 +26,16 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
 import {
   createToolFormSchema,
   type CreateToolFormValues,
 } from "@/lib/tools/schema";
-import {
-  getToolDefinition,
-  isKnownToolRegistryId,
-} from "@/lib/tools/tool-registry";
-import type { ListToolsResult } from "@/lib/tools/types";
+import { getToolDefinition } from "@/lib/tools/tool-registry";
+import type { ListToolsResult, ToolDetail } from "@/lib/tools/types";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
-
-type CreateToolPageProps = {
-  workspaceId: string;
-  workspaceIndex: number;
-  registryToolId?: string;
-};
 
 async function fetchTools(workspaceId: string): Promise<ListToolsResult> {
   const res = await workspaceFetch(workspaceId, "/api/tools?limit=100");
@@ -59,69 +51,100 @@ async function fetchTools(workspaceId: string): Promise<ListToolsResult> {
   return data;
 }
 
-function createDefaultValues(registryToolId?: string): CreateToolFormValues {
-  const registryTool =
-    registryToolId && isKnownToolRegistryId(registryToolId)
-      ? getToolDefinition(registryToolId)
-      : undefined;
+type EditToolPageProps = {
+  workspaceId: string;
+  workspaceIndex: number;
+  toolId: string;
+};
+
+async function fetchTool(
+  workspaceId: string,
+  toolId: string,
+): Promise<ToolDetail> {
+  const res = await workspaceFetch(workspaceId, `/api/tools/${toolId}`);
+  const data = (await res.json()) as ToolDetail & {
+    error?: string;
+    message?: string;
+  };
+
+  if (!res.ok) {
+    throw new Error(data.message ?? data.error ?? "Could not load tool.");
+  }
+
+  return data;
+}
+
+function createEditDefaultValues(tool: ToolDetail): CreateToolFormValues {
+  const registryTool = getToolDefinition(tool.registryToolId);
 
   return {
-    name: registryTool?.name ?? "",
-    toolKey: "",
-    registryToolId: registryTool?.id ?? "",
-    description: registryTool?.description ?? "",
+    name: tool.name,
+    toolKey: tool.toolKey,
+    registryToolId: tool.registryToolId,
+    description: tool.description ?? "",
     config: Object.fromEntries(
-      (registryTool?.configFields ?? []).map((field) => [field.key, ""]),
+      (registryTool?.configFields ?? []).map((field) => [
+        field.key,
+        tool.config[field.key] ?? "",
+      ]),
     ),
   };
 }
 
-export function CreateToolPage({
+export function EditToolPage({
   workspaceId,
   workspaceIndex,
-  registryToolId,
-}: CreateToolPageProps) {
+  toolId,
+}: EditToolPageProps) {
   const router = useRouter();
   const toolsHref = getDashboardNavHref(workspaceIndex, "tools");
 
-  const selectedRegistryTool = useMemo(() => {
-    if (!registryToolId || !isKnownToolRegistryId(registryToolId)) {
-      return undefined;
-    }
+  const {
+    data: tool,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["tool", workspaceId, toolId],
+    queryFn: () => fetchTool(workspaceId, toolId),
+  });
 
-    return getToolDefinition(registryToolId);
-  }, [registryToolId]);
+  const registryTool = tool ? getToolDefinition(tool.registryToolId) : undefined;
 
   const { data: toolsData } = useQuery({
     queryKey: ["tools", workspaceId],
     queryFn: () => fetchTools(workspaceId),
   });
 
-  const usedToolKeys = useMemo(
-    () => (toolsData?.items ?? []).map((tool) => tool.toolKey),
-    [toolsData?.items],
-  );
-  const usedToolKeySet = useMemo(
-    () => new Set(usedToolKeys),
-    [usedToolKeys],
-  );
+  const usedToolKeySet = useMemo(() => {
+    const keys = (toolsData?.items ?? [])
+      .filter((item) => item.id !== toolId)
+      .map((item) => item.toolKey);
+
+    return new Set(keys);
+  }, [toolsData?.items, toolId]);
 
   const form = useForm<CreateToolFormValues>({
     resolver: zodResolver(createToolFormSchema),
-    defaultValues: createDefaultValues(registryToolId),
+    defaultValues: {
+      name: "",
+      toolKey: "",
+      registryToolId: "",
+      description: "",
+      config: {},
+    },
   });
 
   useEffect(() => {
-    if (!selectedRegistryTool) {
+    if (!tool) {
       return;
     }
 
-    form.reset(createDefaultValues(registryToolId));
-  }, [selectedRegistryTool, registryToolId, form]);
+    form.reset(createEditDefaultValues(tool));
+  }, [tool, form]);
 
   async function onSubmit(values: CreateToolFormValues) {
-    const res = await workspaceFetch(workspaceId, "/api/tools", {
-      method: "POST",
+    const res = await workspaceFetch(workspaceId, `/api/tools/${toolId}`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
     });
@@ -129,7 +152,7 @@ export function CreateToolPage({
 
     if (res.ok) {
       toast.add({
-        title: data.message ?? "Tool created.",
+        title: data.message ?? "Tool updated.",
         type: "success",
       });
       router.push(toolsHref);
@@ -152,7 +175,20 @@ export function CreateToolPage({
   const toolKeyTaken =
     toolKeyValue.trim().length > 0 && usedToolKeySet.has(toolKeyValue.trim());
 
-  if (!selectedRegistryTool) {
+  if (isLoading) {
+    return (
+      <div className="mx-auto w-full max-w-2xl px-4 py-8 md:px-8">
+        <div className="mb-6 space-y-4">
+          <Skeleton className="h-8 w-28" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <Skeleton className="h-[420px] w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (error || !tool || !registryTool) {
     return (
       <div className="mx-auto w-full max-w-2xl px-4 py-8 md:px-8">
         <div className="mb-6 space-y-4">
@@ -168,10 +204,9 @@ export function CreateToolPage({
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Unknown tool</CardTitle>
+            <CardTitle>Could not open tool</CardTitle>
             <CardDescription>
-              Choose a tool from the Available tools tab to add it to your
-              workspace.
+              {error?.message ?? "This tool could not be loaded."}
             </CardDescription>
           </CardHeader>
           <CardFooter>
@@ -197,9 +232,9 @@ export function CreateToolPage({
           Back to tools
         </Button>
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Add tool</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Edit tool</h1>
           <p className="text-sm text-muted-foreground">
-            Configure {selectedRegistryTool.name} for this workspace.
+            Update {registryTool.name} settings for this workspace.
           </p>
         </div>
       </div>
@@ -208,19 +243,25 @@ export function CreateToolPage({
         <input type="hidden" {...form.register("registryToolId")} />
         <Card>
           <CardHeader>
-            <CardTitle>{selectedRegistryTool.name}</CardTitle>
-            <CardDescription>{selectedRegistryTool.description}</CardDescription>
+            <CardTitle>{registryTool.name}</CardTitle>
+            <CardDescription>{registryTool.description}</CardDescription>
           </CardHeader>
           <CardContent>
             <FieldGroup>
-              <Field data-invalid={!!toolKeyError || toolKeyTaken || undefined}>
-                <FieldLabel htmlFor="create-tool-key">Tool key</FieldLabel>
+              <Field
+                data-invalid={!!toolKeyError || toolKeyTaken || undefined}
+              >
+                <FieldLabel htmlFor="edit-tool-key">Tool key</FieldLabel>
                 <FieldDescription>
                   Unique identifier referenced in agent prompts (e.g.{" "}
                   <code className="text-xs">get_weather</code>).
                 </FieldDescription>
+                <div className="rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100">
+                  Changing the tool key may break agent prompts that reference
+                  the old key.
+                </div>
                 <Input
-                  id="create-tool-key"
+                  id="edit-tool-key"
                   autoComplete="off"
                   placeholder="get_weather"
                   aria-invalid={!!toolKeyError || toolKeyTaken}
@@ -242,14 +283,14 @@ export function CreateToolPage({
               </Field>
 
               <Field data-invalid={!!nameError || undefined}>
-                <FieldLabel htmlFor="create-tool-name">Name</FieldLabel>
+                <FieldLabel htmlFor="edit-tool-name">Name</FieldLabel>
                 <FieldDescription>
                   Display name shown in lists. Overrides the registry default.
                 </FieldDescription>
                 <Input
-                  id="create-tool-name"
+                  id="edit-tool-name"
                   autoComplete="off"
-                  placeholder={selectedRegistryTool.name}
+                  placeholder={registryTool.name}
                   aria-invalid={!!nameError}
                   disabled={isSubmitting}
                   {...form.register("name")}
@@ -258,16 +299,16 @@ export function CreateToolPage({
               </Field>
 
               <Field data-invalid={!!descriptionError || undefined}>
-                <FieldLabel htmlFor="create-tool-description">
+                <FieldLabel htmlFor="edit-tool-description">
                   Description
                 </FieldLabel>
                 <FieldDescription>
                   Optional summary for lists. Overrides the registry default.
                 </FieldDescription>
                 <Input
-                  id="create-tool-description"
+                  id="edit-tool-description"
                   autoComplete="off"
-                  placeholder={selectedRegistryTool.description}
+                  placeholder={registryTool.description}
                   aria-invalid={!!descriptionError}
                   disabled={isSubmitting}
                   {...form.register("description")}
@@ -276,7 +317,7 @@ export function CreateToolPage({
               </Field>
 
               <ToolConfigFields
-                fields={selectedRegistryTool.configFields}
+                fields={registryTool.configFields}
                 register={form.register}
                 disabled={isSubmitting}
                 errors={configError}
@@ -295,17 +336,14 @@ export function CreateToolPage({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || toolKeyTaken}
-            >
+            <Button type="submit" disabled={isSubmitting || toolKeyTaken}>
               {isSubmitting ? (
                 <>
                   <Loader2Icon className="animate-spin" data-icon="inline-start" />
-                  Creating…
+                  Saving…
                 </>
               ) : (
-                "Create tool"
+                "Save changes"
               )}
             </Button>
           </CardFooter>

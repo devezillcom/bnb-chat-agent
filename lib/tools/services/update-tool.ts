@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 
 import { tools } from "@/db/schema";
 import { db } from "@/lib/db";
@@ -14,8 +14,8 @@ export async function updateTool(
     .select({
       id: tools.id,
       locked: tools.locked,
-      handlerKey: tools.handlerKey,
-      handlerType: tools.handlerType,
+      toolKey: tools.toolKey,
+      registryToolId: tools.registryToolId,
     })
     .from(tools)
     .where(
@@ -36,21 +36,35 @@ export async function updateTool(
   }
 
   const trimmedName = params.name.trim();
-  const handlerKey = params.handlerKey.trim();
-  const handlerType = params.handlerType.trim();
+  const toolKey = params.toolKey.trim();
+  const registryToolId = params.registryToolId.trim();
 
-  if (handlerKey !== existing.handlerKey) {
-    throw new APIError(
-      "ERR_TOOL_HANDLER_KEY_IMMUTABLE",
-      "Handler key cannot be changed after creation.",
-      400,
-    );
+  if (toolKey !== existing.toolKey) {
+    const [duplicate] = await db
+      .select({ id: tools.id })
+      .from(tools)
+      .where(
+        and(
+          eq(tools.workspaceId, params.workspaceId),
+          eq(tools.toolKey, toolKey),
+          ne(tools.id, params.toolId),
+        ),
+      )
+      .limit(1);
+
+    if (duplicate) {
+      throw new APIError(
+        "ERR_TOOL_KEY_EXISTS",
+        "A tool with this tool key already exists in the workspace.",
+        409,
+      );
+    }
   }
 
-  if (handlerType !== existing.handlerType) {
+  if (registryToolId !== existing.registryToolId) {
     throw new APIError(
-      "ERR_TOOL_HANDLER_TYPE_IMMUTABLE",
-      "Handler type cannot be changed after creation.",
+      "ERR_TOOL_REGISTRY_ID_IMMUTABLE",
+      "Registry tool cannot be changed after creation.",
       400,
     );
   }
@@ -58,7 +72,7 @@ export async function updateTool(
   let config: Record<string, string>;
 
   try {
-    config = normalizeToolConfig(handlerType, params.config);
+    config = normalizeToolConfig(registryToolId, params.config);
   } catch (error) {
     throw new APIError(
       "ERR_TOOL_CONFIG_INVALID",
@@ -71,6 +85,7 @@ export async function updateTool(
     .update(tools)
     .set({
       name: trimmedName,
+      toolKey,
       description: params.description?.trim() || null,
       config,
       updatedAt: new Date(),

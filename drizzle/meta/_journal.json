@@ -15,6 +15,13 @@
       "when": 1786165842336,
       "tag": "0001_curved_true_believers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786195144062,
+      "tag": "0002_optimal_deadpool",
+      "breakpoints": true
     }
   ]
 }

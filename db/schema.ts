@@ -247,7 +247,7 @@ export type ConnectionInboundDedup = typeof connectionInboundDedup.$inferSelect;
 export type NewConnectionInboundDedup =
   typeof connectionInboundDedup.$inferInsert;
 
-/** User-provided config values matching the handler's config shape. */
+/** User-provided config values validated by the registry tool's configSchema. */
 export type ToolConfig = Record<string, string>;
 
 export const tools = pgTable(
@@ -257,11 +257,12 @@ export const tools = pgTable(
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
+    /** Display name override; defaults from registry when unset at creation. */
     name: text("name").notNull(),
-    /** User-chosen identifier unique per workspace; passed to handlers at runtime. */
-    handlerKey: text("handler_key").notNull(),
-    /** Registry key that selects the handler implementation (e.g. http_api, mcp). */
-    handlerType: text("handler_type").notNull(),
+    /** Code-defined registry tool id (e.g. http_api, mcp). */
+    registryToolId: text("tool_id").notNull(),
+    /** Unique per workspace; referenced in agent prompts (e.g. get_weather). */
+    toolKey: text("tool_key").notNull(),
     description: text("description"),
     config: jsonb("config").$type<ToolConfig>().notNull(),
     /** When true, users cannot view detail, edit, or delete — set only via scripts. */
@@ -275,10 +276,10 @@ export const tools = pgTable(
   },
   (table) => [
     index("tools_workspace_id_idx").on(table.workspaceId),
-    index("tools_handler_type_idx").on(table.handlerType),
-    uniqueIndex("tools_workspace_id_handler_key_idx").on(
+    index("tools_tool_id_idx").on(table.registryToolId),
+    uniqueIndex("tools_workspace_id_tool_key_idx").on(
       table.workspaceId,
-      table.handlerKey,
+      table.toolKey,
     ),
   ],
 );

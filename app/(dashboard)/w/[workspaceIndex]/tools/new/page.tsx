@@ -3,12 +3,15 @@ import { getWorkspaceRouteContext } from "@/lib/workspaces/services/get-workspac
 
 type CreateToolRoutePageProps = {
   params: Promise<{ workspaceIndex: string }>;
+  searchParams: Promise<{ registryToolId?: string }>;
 };
 
 export default async function CreateToolRoutePage({
   params,
+  searchParams,
 }: CreateToolRoutePageProps) {
   const { workspaceIndex: workspaceIndexParam } = await params;
+  const { registryToolId } = await searchParams;
   const { workspace, workspaceIndex } =
     await getWorkspaceRouteContext(workspaceIndexParam);
 
@@ -16,6 +19,7 @@ export default async function CreateToolRoutePage({
     <CreateToolPage
       workspaceId={workspace.id}
       workspaceIndex={workspaceIndex}
+      registryToolId={registryToolId}
     />
   );
 }
