@@ -73,6 +73,7 @@ Tenant container for members and chat sessions.
 - ← `chat_agent_sessions.workspace_id`
 - ← `agents.workspace_id`
 - ← `connections.workspace_id`
+- ← `tools.workspace_id`
 
 ---
 
@@ -150,7 +151,60 @@ Configured chat agents for a workspace.
 **Relations**
 
 - `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
-- ← `connections.agent_id`
+- ← `agent_tools.agent_id`
+
+---
+
+### `tools`
+
+Workspace-scoped tools that agents can call at runtime. Handler input/output JSON Schema lives in the handler registry; each row stores user config for that handler.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | `gen_random_uuid()` | Primary key |
+| workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
+| name | text | NO | — | Display name (not unique) |
+| handler_key | text | NO | — | User-chosen identifier unique per workspace; passed to handlers at runtime |
+| handler_type | text | NO | — | Registry key that selects the handler implementation (e.g. `http_api`, `mcp`) |
+| description | text | YES | — | Short summary shown in lists |
+| config | jsonb | NO | — | User-provided values matching the handler config shape |
+| locked | boolean | NO | `false` | When true, blocks user view/edit/delete (script-only) |
+| created_at | timestamptz | NO | `now()` | Row creation time |
+| updated_at | timestamptz | NO | `now()` | Last update time |
+
+**Indexes**
+
+- `tools_workspace_id_idx` — on `workspace_id`
+- `tools_handler_type_idx` — on `handler_type`
+- `tools_workspace_id_handler_key_idx` — UNIQUE on `(workspace_id, handler_key)`
+
+**Relations**
+
+- `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
+- ← `agent_tools.tool_id`
+
+---
+
+### `agent_tools`
+
+Junction table linking chat agents to tools. UI for assignment is implemented separately.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| agent_id | uuid | NO | — | Chat agent (`agents.id`) |
+| tool_id | uuid | NO | — | Tool (`tools.id`) |
+| created_at | timestamptz | NO | `now()` | When the tool was linked |
+
+**Primary key:** `(agent_id, tool_id)`
+
+**Indexes**
+
+- `agent_tools_tool_id_idx` — on `tool_id`
+
+**Relations**
+
+- `agent_id` → `agents.id` (ON DELETE CASCADE)
+- `tool_id` → `tools.id` (ON DELETE CASCADE)
 
 ---
 

@@ -1,4 +1,5 @@
 import {
+  boolean,
   index,
   jsonb,
   pgTable,
@@ -245,3 +246,64 @@ export const connectionInboundDedup = pgTable(
 export type ConnectionInboundDedup = typeof connectionInboundDedup.$inferSelect;
 export type NewConnectionInboundDedup =
   typeof connectionInboundDedup.$inferInsert;
+
+/** User-provided config values matching the handler's config shape. */
+export type ToolConfig = Record<string, string>;
+
+export const tools = pgTable(
+  "tools",
+  {
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** User-chosen identifier unique per workspace; passed to handlers at runtime. */
+    handlerKey: text("handler_key").notNull(),
+    /** Registry key that selects the handler implementation (e.g. http_api, mcp). */
+    handlerType: text("handler_type").notNull(),
+    description: text("description"),
+    config: jsonb("config").$type<ToolConfig>().notNull(),
+    /** When true, users cannot view detail, edit, or delete — set only via scripts. */
+    locked: boolean("locked").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("tools_workspace_id_idx").on(table.workspaceId),
+    index("tools_handler_type_idx").on(table.handlerType),
+    uniqueIndex("tools_workspace_id_handler_key_idx").on(
+      table.workspaceId,
+      table.handlerKey,
+    ),
+  ],
+);
+
+export type Tool = typeof tools.$inferSelect;
+export type NewTool = typeof tools.$inferInsert;
+
+export const agentTools = pgTable(
+  "agent_tools",
+  {
+    agentId: uuid("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    toolId: uuid("tool_id")
+      .notNull()
+      .references(() => tools.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.agentId, table.toolId] }),
+    index("agent_tools_tool_id_idx").on(table.toolId),
+  ],
+);
+
+export type AgentTool = typeof agentTools.$inferSelect;
+export type NewAgentTool = typeof agentTools.$inferInsert;

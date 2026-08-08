@@ -6,14 +6,9 @@ import type {
   Connection,
   KnowledgeBase,
   Skill,
-  Tool,
 } from "@/lib/dashboard/placeholder-data";
-
-const TOOL_TYPE_LABELS: Record<Tool["type"], string> = {
-  api: "API",
-  mcp: "MCP",
-  builtin: "Built-in",
-};
+import type { ToolListItem } from "@/lib/tools/types";
+import { getToolHandlerDefinition } from "@/lib/tools/tool-handler-registry";
 
 const CONNECTION_CHANNEL_LABELS: Record<Connection["channel"], string> = {
   facebook: "Facebook",
@@ -64,24 +59,25 @@ export function mapSkillsToListItems(skills: Skill[]): ResourceListRowItem[] {
   }));
 }
 
-export function mapToolsToListItems(tools: Tool[]): ResourceListRowItem[] {
-  return tools.map((tool) => ({
-    id: tool.id,
-    name: tool.name,
-    description: tool.description,
-    createdAt: tool.createdAt,
-    subtitle: TOOL_TYPE_LABELS[tool.type],
-    badge: tool.enabled
-      ? {
-          label: "Enabled",
-          className:
-            "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-        }
-      : {
-          label: "Disabled",
-          className: "bg-muted text-muted-foreground",
-        },
-  }));
+export function mapToolsToListItems(tools: ToolListItem[]): ResourceListRowItem[] {
+  return tools.map((tool) => {
+    const handler = getToolHandlerDefinition(tool.handlerType);
+
+    return {
+      id: tool.id,
+      name: tool.name,
+      description: tool.description ?? undefined,
+      createdAt: tool.createdAt,
+      subtitle: handler?.name ?? tool.handlerType,
+      meta: tool.handlerKey,
+      badge: tool.locked
+        ? {
+            label: "Locked",
+            className: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+          }
+        : undefined,
+    };
+  });
 }
 
 export function mapKnowledgeBasesToListItems(

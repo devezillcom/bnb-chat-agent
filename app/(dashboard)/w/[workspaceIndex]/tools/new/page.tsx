@@ -1,16 +1,21 @@
-import { ToolsListPage } from "@/components/tools/tools-list-page";
+import { CreateToolPage } from "@/components/tools/create-tool-page";
 import { getWorkspaceRouteContext } from "@/lib/workspaces/services/get-workspace-route-context";
 
-type ToolsPageProps = {
+type CreateToolRoutePageProps = {
   params: Promise<{ workspaceIndex: string }>;
 };
 
-export default async function ToolsPage({ params }: ToolsPageProps) {
+export default async function CreateToolRoutePage({
+  params,
+}: CreateToolRoutePageProps) {
   const { workspaceIndex: workspaceIndexParam } = await params;
   const { workspace, workspaceIndex } =
     await getWorkspaceRouteContext(workspaceIndexParam);
 
   return (
-    <ToolsListPage workspaceId={workspace.id} workspaceIndex={workspaceIndex} />
+    <CreateToolPage
+      workspaceId={workspace.id}
+      workspaceIndex={workspaceIndex}
+    />
   );
 }
