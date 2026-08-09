@@ -2,9 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { PlusIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import type { ListConnectionsForAgentResult } from "@/lib/connections/types";
 import { getConnectionTypeLabel } from "@/lib/connections/utils/connection-display-utils";
 import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
@@ -51,18 +49,6 @@ export function AgentConnectionsCard({
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <Button
-          variant="outline"
-          size="sm"
-          nativeButton={false}
-          render={<Link href={connectionsPath} />}
-        >
-          <PlusIcon data-icon="inline-start" />
-          Manage connections
-        </Button>
-      </div>
-
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading connections...</p>
       ) : error ? (

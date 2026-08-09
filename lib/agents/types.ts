@@ -32,6 +32,16 @@ export type GetAgentParams = {
 
 export type GetAgentResult = AgentListItem;
 
+export type AssignAgentCapabilityParams = {
+  workspaceId: string;
+  agentId: string;
+  capabilityId: string;
+};
+
+export type AssignAgentCapabilityResult = {
+  message: string;
+};
+
 export type CreateAgentParams = CreateAgentFormValues & {
   workspaceId: string;
 };

@@ -16,6 +16,21 @@ export type ToolDetail = ToolListItem & {
   config: Record<string, string>;
 };
 
+export type AgentToolItem = {
+  id: string;
+  name: string;
+  slug: string;
+  registryToolId: string;
+  description: string | null;
+};
+
+export type ListAgentToolsParams = {
+  workspaceId: string;
+  agentId: string;
+};
+
+export type ListAgentToolsResult = AgentToolItem[];
+
 export type ToolRegistryListItem = {
   id: ToolRegistryId;
   name: string;

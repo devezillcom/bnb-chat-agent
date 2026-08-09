@@ -4,6 +4,7 @@ import { and, asc, eq } from "drizzle-orm";
 
 import { agentSkills, skills } from "@/db/schema";
 import { db } from "@/lib/db";
+import { assertAgentInWorkspace } from "@/lib/agents/utils/assert-agent-in-workspace";
 
 import type {
   ListAgentSkillsParams,
@@ -13,6 +14,8 @@ import type {
 export async function listAgentSkills(
   params: ListAgentSkillsParams,
 ): Promise<ListAgentSkillsResult> {
+  await assertAgentInWorkspace(params);
+
   const rows = await db
     .select({
       id: skills.id,

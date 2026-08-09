@@ -73,6 +73,9 @@ export async function indexKnowledgeBaseChunks(
         detectedLanguage: params.detectedLanguage ?? "unknown",
         headingPath: chunk.metadata.headingPath?.join(" > ").slice(0, 512) ?? "",
         sectionTitle: (chunk.metadata.sectionTitle ?? "").slice(0, 512),
+        sourceChunkIndex: chunk.metadata.sourceChunkIndex ?? chunk.index,
+        partIndex: chunk.metadata.partIndex ?? 0,
+        partCount: chunk.metadata.partCount ?? 1,
       };
     });
 

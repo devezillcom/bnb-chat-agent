@@ -1,11 +1,17 @@
 "use client";
 
-import { ArrowLeftIcon, Loader2Icon, PencilIcon, PlusIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  Loader2Icon,
+  PencilIcon,
+  PlusIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { EditAgentInfoSheet } from "@/components/agents/edit-agent-info-sheet";
+import { AgentCapabilitiesCard } from "@/components/agents/agent-capabilities-card";
 import { AgentConnectionsCard } from "@/components/agents/agent-connections-card";
 import {
   AlertDialog,
@@ -31,10 +37,6 @@ import {
 import { toast } from "@/components/ui/toast";
 import type { AgentListItem } from "@/lib/agents/types";
 import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
-import {
-  PLACEHOLDER_SKILLS,
-  PLACEHOLDER_TOOLS,
-} from "@/lib/dashboard/placeholder-data";
 import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
 import { cn } from "@/lib/utils";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
@@ -62,9 +64,8 @@ export function AgentDetailPage({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const agentsHref = getDashboardNavHref(workspaceIndex, "agents");
+  const connectionsHref = getDashboardNavHref(workspaceIndex, "connections");
   const leading = getAgentListLeading(agent.name);
-  const placeholderSkills = PLACEHOLDER_SKILLS.slice(0, 3);
-  const placeholderTools = PLACEHOLDER_TOOLS.slice(0, 3);
 
   async function handleDelete() {
     setDeleting(true);
@@ -185,92 +186,23 @@ export function AgentDetailPage({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Skills</CardTitle>
-              <CardDescription>
-                Capabilities assigned to this agent. Placeholder data for now.
-              </CardDescription>
-              <CardAction>
-                <Button variant="outline" size="sm">
-                  <PlusIcon data-icon="inline-start" />
-                  Add
-                </Button>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              <ul className="divide-y divide-border">
-                {placeholderSkills.map((skill) => (
-                  <li
-                    key={skill.id}
-                    className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{skill.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {skill.description}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {skill.category}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Edit ${skill.name}`}
-                    >
-                      <PencilIcon />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          <AgentCapabilitiesCard
+            agentId={agent.id}
+            workspaceId={workspaceId}
+            kind="skill"
+          />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Tools</CardTitle>
-              <CardDescription>
-                External integrations available to this agent. Placeholder data
-                for now.
-              </CardDescription>
-              <CardAction>
-                <Button variant="outline" size="sm">
-                  <PlusIcon data-icon="inline-start" />
-                  Add
-                </Button>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              <ul className="divide-y divide-border">
-                {placeholderTools.map((tool) => (
-                  <li
-                    key={tool.id}
-                    className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{tool.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {tool.description}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <span className="text-xs text-muted-foreground capitalize">
-                        {tool.type}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Edit ${tool.name}`}
-                      >
-                        <PencilIcon />
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          <AgentCapabilitiesCard
+            agentId={agent.id}
+            workspaceId={workspaceId}
+            kind="tool"
+          />
+
+          <AgentCapabilitiesCard
+            agentId={agent.id}
+            workspaceId={workspaceId}
+            kind="knowledge-base"
+          />
 
           <Card>
             <CardHeader>
@@ -278,6 +210,17 @@ export function AgentDetailPage({
               <CardDescription>
                 Channels assigned to this agent.
               </CardDescription>
+              <CardAction>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  nativeButton={false}
+                  render={<Link href={connectionsHref} />}
+                >
+                  <PlusIcon data-icon="inline-start" />
+                  Manage connections
+                </Button>
+              </CardAction>
             </CardHeader>
             <CardContent>
               <AgentConnectionsCard

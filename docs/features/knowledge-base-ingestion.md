@@ -103,9 +103,16 @@ Stored on `knowledge_base_documents.detected_language`. Used for chunk strategy 
 | `chunk_tabular_data` | CSV, Excel tables |
 | `chunk_slide_by_slide` | Presentations |
 | `chunk_qa_pairs` | FAQ-style Q&A |
-| `chunk_recursive_by_token` | Fallback (~900 tokens, 120 overlap) |
+| `chunk_recursive_by_token` | Fallback (900 characters, 120-character overlap) |
 
 Implementation: `lib/knowledge-base/utils/chunk-document.ts`
+
+All semantic strategies retain their structural context (heading, article, slide, or
+question) in the embedded text. Long logical sections are then split into
+character-bounded chunks with overlap, preserving that context and part provenance
+on every derived chunk. The strategy name `chunk_recursive_by_token` is retained
+for backwards compatibility, but the current LangChain splitter measures
+characters rather than model tokens.
 
 ## Pinecone indexing
 
@@ -114,10 +121,10 @@ Implementation: `lib/knowledge-base/utils/chunk-document.ts`
 - **Namespace:** `{workspaceId}` (one namespace per workspace)
 - **Record ID:** `{documentId}:{chunkIndex}` (idempotent re-index). Oversized logical chunks are split before upsert; Pinecone may have more vectors than `chunks.json`.
 - **Batch size:** 96 records per `upsertRecords` call
-- **Text size limit:** Pinecone metadata cap is **40 KB per vector** (includes `chunk_text`). Chunks larger than ~38 KB UTF-8 are auto-split at index time; full chunks remain in `chunks.json` on R2.
+- **Text size limit:** Pinecone metadata cap is **40 KB per vector** (includes `chunk_text`). Chunks larger than the ~38 KB UTF-8 safety budget are split at index time. The final guard accounts for the chunk text plus its chunk metadata and rejects a record that cannot fit; full logical chunks remain in `chunks.json` on R2.
 - **Region:** `ap-southeast-1` (AWS Singapore) by default — nearest to Vietnam. Override with `PINECONE_REGION`.
 
-Metadata on each record: `workspaceId`, `knowledgeBaseId`, `documentId`, `chunkIndex`, `chunkStrategy`, `detectedLanguage`, `filename`, `headingPath`, `sectionTitle`.
+Metadata on each record: `workspaceId`, `knowledgeBaseId`, `documentId`, `chunkIndex`, `chunkStrategy`, `detectedLanguage`, `filename`, `headingPath`, `sectionTitle`, `sourceChunkIndex`, `partIndex`, `partCount`.
 
 Setup index (once per environment):
 

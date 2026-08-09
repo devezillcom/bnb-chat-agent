@@ -19,6 +19,31 @@ export type KnowledgeBaseListItem = {
   updatedAt: string;
 };
 
+export type AgentKnowledgeBaseItem = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  documentCount: number;
+};
+
+export type ListAgentKnowledgeBasesParams = {
+  workspaceId: string;
+  agentId: string;
+};
+
+export type ListAgentKnowledgeBasesResult = AgentKnowledgeBaseItem[];
+
+export type AssignAgentKnowledgeBaseParams = {
+  workspaceId: string;
+  agentId: string;
+  knowledgeBaseId: string;
+};
+
+export type AssignAgentKnowledgeBaseResult = {
+  message: string;
+};
+
 export type KnowledgeBaseDocumentListItem = {
   id: string;
   filename: string;
@@ -41,6 +66,9 @@ export type KnowledgeBaseChunk = {
   metadata: {
     headingPath?: string[];
     sectionTitle?: string;
+    sourceChunkIndex?: number;
+    partIndex?: number;
+    partCount?: number;
     strategy: KnowledgeBaseChunkStrategy;
   };
 };
