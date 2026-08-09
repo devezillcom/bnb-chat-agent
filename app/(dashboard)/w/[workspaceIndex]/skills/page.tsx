@@ -1,15 +1,19 @@
-import { ResourceListPage } from "@/components/dashboard/resource-list-page";
-import { mapSkillsToListItems } from "@/lib/dashboard/map-resource-list-items";
-import { PLACEHOLDER_SKILLS } from "@/lib/dashboard/placeholder-data";
+import { SkillsListPage } from "@/components/skills/skills-list-page";
+import { getWorkspaceRouteContext } from "@/lib/workspaces/services/get-workspace-route-context";
 
-export default function SkillsPage() {
+type SkillsPageProps = {
+  params: Promise<{ workspaceIndex: string }>;
+};
+
+export default async function SkillsPage({ params }: SkillsPageProps) {
+  const { workspaceIndex: workspaceIndexParam } = await params;
+  const { workspace, workspaceIndex } =
+    await getWorkspaceRouteContext(workspaceIndexParam);
+
   return (
-    <ResourceListPage
-      title="Skills"
-      description="Reusable capabilities and behaviors you can attach to chat agents."
-      items={mapSkillsToListItems(PLACEHOLDER_SKILLS)}
-      emptyTitle="No skills yet"
-      emptyDescription="Skills define how agents handle specialized tasks like copywriting or guest support."
+    <SkillsListPage
+      workspaceId={workspace.id}
+      workspaceIndex={workspaceIndex}
     />
   );
 }

@@ -7,6 +7,7 @@ import {
   parseChatModel,
 } from "@/lib/langchain/models/create-chat-model";
 import { getChatAgentCheckpointer } from "@/lib/chat-agent/utils/get-chat-agent-checkpointer";
+import { buildChatAgentTools } from "@/lib/chat-agent/tools/build-chat-agent-tools";
 
 import {
   CHANNEL_AGENT_SUMMARIZATION_KEEP_MESSAGES,
@@ -15,10 +16,12 @@ import {
 import type { ChannelAgentConfig } from "../schema";
 import type { ChannelAgentContext } from "../schema";
 import { channelAgentContextSchema } from "../schema";
+import { buildWorkspaceAgentCacheKey } from "@/lib/agents/utils/build-workspace-agent-cache-key";
 
 type ChannelAgent = Awaited<ReturnType<typeof buildChannelAgent>>;
 
 const agentCache = new Map<string, Promise<ChannelAgent>>();
+const agentCacheKeyByAgentId = new Map<string, string>();
 
 function getDefaultChannelAgentModel() {
   return parseChatModel(process.env.CHANNEL_AGENT_MODEL ?? process.env.CHAT_AGENT_MODEL);
@@ -40,7 +43,10 @@ async function buildChannelAgent(config: ChannelAgentConfig) {
 
   return createAgent({
     model,
-    tools: [],
+    tools: await buildChatAgentTools({
+      workspaceId: config.workspaceId,
+      toolSlugs: config.toolSlugs,
+    }),
     contextSchema: channelAgentContextSchema,
     middleware: [
       dynamicSystemPromptMiddleware<ChannelAgentContext>(() => config.systemPrompt),
@@ -55,11 +61,21 @@ async function buildChannelAgent(config: ChannelAgentConfig) {
 }
 
 export function getChannelAgent(config: ChannelAgentConfig): Promise<ChannelAgent> {
-  const cacheKey = `${config.agentId}:${config.systemPrompt}`;
+  const cacheKey = buildWorkspaceAgentCacheKey(config);
+  const cachedAgent = agentCache.get(cacheKey);
 
-  if (!agentCache.has(cacheKey)) {
-    agentCache.set(cacheKey, buildChannelAgent(config));
+  if (cachedAgent) {
+    return cachedAgent;
   }
 
-  return agentCache.get(cacheKey)!;
+  const previousCacheKey = agentCacheKeyByAgentId.get(config.agentId);
+  if (previousCacheKey && previousCacheKey !== cacheKey) {
+    agentCache.delete(previousCacheKey);
+  }
+
+  const agentPromise = buildChannelAgent(config);
+  agentCache.set(cacheKey, agentPromise);
+  agentCacheKeyByAgentId.set(config.agentId, cacheKey);
+
+  return agentPromise;
 }

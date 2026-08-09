@@ -79,7 +79,7 @@ function createEditDefaultValues(tool: ToolDetail): CreateToolFormValues {
 
   return {
     name: tool.name,
-    toolKey: tool.toolKey,
+    slug: tool.slug,
     registryToolId: tool.registryToolId,
     description: tool.description ?? "",
     config: Object.fromEntries(
@@ -115,19 +115,19 @@ export function EditToolPage({
     queryFn: () => fetchTools(workspaceId),
   });
 
-  const usedToolKeySet = useMemo(() => {
-    const keys = (toolsData?.items ?? [])
+  const usedSlugSet = useMemo(() => {
+    const slugs = (toolsData?.items ?? [])
       .filter((item) => item.id !== toolId)
-      .map((item) => item.toolKey);
+      .map((item) => item.slug);
 
-    return new Set(keys);
+    return new Set(slugs);
   }, [toolsData?.items, toolId]);
 
   const form = useForm<CreateToolFormValues>({
     resolver: zodResolver(createToolFormSchema),
     defaultValues: {
       name: "",
-      toolKey: "",
+      slug: "",
       registryToolId: "",
       description: "",
       config: {},
@@ -167,13 +167,13 @@ export function EditToolPage({
 
   const isSubmitting = form.formState.isSubmitting;
   const nameError = form.formState.errors.name;
-  const toolKeyError = form.formState.errors.toolKey;
+  const slugError = form.formState.errors.slug;
   const descriptionError = form.formState.errors.description;
   const registryToolIdError = form.formState.errors.registryToolId;
   const configError = form.formState.errors.config;
-  const toolKeyValue = form.watch("toolKey");
-  const toolKeyTaken =
-    toolKeyValue.trim().length > 0 && usedToolKeySet.has(toolKeyValue.trim());
+  const slugValue = form.watch("slug");
+  const slugTaken =
+    slugValue.trim().length > 0 && usedSlugSet.has(slugValue.trim());
 
   if (isLoading) {
     return (
@@ -249,36 +249,36 @@ export function EditToolPage({
           <CardContent>
             <FieldGroup>
               <Field
-                data-invalid={!!toolKeyError || toolKeyTaken || undefined}
+                data-invalid={!!slugError || slugTaken || undefined}
               >
-                <FieldLabel htmlFor="edit-tool-key">Tool key</FieldLabel>
+                <FieldLabel htmlFor="edit-tool-slug">Slug</FieldLabel>
                 <FieldDescription>
                   Unique identifier referenced in agent prompts (e.g.{" "}
                   <code className="text-xs">get_weather</code>).
                 </FieldDescription>
                 <div className="rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100">
-                  Changing the tool key may break agent prompts that reference
-                  the old key.
+                  Changing the slug may break agent prompts that reference
+                  the old slug.
                 </div>
                 <Input
-                  id="edit-tool-key"
+                  id="edit-tool-slug"
                   autoComplete="off"
                   placeholder="get_weather"
-                  aria-invalid={!!toolKeyError || toolKeyTaken}
+                  aria-invalid={!!slugError || slugTaken}
                   disabled={isSubmitting}
-                  {...form.register("toolKey")}
+                  {...form.register("slug")}
                 />
-                {toolKeyTaken ? (
+                {slugTaken ? (
                   <FieldError
                     errors={[
                       {
                         message:
-                          "This tool key is already used in the workspace.",
+                          "This slug is already used in the workspace.",
                       },
                     ]}
                   />
                 ) : (
-                  <FieldError errors={[toolKeyError]} />
+                  <FieldError errors={[slugError]} />
                 )}
               </Field>
 
@@ -336,7 +336,7 @@ export function EditToolPage({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || toolKeyTaken}>
+            <Button type="submit" disabled={isSubmitting || slugTaken}>
               {isSubmitting ? (
                 <>
                   <Loader2Icon className="animate-spin" data-icon="inline-start" />

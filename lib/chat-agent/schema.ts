@@ -17,6 +17,7 @@ export const chatAgentMessageSchema = z.object({
 
 export const chatWithAgentRequestSchema = z
   .object({
+    agentId: z.uuid({ error: "Agent is required." }),
     sessionId: z.string().uuid().optional(),
     message: z.string().trim(),
     images: z
@@ -29,9 +30,17 @@ export const chatWithAgentRequestSchema = z
     { message: "Message or at least one image is required." },
   );
 
+export const chatAgentConfigSchema = z.object({
+  agentId: z.uuid(),
+  workspaceId: z.uuid(),
+  systemPrompt: z.string(),
+  toolSlugs: z.array(z.string()).default([]),
+});
+
 export const chatAgentContextSchema = z.object({
   userId: z.uuid(),
   workspaceId: z.uuid(),
+  agentId: z.uuid(),
 });
 
 export type ChatAgentImageAttachment = z.infer<
@@ -39,4 +48,5 @@ export type ChatAgentImageAttachment = z.infer<
 >;
 export type ChatAgentMessage = z.infer<typeof chatAgentMessageSchema>;
 export type ChatWithAgentRequest = z.infer<typeof chatWithAgentRequestSchema>;
+export type ChatAgentConfig = z.infer<typeof chatAgentConfigSchema>;
 export type ChatAgentContext = z.infer<typeof chatAgentContextSchema>;

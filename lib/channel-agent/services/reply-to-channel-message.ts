@@ -1,6 +1,7 @@
 import "server-only";
 
 import { buildChatAgentHumanMessage } from "@/lib/chat-agent/utils/build-chat-agent-human-message";
+import { resolveWorkspaceAgentRuntime } from "@/lib/chat-agent/utils/resolve-workspace-agent-runtime";
 import { extractMessageContent } from "@/lib/chat-agent/utils/extract-message-content";
 
 import type {
@@ -13,9 +14,17 @@ import { getChannelAgent } from "./create-channel-agent";
 export async function replyToChannelMessage(
   params: ReplyToChannelMessageParams,
 ): Promise<ReplyToChannelMessageResult> {
+  const runtime = await resolveWorkspaceAgentRuntime({
+    agentId: params.agent.id,
+    workspaceId: params.context.workspaceId,
+    systemPrompt: params.agent.systemPrompt,
+  });
+
   const agent = await getChannelAgent({
     agentId: params.agent.id,
-    systemPrompt: params.agent.systemPrompt,
+    workspaceId: params.context.workspaceId,
+    systemPrompt: runtime.systemPrompt,
+    toolSlugs: runtime.toolSlugs,
   });
 
   const runConfig = createChannelAgentRunConfig(params.sessionId, params.context);

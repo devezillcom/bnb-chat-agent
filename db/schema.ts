@@ -262,7 +262,7 @@ export const tools = pgTable(
     /** Code-defined registry tool id (e.g. http_api, mcp). */
     registryToolId: text("tool_id").notNull(),
     /** Unique per workspace; referenced in agent prompts (e.g. get_weather). */
-    toolKey: text("tool_key").notNull(),
+    slug: text("slug").notNull(),
     description: text("description"),
     config: jsonb("config").$type<ToolConfig>().notNull(),
     /** When true, users cannot view detail, edit, or delete — set only via scripts. */
@@ -277,9 +277,9 @@ export const tools = pgTable(
   (table) => [
     index("tools_workspace_id_idx").on(table.workspaceId),
     index("tools_tool_id_idx").on(table.registryToolId),
-    uniqueIndex("tools_workspace_id_tool_key_idx").on(
+    uniqueIndex("tools_workspace_id_slug_idx").on(
       table.workspaceId,
-      table.toolKey,
+      table.slug,
     ),
   ],
 );
@@ -308,3 +308,58 @@ export const agentTools = pgTable(
 
 export type AgentTool = typeof agentTools.$inferSelect;
 export type NewAgentTool = typeof agentTools.$inferInsert;
+
+export const skills = pgTable(
+  "skills",
+  {
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** URL-safe unique identifier per workspace; referenced in prompts and APIs. */
+    slug: text("slug").notNull(),
+    description: text("description"),
+    /** Workspace tool slug values this skill may use (soft reference, validated in app). */
+    tools: text("tools").array().notNull().default([]),
+    instructions: text("instructions").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("skills_workspace_id_idx").on(table.workspaceId),
+    uniqueIndex("skills_workspace_id_slug_idx").on(
+      table.workspaceId,
+      table.slug,
+    ),
+  ],
+);
+
+export type Skill = typeof skills.$inferSelect;
+export type NewSkill = typeof skills.$inferInsert;
+
+export const agentSkills = pgTable(
+  "agent_skills",
+  {
+    agentId: uuid("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    skillId: uuid("skill_id")
+      .notNull()
+      .references(() => skills.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.agentId, table.skillId] }),
+    index("agent_skills_skill_id_idx").on(table.skillId),
+  ],
+);
+
+export type AgentSkill = typeof agentSkills.$inferSelect;
+export type NewAgentSkill = typeof agentSkills.$inferInsert;

@@ -13,6 +13,7 @@ export function createChatAgentRunConfig(
       session_id: sessionId,
       user_id: context.userId,
       workspace_id: context.workspaceId,
+      agent_id: context.agentId,
       feature: "chat-agent",
     },
     tags: ["chat-agent"],

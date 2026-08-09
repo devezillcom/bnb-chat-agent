@@ -11,6 +11,7 @@ import type {
 } from "../types";
 import { mapAgentStateMessagesToChatMessages } from "../utils/map-agent-state-messages";
 import { getChatAgent } from "./create-chat-agent";
+import { resolveChatAgentContext } from "./resolve-chat-agent-context";
 
 type AgentWithState = {
   getState: (
@@ -37,7 +38,11 @@ export async function getChatAgentSessionMessages(
     throw new APIError("ERR_NOT_FOUND", "Chat session not found.", 404);
   }
 
-  const agent = await getChatAgent();
+  const agentContext = await resolveChatAgentContext({
+    agentId: params.agentId,
+    workspaceId: params.workspaceId,
+  });
+  const agent = await getChatAgent(agentContext);
   const state = await (agent as AgentWithState).getState({
     configurable: { thread_id: params.sessionId },
   });

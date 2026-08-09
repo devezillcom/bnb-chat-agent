@@ -44,6 +44,7 @@ export type GetChatAgentSessionMessagesParams = {
   sessionId: string;
   workspaceId: string;
   userId: string;
+  agentId: string;
 };
 
 export type GetChatAgentSessionMessagesResult = {

@@ -74,6 +74,7 @@ Tenant container for members and chat sessions.
 - ← `agents.workspace_id`
 - ← `connections.workspace_id`
 - ← `tools.workspace_id`
+- ← `skills.workspace_id`
 
 ---
 
@@ -152,12 +153,13 @@ Configured chat agents for a workspace.
 
 - `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
 - ← `agent_tools.agent_id`
+- ← `agent_skills.agent_id`
 
 ---
 
 ### `tools`
 
-Workspace-scoped tool instances that agents can call at runtime. Each row references a code-defined registry tool and stores workspace-specific name, description, tool key, and config.
+Workspace-scoped tool instances that agents can call at runtime. Each row references a code-defined registry tool and stores workspace-specific name, description, slug, and config.
 
 | Column | Type | Nullable | Default | Description |
 | ------ | ---- | -------- | ------- | ----------- |
@@ -165,7 +167,7 @@ Workspace-scoped tool instances that agents can call at runtime. Each row refere
 | workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
 | name | text | NO | — | Display name override |
 | tool_id | text | NO | — | Code-defined registry tool id (e.g. `http_api`, `mcp`) |
-| tool_key | text | NO | — | Unique per workspace; referenced in agent prompts (e.g. `get_weather`) |
+| slug | text | NO | — | Unique per workspace; referenced in agent prompts (e.g. `get_weather`) |
 | description | text | YES | — | Short summary override shown in lists |
 | config | jsonb | NO | — | Workspace config validated by the registry tool's `configSchema` |
 | locked | boolean | NO | `false` | When true, blocks user view/edit/delete (script-only) |
@@ -176,7 +178,7 @@ Workspace-scoped tool instances that agents can call at runtime. Each row refere
 
 - `tools_workspace_id_idx` — on `workspace_id`
 - `tools_tool_id_idx` — on `tool_id`
-- `tools_workspace_id_tool_key_idx` — UNIQUE on `(workspace_id, tool_key)` (same registry `tool_id` may appear multiple times with different keys)
+- `tools_workspace_id_slug_idx` — UNIQUE on `(workspace_id, slug)` (same registry `tool_id` may appear multiple times with different slugs)
 
 **Relations**
 
@@ -218,6 +220,57 @@ Junction table linking chat agents to tools. UI for assignment is implemented se
 
 - `agent_id` → `agents.id` (ON DELETE CASCADE)
 - `tool_id` → `tools.id` (ON DELETE CASCADE)
+
+---
+
+### `skills`
+
+Workspace-scoped specialized capabilities assigned to agents. Each skill bundles instructions and optional tool slugs for runtime prompt and tool resolution.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | `gen_random_uuid()` | Primary key |
+| workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
+| name | text | NO | — | Display name |
+| slug | text | NO | — | URL-safe unique identifier per workspace |
+| description | text | YES | — | Short summary shown in lists |
+| tools | text[] | NO | `{}` | Workspace tool `slug` values (soft reference, validated in app) |
+| instructions | text | NO | — | Skill-specific guidance injected into the agent system prompt |
+| created_at | timestamptz | NO | `now()` | Row creation time |
+| updated_at | timestamptz | NO | `now()` | Last update time |
+
+**Indexes**
+
+- `skills_workspace_id_idx` — on `workspace_id`
+- `skills_workspace_id_slug_idx` — UNIQUE on `(workspace_id, slug)`
+
+**Relations**
+
+- `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
+- ← `agent_skills.skill_id`
+
+---
+
+### `agent_skills`
+
+Junction table linking chat agents to skills.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| agent_id | uuid | NO | — | Chat agent (`agents.id`) |
+| skill_id | uuid | NO | — | Skill (`skills.id`) |
+| created_at | timestamptz | NO | `now()` | When the skill was linked |
+
+**Primary key:** `(agent_id, skill_id)`
+
+**Indexes**
+
+- `agent_skills_skill_id_idx` — on `skill_id`
+
+**Relations**
+
+- `agent_id` → `agents.id` (ON DELETE CASCADE)
+- `skill_id` → `skills.id` (ON DELETE CASCADE)
 
 ---
 

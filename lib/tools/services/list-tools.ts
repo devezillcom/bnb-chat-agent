@@ -20,7 +20,7 @@ export async function listTools(
       or(
         ilike(tools.name, `%${keyword}%`),
         ilike(tools.description, `%${keyword}%`),
-        ilike(tools.toolKey, `%${keyword}%`),
+        ilike(tools.slug, `%${keyword}%`),
         ilike(tools.registryToolId, `%${keyword}%`),
       )!,
     );
@@ -46,7 +46,7 @@ export async function listTools(
     .select({
       id: tools.id,
       name: tools.name,
-      toolKey: tools.toolKey,
+      slug: tools.slug,
       registryToolId: tools.registryToolId,
       description: tools.description,
       locked: tools.locked,
@@ -66,7 +66,7 @@ export async function listTools(
     items: rows.map((row) => ({
       id: row.id,
       name: row.name,
-      toolKey: row.toolKey,
+      slug: row.slug,
       registryToolId: row.registryToolId as ToolRegistryId,
       description: row.description,
       locked: row.locked,

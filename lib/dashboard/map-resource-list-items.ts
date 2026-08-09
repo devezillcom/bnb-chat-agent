@@ -5,8 +5,8 @@ import type {
   ChatAgent,
   Connection,
   KnowledgeBase,
-  Skill,
 } from "@/lib/dashboard/placeholder-data";
+import type { SkillListItem } from "@/lib/skills/types";
 import type { ToolListItem } from "@/lib/tools/types";
 import { getToolDefinition } from "@/lib/tools/tool-registry";
 
@@ -45,17 +45,19 @@ export function mapChatAgentsToListItems(
   }));
 }
 
-export function mapSkillsToListItems(skills: Skill[]): ResourceListRowItem[] {
+export function mapSkillsToListItems(
+  skills: SkillListItem[],
+): ResourceListRowItem[] {
   return skills.map((skill) => ({
     id: skill.id,
     name: skill.name,
-    description: skill.description,
+    description: skill.description ?? undefined,
     createdAt: skill.createdAt,
-    subtitle: skill.category,
-    meta:
-      skill.agentCount === 1
-        ? "1 agent"
-        : `${skill.agentCount} agents`,
+    subtitle: skill.slug,
+    meta: [
+      skill.agentCount === 1 ? "1 agent" : `${skill.agentCount} agents`,
+      skill.tools.length === 1 ? "1 tool" : `${skill.tools.length} tools`,
+    ].join(" · "),
   }));
 }
 
@@ -69,7 +71,7 @@ export function mapToolsToListItems(tools: ToolListItem[]): ResourceListRowItem[
       description: tool.description ?? undefined,
       createdAt: tool.createdAt,
       subtitle: registryTool?.name ?? tool.registryToolId,
-      meta: tool.toolKey,
+      meta: tool.slug,
       badge: tool.locked
         ? {
             label: "Locked",

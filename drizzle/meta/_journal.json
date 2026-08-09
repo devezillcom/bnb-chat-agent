@@ -22,6 +22,13 @@
       "when": 1786195144062,
       "tag": "0002_optimal_deadpool",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786239338647,
+      "tag": "0003_mute_tusk",
+      "breakpoints": true
     }
   ]
 }

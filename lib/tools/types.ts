@@ -4,7 +4,7 @@ import type { ToolRegistryId } from "./tool-registry";
 export type ToolListItem = {
   id: string;
   name: string;
-  toolKey: string;
+  slug: string;
   registryToolId: ToolRegistryId;
   description: string | null;
   locked: boolean;
@@ -81,3 +81,18 @@ export type DeleteToolParams = {
 export type DeleteToolResult = {
   message: string;
 };
+
+export type WorkspaceToolRuntime = {
+  slug: string;
+  name: string;
+  description: string;
+  registryToolId: ToolRegistryId;
+  config: Record<string, string>;
+};
+
+export type ListToolsBySlugsParams = {
+  workspaceId: string;
+  slugs: string[];
+};
+
+export type ListToolsBySlugsResult = WorkspaceToolRuntime[];

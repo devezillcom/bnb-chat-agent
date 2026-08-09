@@ -2,10 +2,10 @@ import { z } from "zod";
 
 import { isKnownToolRegistryId } from "./tool-registry";
 
-export const toolKeySchema = z
+export const slugSchema = z
   .string()
   .trim()
-  .min(1, { error: "Tool key is required." })
+  .min(1, { error: "Slug is required." })
   .regex(/^[a-z][a-z0-9_]*$/, {
     error:
       "Use lowercase letters, numbers, and underscores. Start with a letter.",
@@ -13,7 +13,7 @@ export const toolKeySchema = z
 
 export const createToolFormSchema = z.object({
   name: z.string().trim().min(1, { error: "Tool name is required." }),
-  toolKey: toolKeySchema,
+  slug: slugSchema,
   registryToolId: z
     .string()
     .trim()

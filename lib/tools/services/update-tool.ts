@@ -14,7 +14,7 @@ export async function updateTool(
     .select({
       id: tools.id,
       locked: tools.locked,
-      toolKey: tools.toolKey,
+      slug: tools.slug,
       registryToolId: tools.registryToolId,
     })
     .from(tools)
@@ -36,17 +36,17 @@ export async function updateTool(
   }
 
   const trimmedName = params.name.trim();
-  const toolKey = params.toolKey.trim();
+  const slug = params.slug.trim();
   const registryToolId = params.registryToolId.trim();
 
-  if (toolKey !== existing.toolKey) {
+  if (slug !== existing.slug) {
     const [duplicate] = await db
       .select({ id: tools.id })
       .from(tools)
       .where(
         and(
           eq(tools.workspaceId, params.workspaceId),
-          eq(tools.toolKey, toolKey),
+          eq(tools.slug, slug),
           ne(tools.id, params.toolId),
         ),
       )
@@ -54,8 +54,8 @@ export async function updateTool(
 
     if (duplicate) {
       throw new APIError(
-        "ERR_TOOL_KEY_EXISTS",
-        "A tool with this tool key already exists in the workspace.",
+        "ERR_TOOL_SLUG_EXISTS",
+        "A tool with this slug already exists in the workspace.",
         409,
       );
     }
@@ -85,7 +85,7 @@ export async function updateTool(
     .update(tools)
     .set({
       name: trimmedName,
-      toolKey,
+      slug,
       description: params.description?.trim() || null,
       config,
       updatedAt: new Date(),

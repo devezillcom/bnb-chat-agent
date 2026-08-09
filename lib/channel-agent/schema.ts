@@ -12,7 +12,9 @@ export type ChannelAgentContext = z.infer<typeof channelAgentContextSchema>;
 
 export const channelAgentConfigSchema = z.object({
   agentId: z.uuid(),
+  workspaceId: z.uuid(),
   systemPrompt: z.string(),
+  toolSlugs: z.array(z.string()).default([]),
 });
 
 export type ChannelAgentConfig = z.infer<typeof channelAgentConfigSchema>;

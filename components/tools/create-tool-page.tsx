@@ -67,7 +67,7 @@ function createDefaultValues(registryToolId?: string): CreateToolFormValues {
 
   return {
     name: registryTool?.name ?? "",
-    toolKey: "",
+    slug: "",
     registryToolId: registryTool?.id ?? "",
     description: registryTool?.description ?? "",
     config: Object.fromEntries(
@@ -97,13 +97,13 @@ export function CreateToolPage({
     queryFn: () => fetchTools(workspaceId),
   });
 
-  const usedToolKeys = useMemo(
-    () => (toolsData?.items ?? []).map((tool) => tool.toolKey),
+  const usedSlugs = useMemo(
+    () => (toolsData?.items ?? []).map((tool) => tool.slug),
     [toolsData?.items],
   );
-  const usedToolKeySet = useMemo(
-    () => new Set(usedToolKeys),
-    [usedToolKeys],
+  const usedSlugSet = useMemo(
+    () => new Set(usedSlugs),
+    [usedSlugs],
   );
 
   const form = useForm<CreateToolFormValues>({
@@ -144,13 +144,13 @@ export function CreateToolPage({
 
   const isSubmitting = form.formState.isSubmitting;
   const nameError = form.formState.errors.name;
-  const toolKeyError = form.formState.errors.toolKey;
+  const slugError = form.formState.errors.slug;
   const descriptionError = form.formState.errors.description;
   const registryToolIdError = form.formState.errors.registryToolId;
   const configError = form.formState.errors.config;
-  const toolKeyValue = form.watch("toolKey");
-  const toolKeyTaken =
-    toolKeyValue.trim().length > 0 && usedToolKeySet.has(toolKeyValue.trim());
+  const slugValue = form.watch("slug");
+  const slugTaken =
+    slugValue.trim().length > 0 && usedSlugSet.has(slugValue.trim());
 
   if (!selectedRegistryTool) {
     return (
@@ -213,31 +213,31 @@ export function CreateToolPage({
           </CardHeader>
           <CardContent>
             <FieldGroup>
-              <Field data-invalid={!!toolKeyError || toolKeyTaken || undefined}>
-                <FieldLabel htmlFor="create-tool-key">Tool key</FieldLabel>
+              <Field data-invalid={!!slugError || slugTaken || undefined}>
+                <FieldLabel htmlFor="create-tool-slug">Slug</FieldLabel>
                 <FieldDescription>
                   Unique identifier referenced in agent prompts (e.g.{" "}
                   <code className="text-xs">get_weather</code>).
                 </FieldDescription>
                 <Input
-                  id="create-tool-key"
+                  id="create-tool-slug"
                   autoComplete="off"
                   placeholder="get_weather"
-                  aria-invalid={!!toolKeyError || toolKeyTaken}
+                  aria-invalid={!!slugError || slugTaken}
                   disabled={isSubmitting}
-                  {...form.register("toolKey")}
+                  {...form.register("slug")}
                 />
-                {toolKeyTaken ? (
+                {slugTaken ? (
                   <FieldError
                     errors={[
                       {
                         message:
-                          "This tool key is already used in the workspace.",
+                          "This slug is already used in the workspace.",
                       },
                     ]}
                   />
                 ) : (
-                  <FieldError errors={[toolKeyError]} />
+                  <FieldError errors={[slugError]} />
                 )}
               </Field>
 
@@ -297,7 +297,7 @@ export function CreateToolPage({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || toolKeyTaken}
+              disabled={isSubmitting || slugTaken}
             >
               {isSubmitting ? (
                 <>
