@@ -17,3 +17,8 @@ A chat agent can be used in several ways:
 1. **Directly** — chat with the agent inside the app
 2. **Embedded on a website** — embed the agent widget into any site
 3. **Connected to support channels** — link the agent to chat support channels such as Facebook Page Messenger
+
+## Feature docs
+
+- [Facebook agent replies](./features/facebook-agent-replies.md) — Messenger webhook, QStash, session continuity
+- [Knowledge base ingestion](./features/knowledge-base-ingestion.md) — document upload, convert, chunk, Pinecone index pipeline

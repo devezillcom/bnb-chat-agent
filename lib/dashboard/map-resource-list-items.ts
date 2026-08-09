@@ -1,11 +1,8 @@
 import type { ResourceListRowItem } from "@/components/dashboard/resource-list-page";
 import type { AgentListItem } from "@/lib/agents/types";
 import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
-import type {
-  ChatAgent,
-  Connection,
-  KnowledgeBase,
-} from "@/lib/dashboard/placeholder-data";
+import type { ChatAgent, Connection } from "@/lib/dashboard/placeholder-data";
+import type { KnowledgeBaseListItem } from "@/lib/knowledge-base/types";
 import type { SkillListItem } from "@/lib/skills/types";
 import type { ToolListItem } from "@/lib/tools/types";
 import { getToolDefinition } from "@/lib/tools/tool-registry";
@@ -83,12 +80,12 @@ export function mapToolsToListItems(tools: ToolListItem[]): ResourceListRowItem[
 }
 
 export function mapKnowledgeBasesToListItems(
-  knowledgeBases: KnowledgeBase[],
+  knowledgeBases: KnowledgeBaseListItem[],
 ): ResourceListRowItem[] {
   return knowledgeBases.map((knowledgeBase) => ({
     id: knowledgeBase.id,
     name: knowledgeBase.name,
-    description: knowledgeBase.description,
+    description: knowledgeBase.description ?? undefined,
     createdAt: knowledgeBase.createdAt,
     meta:
       knowledgeBase.documentCount === 1

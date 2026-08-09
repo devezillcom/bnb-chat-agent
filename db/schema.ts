@@ -363,3 +363,113 @@ export const agentSkills = pgTable(
 
 export type AgentSkill = typeof agentSkills.$inferSelect;
 export type NewAgentSkill = typeof agentSkills.$inferInsert;
+
+export const knowledgeBases = pgTable(
+  "knowledge_bases",
+  {
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("knowledge_bases_workspace_id_idx").on(table.workspaceId),
+    uniqueIndex("knowledge_bases_workspace_id_slug_idx").on(
+      table.workspaceId,
+      table.slug,
+    ),
+  ],
+);
+
+export type KnowledgeBase = typeof knowledgeBases.$inferSelect;
+export type NewKnowledgeBase = typeof knowledgeBases.$inferInsert;
+
+export type KnowledgeBaseDocumentPipelineLog = {
+  stages: Array<{
+    name: string;
+    status: "started" | "succeeded" | "failed";
+    startedAt: string;
+    finishedAt?: string;
+    details?: Record<string, unknown>;
+    error?: string;
+  }>;
+};
+
+export const knowledgeBaseDocuments = pgTable(
+  "knowledge_base_documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+    knowledgeBaseId: uuid("knowledge_base_id")
+      .notNull()
+      .references(() => knowledgeBases.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    filename: text("filename").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: text("size_bytes").notNull(),
+    sourceR2Key: text("source_r2_key").notNull(),
+    status: text("status").notNull().default("uploaded"),
+    detectedLanguage: text("detected_language"),
+    chunkStrategy: text("chunk_strategy"),
+    classificationReason: text("classification_reason"),
+    markdownR2Key: text("markdown_r2_key"),
+    chunksR2Key: text("chunks_r2_key"),
+    indexResultR2Key: text("index_result_r2_key"),
+    pipelineLogR2Key: text("pipeline_log_r2_key"),
+    chunkCount: text("chunk_count"),
+    pineconeNamespace: text("pinecone_namespace"),
+    pineconeRecordCount: text("pinecone_record_count"),
+    errorMessage: text("error_message"),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("knowledge_base_documents_knowledge_base_id_idx").on(
+      table.knowledgeBaseId,
+    ),
+    index("knowledge_base_documents_workspace_id_idx").on(table.workspaceId),
+    index("knowledge_base_documents_status_idx").on(table.status),
+  ],
+);
+
+export type KnowledgeBaseDocument = typeof knowledgeBaseDocuments.$inferSelect;
+export type NewKnowledgeBaseDocument = typeof knowledgeBaseDocuments.$inferInsert;
+
+export const agentKnowledgeBases = pgTable(
+  "agent_knowledge_bases",
+  {
+    agentId: uuid("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    knowledgeBaseId: uuid("knowledge_base_id")
+      .notNull()
+      .references(() => knowledgeBases.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.agentId, table.knowledgeBaseId] }),
+    index("agent_knowledge_bases_knowledge_base_id_idx").on(
+      table.knowledgeBaseId,
+    ),
+  ],
+);
+
+export type AgentKnowledgeBase = typeof agentKnowledgeBases.$inferSelect;
+export type NewAgentKnowledgeBase = typeof agentKnowledgeBases.$inferInsert;

@@ -75,6 +75,7 @@ Tenant container for members and chat sessions.
 - ← `connections.workspace_id`
 - ← `tools.workspace_id`
 - ← `skills.workspace_id`
+- ← `knowledge_bases.workspace_id`
 
 ---
 
@@ -154,6 +155,7 @@ Configured chat agents for a workspace.
 - `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
 - ← `agent_tools.agent_id`
 - ← `agent_skills.agent_id`
+- ← `agent_knowledge_bases.agent_id`
 
 ---
 
@@ -356,3 +358,95 @@ Tracks processed inbound message ids to avoid duplicate replies when Facebook re
 **Relations**
 
 - `connection_id` → `connections.id` (ON DELETE CASCADE)
+
+---
+
+### `knowledge_bases`
+
+Workspace-scoped document collections for agent retrieval.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | `gen_random_uuid()` | Primary key |
+| workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
+| name | text | NO | — | Display name |
+| slug | text | NO | — | URL-safe unique identifier per workspace |
+| description | text | YES | — | Short summary |
+| created_at | timestamptz | NO | `now()` | Row creation time |
+| updated_at | timestamptz | NO | `now()` | Last update time |
+
+**Indexes**
+
+- `knowledge_bases_workspace_id_idx` — on `workspace_id`
+- `knowledge_bases_workspace_id_slug_idx` — UNIQUE on `(workspace_id, slug)`
+
+**Relations**
+
+- `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
+- ← `knowledge_base_documents.knowledge_base_id`
+- ← `agent_knowledge_bases.knowledge_base_id`
+
+---
+
+### `knowledge_base_documents`
+
+Uploaded files and ingestion pipeline state for a knowledge base.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| id | uuid | NO | `gen_random_uuid()` | Primary key |
+| knowledge_base_id | uuid | NO | — | Parent KB (`knowledge_bases.id`) |
+| workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
+| filename | text | NO | — | Original filename |
+| content_type | text | NO | — | MIME type |
+| size_bytes | text | NO | — | File size in bytes (stored as text) |
+| source_r2_key | text | NO | — | R2 key for uploaded source file |
+| status | text | NO | `uploaded` | Pipeline status |
+| detected_language | text | YES | — | `vi`, `en`, `mixed`, or `unknown` |
+| chunk_strategy | text | YES | — | Selected chunk strategy id |
+| classification_reason | text | YES | — | Heuristic or Haiku explanation |
+| markdown_r2_key | text | YES | — | Converted markdown artifact |
+| chunks_r2_key | text | YES | — | Chunk JSON artifact |
+| index_result_r2_key | text | YES | — | Pinecone index result artifact |
+| pipeline_log_r2_key | text | YES | — | Stage-by-stage pipeline log |
+| chunk_count | text | YES | — | Number of chunks produced |
+| pinecone_namespace | text | YES | — | Pinecone namespace (workspace id) |
+| pinecone_record_count | text | YES | — | Number of vectors upserted |
+| error_message | text | YES | — | Last pipeline error |
+| processed_at | timestamptz | YES | — | When indexing completed |
+| created_at | timestamptz | NO | `now()` | Row creation time |
+| updated_at | timestamptz | NO | `now()` | Last update time |
+
+**Indexes**
+
+- `knowledge_base_documents_knowledge_base_id_idx` — on `knowledge_base_id`
+- `knowledge_base_documents_workspace_id_idx` — on `workspace_id`
+- `knowledge_base_documents_status_idx` — on `status`
+
+**Relations**
+
+- `knowledge_base_id` → `knowledge_bases.id` (ON DELETE CASCADE)
+- `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
+
+---
+
+### `agent_knowledge_bases`
+
+Junction table linking chat agents to knowledge bases. Assignment is owned by the agent service (agent adds/removes knowledge bases), not the knowledge-base module.
+
+| Column | Type | Nullable | Default | Description |
+| ------ | ---- | -------- | ------- | ----------- |
+| agent_id | uuid | NO | — | Chat agent (`agents.id`) |
+| knowledge_base_id | uuid | NO | — | Knowledge base (`knowledge_bases.id`) |
+| created_at | timestamptz | NO | `now()` | When the KB was linked |
+
+**Primary key:** `(agent_id, knowledge_base_id)`
+
+**Indexes**
+
+- `agent_knowledge_bases_knowledge_base_id_idx` — on `knowledge_base_id`
+
+**Relations**
+
+- `agent_id` → `agents.id` (ON DELETE CASCADE)
+- `knowledge_base_id` → `knowledge_bases.id` (ON DELETE CASCADE)

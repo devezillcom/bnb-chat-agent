@@ -1,15 +1,21 @@
-import { ResourceListPage } from "@/components/dashboard/resource-list-page";
-import { mapKnowledgeBasesToListItems } from "@/lib/dashboard/map-resource-list-items";
-import { PLACEHOLDER_KNOWLEDGE_BASES } from "@/lib/dashboard/placeholder-data";
+import { KnowledgeBasesListPage } from "@/components/knowledge-base/knowledge-bases-list-page";
+import { getWorkspaceRouteContext } from "@/lib/workspaces/services/get-workspace-route-context";
 
-export default function KnowledgeBasePage() {
+type KnowledgeBasePageProps = {
+  params: Promise<{ workspaceIndex: string }>;
+};
+
+export default async function KnowledgeBasePage({
+  params,
+}: KnowledgeBasePageProps) {
+  const { workspaceIndex: workspaceIndexParam } = await params;
+  const { workspace, workspaceIndex } =
+    await getWorkspaceRouteContext(workspaceIndexParam);
+
   return (
-    <ResourceListPage
-      title="Knowledge base"
-      description="Document collections agents can reference when answering questions."
-      items={mapKnowledgeBasesToListItems(PLACEHOLDER_KNOWLEDGE_BASES)}
-      emptyTitle="No knowledge bases yet"
-      emptyDescription="Upload guides, FAQs, and playbooks so agents can answer with accurate context."
+    <KnowledgeBasesListPage
+      workspaceId={workspace.id}
+      workspaceIndex={workspaceIndex}
     />
   );
 }
