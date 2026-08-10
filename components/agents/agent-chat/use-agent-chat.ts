@@ -11,12 +11,17 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 
 import { readChatAgentStream } from "@/lib/chat-agent/client/read-chat-agent-stream";
+import type { ActiveChatEnv } from "@/lib/chat-agent/config/chat-env";
+import { resolveChatEnvRuntime } from "@/lib/chat-agent/config/chat-env";
 import {
   CHAT_AGENT_IMAGE_MAX_COUNT,
   CHAT_AGENT_IMAGE_UPLOAD_RULES,
 } from "@/lib/chat-agent/constants/chat-agent-image-upload-rules";
 import type { ChatAgentImageAttachment } from "@/lib/chat-agent/schema";
-import type { GetChatAgentSessionMessagesResult } from "@/lib/chat-agent/types";
+import type {
+  ChatWithAgentResult,
+  GetChatAgentSessionMessagesResult,
+} from "@/lib/chat-agent/types";
 import type { GetUploadSignedUrlResult } from "@/lib/r2/types";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
@@ -25,6 +30,7 @@ import type { AgentChatMessage, PendingChatImage } from "./types";
 type UseAgentChatParams = {
   agentId: string;
   workspaceId: string;
+  chatEnv: ActiveChatEnv;
 };
 
 function createMessageId() {
@@ -34,14 +40,16 @@ function createMessageId() {
 export function agentChatSessionQueryKey(
   workspaceId: string,
   agentId: string,
+  chatEnv: ActiveChatEnv,
   keyword = "",
 ) {
-  return ["agent-chat-sessions", workspaceId, agentId, keyword] as const;
+  return ["agent-chat-sessions", workspaceId, agentId, chatEnv, keyword] as const;
 }
 
 export function useAgentChat({
   agentId,
   workspaceId,
+  chatEnv,
 }: UseAgentChatParams) {
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<AgentChatMessage[]>([]);
@@ -49,6 +57,10 @@ export function useAgentChat({
   const [isSending, setIsSending] = useState(false);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [pendingImages, setPendingImages] = useState<PendingChatImage[]>([]);
+  const usesStream = useMemo(
+    () => resolveChatEnvRuntime(chatEnv).delivery === "stream",
+    [chatEnv],
+  );
 
   const pendingImagesRef = useRef(pendingImages);
 
@@ -270,11 +282,28 @@ export function useAgentChat({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             agentId,
+            chatEnv,
             sessionId,
             message: trimmedMessage,
             ...(images.length > 0 ? { images } : {}),
           }),
         });
+
+        const contentType = response.headers.get("content-type") ?? "";
+
+        if (contentType.includes("application/json")) {
+          if (!response.ok) {
+            throw new Error("The agent could not answer right now.");
+          }
+
+          const result = (await response.json()) as ChatWithAgentResult;
+          setSessionId(result.sessionId);
+          replaceLatestAssistantMessage(result.message);
+          void queryClient.invalidateQueries({
+            queryKey: agentChatSessionQueryKey(workspaceId, agentId, chatEnv),
+          });
+          return;
+        }
 
         await readChatAgentStream(response, {
           onSession: setSessionId,
@@ -283,7 +312,7 @@ export function useAgentChat({
             setSessionId(event.sessionId);
             replaceLatestAssistantMessage(event.message);
             void queryClient.invalidateQueries({
-              queryKey: agentChatSessionQueryKey(workspaceId, agentId),
+              queryKey: agentChatSessionQueryKey(workspaceId, agentId, chatEnv),
             });
           },
           onError: replaceLatestAssistantMessage,
@@ -299,6 +328,7 @@ export function useAgentChat({
     [
       agentId,
       appendAssistantToken,
+      chatEnv,
       clearPendingImages,
       isSending,
       replaceLatestAssistantMessage,
@@ -323,7 +353,10 @@ export function useAgentChat({
       clearPendingImages();
 
       try {
-        const searchParams = new URLSearchParams({ agentId });
+        const searchParams = new URLSearchParams({
+          agentId,
+          chatEnv,
+        });
         const response = await workspaceFetch(
           workspaceId,
           `/api/chat-agent/sessions/${nextSessionId}?${searchParams.toString()}`,
@@ -359,6 +392,7 @@ export function useAgentChat({
     },
     [
       agentId,
+      chatEnv,
       clearPendingImages,
       isLoadingSession,
       isSending,
@@ -376,6 +410,7 @@ export function useAgentChat({
   }, [clearPendingImages, isLoadingSession, isSending]);
 
   return {
+    chatEnv,
     handleImageInputChange,
     hasUploadingImages,
     isLoadingSession,
@@ -388,5 +423,6 @@ export function useAgentChat({
     resetChat,
     sessionId,
     submitMessage,
+    usesStream,
   };
 }

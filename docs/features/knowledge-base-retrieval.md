@@ -109,7 +109,7 @@ Channel agent (WhatsApp, etc.): `citationsEnabled: false` → no citation marker
 | `resolve-workspace-agent-runtime.ts` | Merge skills prompt + KB prompt + tool/KB IDs |
 | `build-chat-agent-knowledge-tool.ts` | LangChain tool wrapper |
 | `create-chat-agent.ts` | Append KB tool to workspace tools |
-| `create-channel-agent.ts` | Same tool wiring for channel replies |
+| `create-chat-agent.ts` | Shared tool wiring for web and channel envs |
 | `build-workspace-agent-cache-key.ts` | Cache invalidates on KB assignment or citation mode |
 
 Agent cache key includes `knowledgeBaseIds` and `citationsEnabled` so assignment changes rebuild the agent instance.

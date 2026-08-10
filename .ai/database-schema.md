@@ -108,29 +108,41 @@ Membership and permission of a user in a workspace.
 
 ### `chat_agent_sessions`
 
-Persisted chat/agent conversation sessions.
+Unified LangGraph session metadata for in-app sandbox chats and production channel conversations.
 
 | Column | Type | Nullable | Default | Description |
 | ------ | ---- | -------- | ------- | ----------- |
 | id | uuid | NO | — | LangGraph thread id (matches chat `sessionId`) |
 | workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
-| user_id | uuid | NO | — | Session owner (`users.id`) |
 | agent_id | uuid | NO | — | Agent that owns the conversation (`agents.id`) |
+| chat_env | text | NO | `web` | Target environment: `web`, `facebook_page`, `zalo`, etc. |
+| user_id | uuid | YES | — | In-app sandbox owner (`users.id`); null for external channel participants |
+| connection_id | uuid | YES | — | Production channel connection (`connections.id`) |
+| external_participant_id | text | YES | — | Channel participant id (e.g. Facebook PSID) |
 | title | text | NO | — | Preview label, typically the first user message |
+| last_message_at | timestamptz | NO | `now()` | Last inbound/outbound activity |
 | created_at | timestamptz | NO | `now()` | Row creation time |
 | updated_at | timestamptz | NO | `now()` | Last update time |
 
 **Indexes**
 
-- `chat_agent_sessions_workspace_id_user_id_idx` — on `(workspace_id, user_id)`
-- `chat_agent_sessions_workspace_id_user_id_agent_id_idx` — on `(workspace_id, user_id, agent_id)`
+- `chat_agent_sessions_workspace_id_user_id_agent_id_chat_env_idx` — on `(workspace_id, user_id, agent_id, chat_env)`
+- `chat_agent_sessions_connection_participant_chat_env_idx` — UNIQUE on `(connection_id, external_participant_id, chat_env)`
+- `chat_agent_sessions_connection_id_idx` — on `connection_id`
 - `chat_agent_sessions_updated_at_idx` — on `updated_at`
+- `chat_agent_sessions_last_message_at_idx` — on `last_message_at`
 
 **Relations**
 
 - `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
 - `user_id` → `users.id` (ON DELETE CASCADE)
 - `agent_id` → `agents.id` (ON DELETE CASCADE)
+- `connection_id` → `connections.id` (ON DELETE CASCADE)
+
+**Session scope**
+
+- In-app sandbox: `(workspace_id, user_id, agent_id, chat_env)`
+- Production channel: `(connection_id, external_participant_id, chat_env)`
 
 ---
 
@@ -309,37 +321,6 @@ External channel connections for a workspace (Facebook pages, etc.). Each connec
 - `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
 - `user_id` → `users.id` (ON DELETE CASCADE)
 - `agent_id` → `agents.id` (ON DELETE SET NULL)
-
----
-
-### `connection_conversations`
-
-Per-customer chat sessions for external channel connections (e.g. Facebook PSID). Each row maps to a LangGraph `thread_id`.
-
-| Column | Type | Nullable | Default | Description |
-| ------ | ---- | -------- | ------- | ----------- |
-| id | uuid | NO | — | LangGraph thread id |
-| workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
-| connection_id | uuid | NO | — | Channel connection (`connections.id`) |
-| agent_id | uuid | NO | — | Agent serving this conversation (`agents.id`) |
-| external_participant_id | text | NO | — | Channel participant id (e.g. Facebook PSID) |
-| title | text | NO | — | Preview label |
-| last_message_at | timestamptz | NO | `now()` | Last inbound/outbound activity |
-| created_at | timestamptz | NO | `now()` | Row creation time |
-| updated_at | timestamptz | NO | `now()` | Last update time |
-
-**Indexes**
-
-- `connection_conversations_connection_participant_idx` — UNIQUE on `(connection_id, external_participant_id)`
-- `connection_conversations_workspace_id_idx` — on `workspace_id`
-- `connection_conversations_connection_id_idx` — on `connection_id`
-- `connection_conversations_last_message_at_idx` — on `last_message_at`
-
-**Relations**
-
-- `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
-- `connection_id` → `connections.id` (ON DELETE CASCADE)
-- `agent_id` → `agents.id` (ON DELETE CASCADE)
 
 ---
 

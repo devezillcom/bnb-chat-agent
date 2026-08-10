@@ -16,6 +16,7 @@ export async function listChatAgentSessions(
     eq(chatAgentSessions.workspaceId, params.workspaceId),
     eq(chatAgentSessions.userId, params.userId),
     eq(chatAgentSessions.agentId, params.agentId),
+    eq(chatAgentSessions.chatEnv, params.chatEnv),
   ];
 
   if (keyword) {
@@ -26,6 +27,7 @@ export async function listChatAgentSessions(
     .select({
       id: chatAgentSessions.id,
       title: chatAgentSessions.title,
+      chatEnv: chatAgentSessions.chatEnv,
       createdAt: chatAgentSessions.createdAt,
       updatedAt: chatAgentSessions.updatedAt,
     })
@@ -38,6 +40,7 @@ export async function listChatAgentSessions(
     items: rows.map((row) => ({
       id: row.id,
       title: row.title,
+      chatEnv: row.chatEnv as ListChatAgentSessionsParams["chatEnv"],
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     })),

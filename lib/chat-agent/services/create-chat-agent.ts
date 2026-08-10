@@ -1,15 +1,18 @@
 import "server-only";
 
-import { createAgent, dynamicSystemPromptMiddleware } from "langchain";
+import { createAgent, dynamicSystemPromptMiddleware, summarizationMiddleware } from "langchain";
 
 import { buildWorkspaceAgentCacheKey } from "@/lib/agents/utils/build-workspace-agent-cache-key";
 import { createChatModel, parseChatModel } from "@/lib/langchain/models/create-chat-model";
 
-import { chatAgentContextSchema, type ChatAgentContext } from "../schema";
+import {
+  CHAT_AGENT_SUMMARIZATION_KEEP_MESSAGES,
+  CHAT_AGENT_SUMMARIZATION_TRIGGER_TOKENS,
+} from "../constants";
+import { chatAgentRunContextSchema, type ChatAgentConfig } from "../schema";
 import { buildChatAgentKnowledgeTool } from "../tools/build-chat-agent-knowledge-tool";
 import { buildChatAgentTools } from "../tools/build-chat-agent-tools";
 import { getChatAgentCheckpointer } from "../utils/get-chat-agent-checkpointer";
-import type { ChatAgentConfig } from "../schema";
 
 type ChatAgent = Awaited<ReturnType<typeof buildChatAgent>>;
 
@@ -20,21 +23,27 @@ function getDefaultChatModel() {
   return parseChatModel(process.env.CHAT_AGENT_MODEL);
 }
 
+function getSummarizationModel() {
+  return parseChatModel(process.env.CHAT_AGENT_MODEL, "gpt-4o");
+}
+
 async function buildChatAgent(config: ChatAgentConfig) {
-  const [checkpointer, model, workspaceTools, knowledgeTool] = await Promise.all([
-    getChatAgentCheckpointer(),
-    Promise.resolve(createChatModel(getDefaultChatModel(), { temperature: 0.5 })),
-    buildChatAgentTools({
-      workspaceId: config.workspaceId,
-      toolSlugs: config.toolSlugs,
-    }),
-    Promise.resolve(
-      buildChatAgentKnowledgeTool({
+  const [checkpointer, model, summarizationModel, workspaceTools, knowledgeTool] =
+    await Promise.all([
+      getChatAgentCheckpointer(),
+      Promise.resolve(createChatModel(getDefaultChatModel(), { temperature: 0.5 })),
+      Promise.resolve(createChatModel(getSummarizationModel(), { temperature: 0.2 })),
+      buildChatAgentTools({
         workspaceId: config.workspaceId,
-        knowledgeBaseIds: config.knowledgeBaseIds,
+        toolSlugs: config.toolSlugs,
       }),
-    ),
-  ]);
+      Promise.resolve(
+        buildChatAgentKnowledgeTool({
+          workspaceId: config.workspaceId,
+          knowledgeBaseIds: config.knowledgeBaseIds,
+        }),
+      ),
+    ]);
 
   const tools = knowledgeTool
     ? [...workspaceTools, knowledgeTool]
@@ -43,9 +52,14 @@ async function buildChatAgent(config: ChatAgentConfig) {
   return createAgent({
     model,
     tools,
-    contextSchema: chatAgentContextSchema,
+    contextSchema: chatAgentRunContextSchema,
     middleware: [
-      dynamicSystemPromptMiddleware<ChatAgentContext>(() => config.systemPrompt),
+      dynamicSystemPromptMiddleware(() => config.systemPrompt),
+      summarizationMiddleware({
+        model: summarizationModel,
+        trigger: { tokens: CHAT_AGENT_SUMMARIZATION_TRIGGER_TOKENS },
+        keep: { messages: CHAT_AGENT_SUMMARIZATION_KEEP_MESSAGES },
+      }),
     ],
     checkpointer,
   });

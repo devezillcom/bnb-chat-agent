@@ -13,9 +13,14 @@ import { AgentChatHistory } from "@/components/agents/agent-chat/agent-chat-hist
 import { AgentChatMessageList } from "@/components/agents/agent-chat/agent-chat-message-list";
 import { useAgentChat } from "@/components/agents/agent-chat/use-agent-chat";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AgentListItem } from "@/lib/agents/types";
 import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
-import { DEFAULT_CHANNEL_AGENT_FIRST_MESSAGE } from "@/lib/channel-agent/constants";
+import {
+  getChatEnvUiOptions,
+  type ActiveChatEnv,
+} from "@/lib/chat-agent/config/chat-env";
+import { DEFAULT_AGENT_FIRST_MESSAGE } from "@/lib/chat-agent/constants";
 import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +30,8 @@ type AgentChatPageProps = {
   workspaceIndex: number;
 };
 
+const CHAT_ENV_OPTIONS = getChatEnvUiOptions();
+
 export function AgentChatPage({
   agent,
   workspaceId,
@@ -32,6 +39,7 @@ export function AgentChatPage({
 }: AgentChatPageProps) {
   const [input, setInput] = useState("");
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [chatEnv, setChatEnv] = useState<ActiveChatEnv>("web");
   const {
     handleImageInputChange,
     hasUploadingImages,
@@ -48,6 +56,7 @@ export function AgentChatPage({
   } = useAgentChat({
     agentId: agent.id,
     workspaceId,
+    chatEnv,
   });
   const agentHref = `${getDashboardNavHref(workspaceIndex, "agents")}/${agent.id}`;
   const leading = getAgentListLeading(agent.name);
@@ -63,6 +72,15 @@ export function AgentChatPage({
   }
 
   function handleNewChat() {
+    setInput("");
+    resetChat();
+    setIsHistoryOpen(false);
+  }
+
+  function handleChatEnvChange(nextChatEnv: ActiveChatEnv) {
+    if (nextChatEnv === chatEnv) return;
+
+    setChatEnv(nextChatEnv);
     setInput("");
     resetChat();
     setIsHistoryOpen(false);
@@ -122,6 +140,23 @@ export function AgentChatPage({
               </Button>
             </div>
           </div>
+          <Tabs
+            value={chatEnv}
+            onValueChange={(value) => handleChatEnvChange(value as ActiveChatEnv)}
+          >
+            <TabsList>
+              {CHAT_ENV_OPTIONS.map((option) => (
+                <TabsTrigger
+                  key={option.value}
+                  value={option.value}
+                  disabled={!option.enabled || isInteractionDisabled}
+                >
+                  {option.label}
+                  {!option.enabled ? " (Soon)" : null}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
       </header>
 
@@ -131,6 +166,7 @@ export function AgentChatPage({
             <AgentChatHistory
               activeSessionId={sessionId}
               agentId={agent.id}
+              chatEnv={chatEnv}
               isDisabled={isInteractionDisabled}
               onSelectSession={(nextSessionId) => {
                 setIsHistoryOpen(false);
@@ -143,7 +179,7 @@ export function AgentChatPage({
           <AgentChatMessageList
             agent={agent}
             greeting={
-              agent.firstMessage?.trim() || DEFAULT_CHANNEL_AGENT_FIRST_MESSAGE
+              agent.firstMessage?.trim() || DEFAULT_AGENT_FIRST_MESSAGE
             }
             messages={messages}
             isSending={isSending}

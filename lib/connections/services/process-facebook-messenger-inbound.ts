@@ -1,15 +1,16 @@
 import { and, eq } from "drizzle-orm";
 
 import { agents, connections } from "@/db/schema";
-import { DEFAULT_CHANNEL_AGENT_FIRST_MESSAGE } from "@/lib/channel-agent/constants";
+import type { ActiveChatEnv } from "@/lib/chat-agent/config/chat-env";
+import { DEFAULT_AGENT_FIRST_MESSAGE } from "@/lib/chat-agent/constants";
+import { getOrCreateChannelAgentSession } from "@/lib/chat-agent/services/upsert-agent-session";
 import { replyToChannelMessage } from "@/lib/channel-agent/services/reply-to-channel-message";
-import { splitFacebookMessageText } from "@/lib/channel-agent/utils/split-facebook-message-text";
+import { splitFacebookMessageText } from "@/lib/connections/utils/split-facebook-message-text";
 import { db } from "@/lib/db";
 
 import type { FacebookMessengerInboundQstashPayload } from "../schema";
 import { sendFacebookMessengerSenderAction } from "../utils/send-facebook-messenger-message";
 import { claimConnectionInboundDedup } from "./claim-connection-inbound-dedup";
-import { getOrCreateConnectionConversation } from "./get-or-create-connection-conversation";
 import { resolveFacebookInboundPageAccessToken } from "./resolve-facebook-inbound-page-access-token";
 import { sendFacebookInboundReply } from "./send-facebook-inbound-reply";
 import { storeFacebookInboundImages } from "./store-facebook-inbound-images";
@@ -42,7 +43,7 @@ async function loadConnectionWithAgent(connectionId: string) {
 
 function resolveAgentFirstMessage(firstMessage: string | null): string {
   const trimmed = firstMessage?.trim();
-  return trimmed || DEFAULT_CHANNEL_AGENT_FIRST_MESSAGE;
+  return trimmed || DEFAULT_AGENT_FIRST_MESSAGE;
 }
 
 async function sendFacebookTypingIndicator(params: {
@@ -112,10 +113,13 @@ export async function processFacebookMessengerInbound(
           (hasImageAttachments ? "Facebook image" : "Facebook message")
         : "Get Started";
 
-    const { sessionId } = await getOrCreateConnectionConversation({
+    const chatEnv: ActiveChatEnv = "facebook_page";
+
+    const { sessionId } = await getOrCreateChannelAgentSession({
       connectionId: connection.id,
       workspaceId: connection.workspaceId,
       agentId: connection.agentId,
+      chatEnv,
       externalParticipantId: payload.psid,
       title,
     });
@@ -124,6 +128,7 @@ export async function processFacebookMessengerInbound(
       workspaceId: connection.workspaceId,
       connectionId: connection.id,
       agentId: connection.agentId,
+      chatEnv,
       channelType: connection.channelType,
       externalParticipantId: payload.psid,
     };
@@ -150,6 +155,7 @@ export async function processFacebookMessengerInbound(
       } else {
         const result = await replyToChannelMessage({
           sessionId,
+          chatEnv,
           message: payload.text?.trim()
             ? payload.text.trim()
             : FACEBOOK_IMAGE_ONLY_USER_MESSAGE,

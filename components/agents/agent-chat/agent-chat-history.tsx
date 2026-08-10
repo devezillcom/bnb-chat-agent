@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { ActiveChatEnv } from "@/lib/chat-agent/config/chat-env";
 import type { ListChatAgentSessionsResult } from "@/lib/chat-agent/types";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
@@ -20,6 +21,7 @@ import { agentChatSessionQueryKey } from "./use-agent-chat";
 type AgentChatHistoryProps = {
   activeSessionId?: string;
   agentId: string;
+  chatEnv: ActiveChatEnv;
   isDisabled: boolean;
   onSelectSession: (sessionId: string) => void;
   workspaceId: string;
@@ -41,10 +43,12 @@ function formatSessionTimestamp(value: string) {
 async function fetchAgentChatSessions(
   workspaceId: string,
   agentId: string,
+  chatEnv: ActiveChatEnv,
   keyword: string,
 ) {
   const searchParams = new URLSearchParams({
     agentId,
+    chatEnv,
     limit: "50",
   });
   const trimmedKeyword = keyword.trim();
@@ -68,14 +72,15 @@ async function fetchAgentChatSessions(
 export function AgentChatHistory({
   activeSessionId,
   agentId,
+  chatEnv,
   isDisabled,
   onSelectSession,
   workspaceId,
 }: AgentChatHistoryProps) {
   const [keyword, setKeyword] = useState("");
   const { data, isError, isLoading } = useQuery({
-    queryKey: agentChatSessionQueryKey(workspaceId, agentId, keyword),
-    queryFn: () => fetchAgentChatSessions(workspaceId, agentId, keyword),
+    queryKey: agentChatSessionQueryKey(workspaceId, agentId, chatEnv, keyword),
+    queryFn: () => fetchAgentChatSessions(workspaceId, agentId, chatEnv, keyword),
   });
   const sessions = data?.items ?? [];
 

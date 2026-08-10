@@ -1,5 +1,8 @@
-export const CHAT_AGENT_GREETING =
-  "Hello! I am your BNB Chat Agent assistant. How can I help you today?";
+export const DEFAULT_AGENT_FIRST_MESSAGE = "Hello! How can I help you today?";
+
+export const CHAT_AGENT_SUMMARIZATION_TRIGGER_TOKENS = 6000;
+
+export const CHAT_AGENT_SUMMARIZATION_KEEP_MESSAGES = 20;
 
 export function buildChatAgentSystemPrompt(): string {
   return [

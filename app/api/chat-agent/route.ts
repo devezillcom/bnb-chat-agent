@@ -1,6 +1,9 @@
 import { createApiHandler } from "@/lib/exposers/create-api-handler";
 import { chatWithAgentRequestSchema } from "@/lib/chat-agent/schema";
-import { chatWithAgent } from "@/lib/chat-agent/services/chat-with-agent";
+import {
+  chatWithAgent,
+  shouldStreamChatEnv,
+} from "@/lib/chat-agent/services/chat-with-agent";
 import { createChatAgentStreamResponse } from "@/lib/chat-agent/utils/create-chat-agent-stream-response";
 
 export const POST = createApiHandler(
@@ -14,7 +17,12 @@ export const POST = createApiHandler(
       userId: ctx.userId,
     };
 
-    return createChatAgentStreamResponse(chatParams);
+    if (shouldStreamChatEnv(chatParams.chatEnv)) {
+      return createChatAgentStreamResponse(chatParams);
+    }
+
+    const result = await chatWithAgent(chatParams);
+    return Response.json(result);
   },
   {
     allowedRoles: ["user", "admin"],

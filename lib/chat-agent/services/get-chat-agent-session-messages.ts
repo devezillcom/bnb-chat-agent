@@ -5,6 +5,7 @@ import { chatAgentSessions } from "@/db/schema";
 import { db } from "@/lib/db";
 import { APIError } from "@/lib/exposers/api-error";
 
+import type { ActiveChatEnv } from "../config/chat-env";
 import type {
   GetChatAgentSessionMessagesParams,
   GetChatAgentSessionMessagesResult,
@@ -23,7 +24,10 @@ export async function getChatAgentSessionMessages(
   params: GetChatAgentSessionMessagesParams,
 ): Promise<GetChatAgentSessionMessagesResult> {
   const [session] = await db
-    .select({ id: chatAgentSessions.id })
+    .select({
+      id: chatAgentSessions.id,
+      chatEnv: chatAgentSessions.chatEnv,
+    })
     .from(chatAgentSessions)
     .where(
       and(
@@ -31,6 +35,7 @@ export async function getChatAgentSessionMessages(
         eq(chatAgentSessions.workspaceId, params.workspaceId),
         eq(chatAgentSessions.userId, params.userId),
         eq(chatAgentSessions.agentId, params.agentId),
+        eq(chatAgentSessions.chatEnv, params.chatEnv),
       ),
     )
     .limit(1);
@@ -39,9 +44,11 @@ export async function getChatAgentSessionMessages(
     throw new APIError("ERR_NOT_FOUND", "Chat session not found.", 404);
   }
 
+  const chatEnv = session.chatEnv as ActiveChatEnv;
   const agentContext = await resolveChatAgentContext({
     agentId: params.agentId,
     workspaceId: params.workspaceId,
+    chatEnv,
   });
   const agent = await getChatAgent(agentContext);
   const state = await (agent as AgentWithState).getState({
@@ -54,6 +61,7 @@ export async function getChatAgentSessionMessages(
 
   return {
     sessionId: params.sessionId,
+    chatEnv,
     messages,
   };
 }

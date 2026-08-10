@@ -1,10 +1,12 @@
 import type {
-  ChatAgentContext,
+  ChatAgentImageAttachment,
   ChatAgentMessage,
   ChatWithAgentRequest,
 } from "./schema";
+import type { ActiveChatEnv } from "./config/chat-env";
 
-export type { ChatAgentMessage, ChatWithAgentRequest, ChatAgentContext };
+export type { ChatAgentMessage, ChatWithAgentRequest };
+export type { ActiveChatEnv, ChatEnv } from "./config/chat-env";
 
 export type ChatWithAgentParams = ChatWithAgentRequest & {
   workspaceId: string;
@@ -26,6 +28,7 @@ export type ListChatAgentSessionsParams = {
   workspaceId: string;
   userId: string;
   agentId: string;
+  chatEnv: ActiveChatEnv;
   limit: number;
   keyword?: string;
 };
@@ -33,6 +36,7 @@ export type ListChatAgentSessionsParams = {
 export type ChatAgentSessionListItem = {
   id: string;
   title: string;
+  chatEnv: ActiveChatEnv;
   createdAt: string;
   updatedAt: string;
 };
@@ -46,9 +50,34 @@ export type GetChatAgentSessionMessagesParams = {
   workspaceId: string;
   userId: string;
   agentId: string;
+  chatEnv: ActiveChatEnv;
 };
 
 export type GetChatAgentSessionMessagesResult = {
   sessionId: string;
+  chatEnv: ActiveChatEnv;
   messages: ChatAgentMessage[];
+};
+
+export type ReplyToChannelMessageParams = {
+  sessionId: string;
+  message: string;
+  images?: ChatAgentImageAttachment[];
+  chatEnv: ActiveChatEnv;
+  agent: {
+    id: string;
+    systemPrompt: string;
+  };
+  context: {
+    workspaceId: string;
+    agentId: string;
+    chatEnv: ActiveChatEnv;
+    connectionId: string;
+    channelType: string;
+    externalParticipantId: string;
+  };
+};
+
+export type ReplyToChannelMessageResult = {
+  message: string;
 };

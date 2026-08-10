@@ -20,7 +20,7 @@ When Facebook sends a webhook event to `/api/webhooks/facebook`:
 | Decision | Behavior |
 | -------- | -------- |
 | No assigned agent | `mark_seen` only; no typing indicator, no reply |
-| Agent reassignment | All `connection_conversations` rows for that connection are deleted; next message creates a fresh session |
+| Agent reassignment | All channel `chat_agent_sessions` rows for that connection are deleted; next message creates a fresh session |
 | Get Started postback | Always handled when an agent is assigned; sends the agent's `first_message` (or default greeting) without invoking the LLM |
 | Async processing | QStash from the first version; webhook never waits for LLM latency |
 | Sender actions | Webhook: `mark_seen` on receive; QStash job: `typing_on` before processing; Messenger clears typing when the reply is delivered — `typing_off` only on job failure |
@@ -34,9 +34,9 @@ Optional greeting text used for Messenger **Get Started** postbacks. If empty, t
 
 `Hello! How can I help you today?`
 
-### `connection_conversations`
+### `chat_agent_sessions` (channel rows)
 
-One row per `(connection_id, external_participant_id)` — e.g. one Facebook PSID per Page connection.
+One row per `(connection_id, external_participant_id, chat_env)` — e.g. one Facebook PSID per Page connection with `chat_env = facebook_page`.
 
 - `id` = LangGraph `thread_id` (Postgres checkpointer)
 - `agent_id` = agent that owns this session; mismatch with the connection's current agent triggers session reset
@@ -47,14 +47,14 @@ Stores processed Facebook `mid` values per connection to avoid duplicate replies
 
 ## Session continuity
 
-Each Facebook customer (PSID) gets a stable LangGraph thread via `connection_conversations.id`.
+Each Facebook customer (PSID) gets a stable LangGraph thread via `chat_agent_sessions.id` (`chat_env = facebook_page`).
 
 When they message again:
 
 - Same `(connection, psid)` → same `sessionId` → checkpoint history is loaded
 - Agent changed on connection → old conversation row deleted → new UUID → fresh thread
 
-Long conversations are trimmed via LangChain `summarizationMiddleware` on the channel agent (trigger: 6000 tokens, keep last 20 messages).
+Long conversations are trimmed via LangChain `summarizationMiddleware` on the shared chat agent (trigger: 6000 tokens, keep last 20 messages).
 
 ## Inbound images
 
@@ -67,7 +67,7 @@ When a customer sends Facebook image attachments:
 5. If R2 is not configured, the job falls back to fetching the Facebook CDN URL directly for vision.
 6. If resize fetch fails, `resolveImageSourceForVision` retries the original public R2 URL.
 
-Requires a **vision-capable** `CHANNEL_AGENT_MODEL` (e.g. `gpt-4o`, `claude-sonnet-4-6`). Video, audio, and non-image files still receive a static fallback reply.
+Requires a **vision-capable** `CHAT_AGENT_MODEL` (e.g. `gpt-4o`, `claude-sonnet-4-6`). Video, audio, and non-image files still receive a static fallback reply.
 
 ## Code map
 
@@ -80,7 +80,7 @@ Requires a **vision-capable** `CHANNEL_AGENT_MODEL` (e.g. `gpt-4o`, `claude-sonn
 | QStash handler | `lib/connections/services/handle-facebook-messenger-inbound-qstash-job.ts` |
 | Reply orchestration | `lib/connections/services/process-facebook-messenger-inbound.ts` |
 | Facebook image storage | `lib/connections/services/store-facebook-inbound-images.ts` |
-| LangGraph channel agent | `lib/channel-agent/` |
+| LangGraph core + channel adapter | `lib/chat-agent/`, `lib/channel-agent/services/reply-to-channel-message.ts` |
 | Job registry | `lib/qstash/job-config.ts` → `facebook-messenger-inbound` |
 
 ## Environment variables
@@ -90,9 +90,8 @@ Requires a **vision-capable** `CHANNEL_AGENT_MODEL` (e.g. `gpt-4o`, `claude-sonn
 | `QSTASH_TOKEN` | Publish inbound jobs |
 | `QSTASH_CURRENT_SIGNING_KEY` / `QSTASH_NEXT_SIGNING_KEY` | Verify callback (required in production) |
 | `QSTASH_CALLBACK_URL` or `NEXT_PUBLIC_APP_URL` | Callback base URL |
-| `DATABASE_URL` | Postgres checkpointer + conversation tables |
-| `CHANNEL_AGENT_MODEL` | Optional; defaults to `CHAT_AGENT_MODEL` |
-| `CHANNEL_AGENT_SUMMARIZATION_MODEL` | Optional; defaults to `gpt-4o` |
+| `DATABASE_URL` | Postgres checkpointer + session tables |
+| `CHAT_AGENT_MODEL` | LLM for chat and channel replies (vision-capable for Facebook images) |
 | `R2_IMAGE_RESIZE_WIDTH` | Optional; resize width for inbound Facebook images via Cloudflare `/cdn-cgi/image/` (default `1568`, `0` disables) |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | LLM provider keys (vision model required for images) |
 
@@ -150,8 +149,8 @@ These are intentional gaps for follow-up work:
 - **Non–Get Started postbacks** — Ignored (quick replies, custom payloads).
 - **24-hour messaging window** — Replies use `messaging_type: RESPONSE`; outside the 24h window Facebook will reject sends (Message Tags not implemented).
 - **Human handoff / pause agent** — No way to disable auto-reply per conversation or escalate to a human.
-- **Conversation UI** — No admin view of `connection_conversations` or message history in the app yet.
-- **Agent tools / skills / knowledge** — Channel agent uses `system_prompt` only; workspace tools and KB are not wired.
+- **Conversation UI** — In-app sandbox can test `facebook_page` env per agent; no admin view of production channel sessions yet.
+- **Agent tools / skills / knowledge** — Wired through the shared chat agent runtime for both web and channel envs.
 - **Concurrent rapid messages** — QStash flow control serializes per `(connection, psid)` but does not debounce/batch multiple messages into one LLM turn.
 - **Error surfacing** — Failures are logged; `connections.last_error` is not updated on reply failures.
 - **Get Started without prior conversation seed** — First message is sent as plain text only; it is not added to the LangGraph checkpoint (first user text message starts LLM history).

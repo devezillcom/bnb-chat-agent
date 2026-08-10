@@ -2,14 +2,14 @@ import { randomUUID } from "crypto";
 
 import type { ChatAgentStreamEvent, ChatWithAgentParams } from "../types";
 import { buildChatAgentHumanMessage } from "../utils/build-chat-agent-human-message";
-import { createChatAgentRunConfig } from "../utils/create-chat-agent-run-config";
+import { createAgentRunConfig } from "../utils/create-agent-run-config";
 import { extractMessageContent } from "../utils/extract-message-content";
 import { getChatAgent } from "./create-chat-agent";
 import {
   resolveChatAgentContext,
   type ResolveChatAgentContextResult,
 } from "./resolve-chat-agent-context";
-import { upsertChatAgentSession } from "./upsert-chat-agent-session";
+import { upsertInAppAgentSession } from "./upsert-agent-session";
 
 type StreamedMessageChunk = {
   content?: unknown;
@@ -46,10 +46,11 @@ async function* streamChatAgentTokens(
   agentContext: ResolveChatAgentContextResult,
 ): AsyncGenerator<string> {
   const agent = await getChatAgent(agentContext);
-  const runConfig = createChatAgentRunConfig(sessionId, {
+  const runConfig = createAgentRunConfig(sessionId, {
     userId: params.userId,
     workspaceId: params.workspaceId,
     agentId: params.agentId,
+    chatEnv: params.chatEnv,
   });
 
   const humanMessage = await buildChatAgentHumanMessage(
@@ -114,15 +115,17 @@ export async function* streamChatWithAgent(
   const agentContext = await resolveChatAgentContext({
     agentId: params.agentId,
     workspaceId: params.workspaceId,
+    chatEnv: params.chatEnv,
   });
 
   yield { type: "session", sessionId };
 
-  await upsertChatAgentSession({
+  await upsertInAppAgentSession({
     sessionId,
     workspaceId: params.workspaceId,
     userId: params.userId,
     agentId: params.agentId,
+    chatEnv: params.chatEnv,
     message: params.message,
   });
 

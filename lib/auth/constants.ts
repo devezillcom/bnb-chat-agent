@@ -3,7 +3,7 @@ export const AUTH_COOKIE_NAME = "auth-token";
 export const DEFAULT_REDIRECT = "/";
 
 /** Path prefixes that require an auth cookie (see `isProtected`). */
-export const PROTECTED_PREFIXES = ["/", "/w", "/p", "/profile"];
+export const PROTECTED_PREFIXES = ["/w", "/profile"];
 
 export const AUTH_PAGES = ["/sign-in", "/sign-up", "/forgot-password"];
 

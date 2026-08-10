@@ -1,9 +1,10 @@
 import { z } from "zod";
 
+import { activeChatEnvSchema, type ActiveChatEnv } from "./config/chat-env";
 import { CHAT_AGENT_IMAGE_MAX_COUNT } from "./constants/chat-agent-image-upload-rules";
 
 export const chatAgentImageAttachmentSchema = z.object({
-  url: z.string().url(),
+  url: z.url(),
   key: z.string().optional(),
   mimeType: z.string().optional(),
   fileName: z.string().optional(),
@@ -24,6 +25,7 @@ export const chatWithAgentRequestSchema = z
   .object({
     agentId: z.uuid({ error: "Agent is required." }),
     sessionId: z.string().uuid().optional(),
+    chatEnv: activeChatEnvSchema.default("web"),
     message: z.string().trim(),
     images: z
       .array(chatAgentImageAttachmentSchema)
@@ -38,16 +40,21 @@ export const chatWithAgentRequestSchema = z
 export const chatAgentConfigSchema = z.object({
   agentId: z.uuid(),
   workspaceId: z.uuid(),
+  chatEnv: activeChatEnvSchema,
   systemPrompt: z.string(),
   toolSlugs: z.array(z.string()).default([]),
   knowledgeBaseIds: z.array(z.uuid()).default([]),
   citationsEnabled: z.boolean().default(true),
 });
 
-export const chatAgentContextSchema = z.object({
-  userId: z.uuid(),
+export const chatAgentRunContextSchema = z.object({
   workspaceId: z.uuid(),
   agentId: z.uuid(),
+  chatEnv: activeChatEnvSchema,
+  userId: z.uuid().optional(),
+  connectionId: z.uuid().optional(),
+  channelType: z.string().optional(),
+  externalParticipantId: z.string().optional(),
 });
 
 export type ChatAgentImageAttachment = z.infer<
@@ -59,4 +66,23 @@ export type ChatAgentImageUploadUrlRequest = z.infer<
 export type ChatAgentMessage = z.infer<typeof chatAgentMessageSchema>;
 export type ChatWithAgentRequest = z.infer<typeof chatWithAgentRequestSchema>;
 export type ChatAgentConfig = z.infer<typeof chatAgentConfigSchema>;
-export type ChatAgentContext = z.infer<typeof chatAgentContextSchema>;
+export type ChatAgentInAppContext = {
+  userId: string;
+  workspaceId: string;
+  agentId: string;
+  chatEnv: ActiveChatEnv;
+};
+
+export type ChatAgentChannelContext = {
+  workspaceId: string;
+  agentId: string;
+  chatEnv: ActiveChatEnv;
+  connectionId: string;
+  channelType: string;
+  externalParticipantId: string;
+};
+
+export type ChatAgentRunContext = ChatAgentInAppContext | ChatAgentChannelContext;
+
+/** @deprecated Use ChatAgentChannelContext */
+export type ChannelAgentContext = ChatAgentChannelContext;

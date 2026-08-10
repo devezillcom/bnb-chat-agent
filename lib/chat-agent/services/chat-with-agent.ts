@@ -1,12 +1,11 @@
 import { randomUUID } from "crypto";
 
+import { resolveChatEnvRuntime } from "../config/chat-env";
 import type { ChatWithAgentParams, ChatWithAgentResult } from "../types";
-import { buildChatAgentHumanMessage } from "../utils/build-chat-agent-human-message";
-import { createChatAgentRunConfig } from "../utils/create-chat-agent-run-config";
-import { extractMessageContent } from "../utils/extract-message-content";
-import { getChatAgent } from "./create-chat-agent";
+import { createAgentRunConfig } from "../utils/create-agent-run-config";
+import { invokeAgentTurn } from "./invoke-agent-turn";
 import { resolveChatAgentContext } from "./resolve-chat-agent-context";
-import { upsertChatAgentSession } from "./upsert-chat-agent-session";
+import { upsertInAppAgentSession } from "./upsert-agent-session";
 
 export async function chatWithAgent(
   params: ChatWithAgentParams,
@@ -15,39 +14,37 @@ export async function chatWithAgent(
   const agentContext = await resolveChatAgentContext({
     agentId: params.agentId,
     workspaceId: params.workspaceId,
-  });
-  const agent = await getChatAgent(agentContext);
-  const runConfig = createChatAgentRunConfig(sessionId, {
-    userId: params.userId,
-    workspaceId: params.workspaceId,
-    agentId: params.agentId,
+    chatEnv: params.chatEnv,
   });
 
-  await upsertChatAgentSession({
+  await upsertInAppAgentSession({
     sessionId,
     workspaceId: params.workspaceId,
     userId: params.userId,
     agentId: params.agentId,
+    chatEnv: params.chatEnv,
     message: params.message,
   });
 
-  const humanMessage = await buildChatAgentHumanMessage(
-    params.message,
-    params.images,
-  );
-
-  const result = await agent.invoke(
-    {
-      messages: [humanMessage],
+  const result = await invokeAgentTurn({
+    sessionId,
+    message: params.message,
+    images: params.images,
+    agentContext,
+    runContext: {
+      userId: params.userId,
+      workspaceId: params.workspaceId,
+      agentId: params.agentId,
+      chatEnv: params.chatEnv,
     },
-    runConfig,
-  );
-
-  const lastMessage = result.messages.at(-1);
-  const message = extractMessageContent(lastMessage?.content).trim();
+  });
 
   return {
     sessionId,
-    message: message || "I am not sure how to answer that yet.",
+    message: result.message,
   };
+}
+
+export function shouldStreamChatEnv(chatEnv: ChatWithAgentParams["chatEnv"]) {
+  return resolveChatEnvRuntime(chatEnv).delivery === "stream";
 }

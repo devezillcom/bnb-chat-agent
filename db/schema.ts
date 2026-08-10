@@ -93,14 +93,24 @@ export const chatAgentSessions = pgTable(
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
     agentId: uuid("agent_id")
       .notNull()
       .references(() => agents.id, { onDelete: "cascade" }),
+    /** Target channel environment: web, facebook_page, zalo, etc. */
+    chatEnv: text("chat_env").notNull().default("web"),
+    /** In-app sandbox sessions — null for external channel participants. */
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    /** Production channel sessions — null for in-app sandbox. */
+    connectionId: uuid("connection_id").references(() => connections.id, {
+      onDelete: "cascade",
+    }),
+    /** Channel-specific participant id (e.g. Facebook PSID). */
+    externalParticipantId: text("external_participant_id"),
     /** Preview label, typically the first user message. */
     title: text("title").notNull(),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -109,16 +119,20 @@ export const chatAgentSessions = pgTable(
       .defaultNow(),
   },
   (table) => [
-    index("chat_agent_sessions_workspace_id_user_id_idx").on(
-      table.workspaceId,
-      table.userId,
-    ),
-    index("chat_agent_sessions_workspace_id_user_id_agent_id_idx").on(
+    index("chat_agent_sessions_workspace_id_user_id_agent_id_chat_env_idx").on(
       table.workspaceId,
       table.userId,
       table.agentId,
+      table.chatEnv,
     ),
+    uniqueIndex("chat_agent_sessions_connection_participant_chat_env_idx").on(
+      table.connectionId,
+      table.externalParticipantId,
+      table.chatEnv,
+    ),
+    index("chat_agent_sessions_connection_id_idx").on(table.connectionId),
     index("chat_agent_sessions_updated_at_idx").on(table.updatedAt),
+    index("chat_agent_sessions_last_message_at_idx").on(table.lastMessageAt),
   ],
 );
 
@@ -185,51 +199,6 @@ export const connections = pgTable(
 
 export type Connection = typeof connections.$inferSelect;
 export type NewConnection = typeof connections.$inferInsert;
-
-export const connectionConversations = pgTable(
-  "connection_conversations",
-  {
-    /** LangGraph thread id for this customer conversation. */
-    id: uuid("id").primaryKey().notNull(),
-    workspaceId: uuid("workspace_id")
-      .notNull()
-      .references(() => workspaces.id, { onDelete: "cascade" }),
-    connectionId: uuid("connection_id")
-      .notNull()
-      .references(() => connections.id, { onDelete: "cascade" }),
-    agentId: uuid("agent_id")
-      .notNull()
-      .references(() => agents.id, { onDelete: "cascade" }),
-    /** Channel-specific participant id (e.g. Facebook PSID). */
-    externalParticipantId: text("external_participant_id").notNull(),
-    title: text("title").notNull(),
-    lastMessageAt: timestamp("last_message_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [
-    uniqueIndex("connection_conversations_connection_participant_idx").on(
-      table.connectionId,
-      table.externalParticipantId,
-    ),
-    index("connection_conversations_workspace_id_idx").on(table.workspaceId),
-    index("connection_conversations_connection_id_idx").on(table.connectionId),
-    index("connection_conversations_last_message_at_idx").on(
-      table.lastMessageAt,
-    ),
-  ],
-);
-
-export type ConnectionConversation =
-  typeof connectionConversations.$inferSelect;
-export type NewConnectionConversation =
-  typeof connectionConversations.$inferInsert;
 
 export const connectionInboundDedup = pgTable(
   "connection_inbound_dedup",

@@ -1,15 +1,12 @@
 import "server-only";
 
-import { buildChatAgentHumanMessage } from "@/lib/chat-agent/utils/build-chat-agent-human-message";
 import { resolveWorkspaceAgentRuntime } from "@/lib/chat-agent/utils/resolve-workspace-agent-runtime";
-import { extractMessageContent } from "@/lib/chat-agent/utils/extract-message-content";
+import { invokeAgentTurn } from "@/lib/chat-agent/services/invoke-agent-turn";
 
 import type {
   ReplyToChannelMessageParams,
   ReplyToChannelMessageResult,
 } from "../types";
-import { createChannelAgentRunConfig } from "../utils/create-channel-agent-run-config";
-import { getChannelAgent } from "./create-channel-agent";
 
 export async function replyToChannelMessage(
   params: ReplyToChannelMessageParams,
@@ -18,35 +15,26 @@ export async function replyToChannelMessage(
     agentId: params.agent.id,
     workspaceId: params.context.workspaceId,
     systemPrompt: params.agent.systemPrompt,
-    citationsEnabled: false,
+    chatEnv: params.chatEnv,
   });
 
-  const agent = await getChannelAgent({
-    agentId: params.agent.id,
-    workspaceId: params.context.workspaceId,
-    systemPrompt: runtime.systemPrompt,
-    toolSlugs: runtime.toolSlugs,
-    knowledgeBaseIds: runtime.knowledgeBaseIds,
-    citationsEnabled: runtime.citationsEnabled,
-  });
-
-  const runConfig = createChannelAgentRunConfig(params.sessionId, params.context);
-  const humanMessage = await buildChatAgentHumanMessage(
-    params.message,
-    params.images,
-  );
-
-  const result = await agent.invoke(
-    {
-      messages: [humanMessage],
+  const result = await invokeAgentTurn({
+    sessionId: params.sessionId,
+    message: params.message,
+    images: params.images,
+    agentContext: {
+      agentId: params.agent.id,
+      workspaceId: params.context.workspaceId,
+      chatEnv: params.chatEnv,
+      systemPrompt: runtime.systemPrompt,
+      toolSlugs: runtime.toolSlugs,
+      knowledgeBaseIds: runtime.knowledgeBaseIds,
+      citationsEnabled: runtime.citationsEnabled,
     },
-    runConfig,
-  );
-
-  const lastMessage = result.messages.at(-1);
-  const message = extractMessageContent(lastMessage?.content).trim();
+    runContext: params.context,
+  });
 
   return {
-    message: message || "I am not sure how to answer that yet.",
+    message: result.message,
   };
 }

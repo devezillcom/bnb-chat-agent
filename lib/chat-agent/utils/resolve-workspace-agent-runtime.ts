@@ -4,6 +4,10 @@ import { listAgentToolSlugs } from "@/lib/agents/services/list-agent-tool-slugs"
 import { listAgentKnowledgeBaseIds } from "@/lib/knowledge-base/services/list-agent-knowledge-base-ids";
 import { listAgentSkills } from "@/lib/skills/services/list-agent-skills";
 
+import {
+  resolveChatEnvRuntime,
+  type ActiveChatEnv,
+} from "../config/chat-env";
 import { buildChatAgentKnowledgePrompt } from "../knowledge/build-chat-agent-knowledge-prompt";
 import { buildChatAgentSkillsPrompt } from "../skills/build-chat-agent-skills";
 
@@ -11,10 +15,12 @@ export type ResolveWorkspaceAgentRuntimeParams = {
   agentId: string;
   workspaceId: string;
   systemPrompt: string;
+  chatEnv: ActiveChatEnv;
   citationsEnabled?: boolean;
 };
 
 export type ResolveWorkspaceAgentRuntimeResult = {
+  chatEnv: ActiveChatEnv;
   systemPrompt: string;
   toolSlugs: string[];
   knowledgeBaseIds: string[];
@@ -28,7 +34,9 @@ function uniqueToolSlugs(slugs: string[]): string[] {
 export async function resolveWorkspaceAgentRuntime(
   params: ResolveWorkspaceAgentRuntimeParams,
 ): Promise<ResolveWorkspaceAgentRuntimeResult> {
-  const citationsEnabled = params.citationsEnabled ?? true;
+  const chatEnvRuntime = resolveChatEnvRuntime(params.chatEnv);
+  const citationsEnabled =
+    params.citationsEnabled ?? chatEnvRuntime.citationsEnabled;
 
   const [agentSkills, directToolSlugs, knowledgeBaseIds] = await Promise.all([
     listAgentSkills({
@@ -54,6 +62,7 @@ export async function resolveWorkspaceAgentRuntime(
   });
   const systemPrompt = [
     params.systemPrompt.trim(),
+    chatEnvRuntime.systemPromptSuffix,
     skillsPrompt,
     knowledgePrompt,
   ]
@@ -61,6 +70,7 @@ export async function resolveWorkspaceAgentRuntime(
     .join("\n\n");
 
   return {
+    chatEnv: params.chatEnv,
     systemPrompt,
     toolSlugs,
     knowledgeBaseIds,

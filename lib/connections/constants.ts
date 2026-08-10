@@ -20,6 +20,8 @@ export const FACEBOOK_GRAPH_BASE = `https://graph.facebook.com/${FACEBOOK_GRAPH_
 
 export const FACEBOOK_MESSENGER_SEND_API_URL = `${FACEBOOK_GRAPH_BASE}/me/messages`;
 
+export const FACEBOOK_MESSENGER_MAX_TEXT_LENGTH = 2000;
+
 export const FACEBOOK_WEBHOOK_SUBSCRIBED_FIELDS = [
   "messages",
   "messaging_postbacks",
