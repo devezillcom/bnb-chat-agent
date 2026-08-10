@@ -1,19 +1,24 @@
 import "server-only";
 
 import { listAgentToolSlugs } from "@/lib/agents/services/list-agent-tool-slugs";
+import { listAgentKnowledgeBaseIds } from "@/lib/knowledge-base/services/list-agent-knowledge-base-ids";
 import { listAgentSkills } from "@/lib/skills/services/list-agent-skills";
 
+import { buildChatAgentKnowledgePrompt } from "../knowledge/build-chat-agent-knowledge-prompt";
 import { buildChatAgentSkillsPrompt } from "../skills/build-chat-agent-skills";
 
 export type ResolveWorkspaceAgentRuntimeParams = {
   agentId: string;
   workspaceId: string;
   systemPrompt: string;
+  citationsEnabled?: boolean;
 };
 
 export type ResolveWorkspaceAgentRuntimeResult = {
   systemPrompt: string;
   toolSlugs: string[];
+  knowledgeBaseIds: string[];
+  citationsEnabled: boolean;
 };
 
 function uniqueToolSlugs(slugs: string[]): string[] {
@@ -23,7 +28,9 @@ function uniqueToolSlugs(slugs: string[]): string[] {
 export async function resolveWorkspaceAgentRuntime(
   params: ResolveWorkspaceAgentRuntimeParams,
 ): Promise<ResolveWorkspaceAgentRuntimeResult> {
-  const [agentSkills, directToolSlugs] = await Promise.all([
+  const citationsEnabled = params.citationsEnabled ?? true;
+
+  const [agentSkills, directToolSlugs, knowledgeBaseIds] = await Promise.all([
     listAgentSkills({
       agentId: params.agentId,
       workspaceId: params.workspaceId,
@@ -32,14 +39,31 @@ export async function resolveWorkspaceAgentRuntime(
       agentId: params.agentId,
       workspaceId: params.workspaceId,
     }),
+    listAgentKnowledgeBaseIds({
+      agentId: params.agentId,
+      workspaceId: params.workspaceId,
+    }),
   ]);
 
   const skillToolSlugs = agentSkills.flatMap((skill) => skill.tools);
   const toolSlugs = uniqueToolSlugs([...directToolSlugs, ...skillToolSlugs]);
   const skillsPrompt = buildChatAgentSkillsPrompt(agentSkills);
-  const systemPrompt = [params.systemPrompt.trim(), skillsPrompt]
+  const knowledgePrompt = buildChatAgentKnowledgePrompt({
+    knowledgeBaseCount: knowledgeBaseIds.length,
+    citationsEnabled,
+  });
+  const systemPrompt = [
+    params.systemPrompt.trim(),
+    skillsPrompt,
+    knowledgePrompt,
+  ]
     .filter(Boolean)
     .join("\n\n");
 
-  return { systemPrompt, toolSlugs };
+  return {
+    systemPrompt,
+    toolSlugs,
+    knowledgeBaseIds,
+    citationsEnabled,
+  };
 }

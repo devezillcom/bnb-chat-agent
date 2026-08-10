@@ -1,0 +1,3 @@
+ALTER TABLE "chat_agent_sessions" ADD COLUMN "agent_id" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "chat_agent_sessions" ADD CONSTRAINT "chat_agent_sessions_agent_id_agents_id_fk" FOREIGN KEY ("agent_id") REFERENCES "public"."agents"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "chat_agent_sessions_workspace_id_user_id_agent_id_idx" ON "chat_agent_sessions" USING btree ("workspace_id","user_id","agent_id");

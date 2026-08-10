@@ -13,6 +13,8 @@ export type ResolveChatAgentContextResult = {
   workspaceId: string;
   systemPrompt: string;
   toolSlugs: string[];
+  knowledgeBaseIds: string[];
+  citationsEnabled: boolean;
 };
 
 export async function resolveChatAgentContext(
@@ -27,6 +29,7 @@ export async function resolveChatAgentContext(
     agentId: agent.id,
     workspaceId: params.workspaceId,
     systemPrompt: agent.systemPrompt,
+    citationsEnabled: true,
   });
 
   return {
@@ -34,5 +37,7 @@ export async function resolveChatAgentContext(
     workspaceId: params.workspaceId,
     systemPrompt: runtime.systemPrompt,
     toolSlugs: runtime.toolSlugs,
+    knowledgeBaseIds: runtime.knowledgeBaseIds,
+    citationsEnabled: runtime.citationsEnabled,
   };
 }

@@ -25,6 +25,7 @@ export type ChatAgentStreamEvent =
 export type ListChatAgentSessionsParams = {
   workspaceId: string;
   userId: string;
+  agentId: string;
   limit: number;
   keyword?: string;
 };

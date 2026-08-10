@@ -4,7 +4,8 @@ import { createApiHandler } from "@/lib/exposers/create-api-handler";
 import { listChatAgentSessions } from "@/lib/chat-agent/services/list-chat-agent-sessions";
 
 const listChatAgentSessionsQueryParamsSchema = z.object({
-  limit: z.coerce.number().int().min(1).max(50).default(20),
+  agentId: z.uuid({ error: "Agent is required." }),
+  limit: z.coerce.number().pipe(z.int().min(1).max(50)).default(20),
   keyword: z
     .string()
     .trim()
@@ -20,6 +21,7 @@ export const GET = createApiHandler(
     listChatAgentSessions({
       workspaceId: ctx.workspaceId,
       userId: ctx.userId,
+      agentId: params.agentId,
       limit: params.limit,
       keyword: params.keyword,
     }),

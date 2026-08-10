@@ -7,6 +7,7 @@ import {
   parseChatModel,
 } from "@/lib/langchain/models/create-chat-model";
 import { getChatAgentCheckpointer } from "@/lib/chat-agent/utils/get-chat-agent-checkpointer";
+import { buildChatAgentKnowledgeTool } from "@/lib/chat-agent/tools/build-chat-agent-knowledge-tool";
 import { buildChatAgentTools } from "@/lib/chat-agent/tools/build-chat-agent-tools";
 
 import {
@@ -35,18 +36,30 @@ function getSummarizationModel() {
 }
 
 async function buildChannelAgent(config: ChannelAgentConfig) {
-  const [checkpointer, model, summarizationModel] = await Promise.all([
+  const [checkpointer, model, summarizationModel, workspaceTools, knowledgeTool] =
+    await Promise.all([
     getChatAgentCheckpointer(),
     Promise.resolve(createChatModel(getDefaultChannelAgentModel(), { temperature: 0.4 })),
     Promise.resolve(createChatModel(getSummarizationModel(), { temperature: 0.2 })),
-  ]);
-
-  return createAgent({
-    model,
-    tools: await buildChatAgentTools({
+    buildChatAgentTools({
       workspaceId: config.workspaceId,
       toolSlugs: config.toolSlugs,
     }),
+    Promise.resolve(
+      buildChatAgentKnowledgeTool({
+        workspaceId: config.workspaceId,
+        knowledgeBaseIds: config.knowledgeBaseIds,
+      }),
+    ),
+  ]);
+
+  const tools = knowledgeTool
+    ? [...workspaceTools, knowledgeTool]
+    : workspaceTools;
+
+  return createAgent({
+    model,
+    tools,
     contextSchema: channelAgentContextSchema,
     middleware: [
       dynamicSystemPromptMiddleware<ChannelAgentContext>(() => config.systemPrompt),

@@ -15,6 +15,7 @@ export async function listChatAgentSessions(
   const conditions = [
     eq(chatAgentSessions.workspaceId, params.workspaceId),
     eq(chatAgentSessions.userId, params.userId),
+    eq(chatAgentSessions.agentId, params.agentId),
   ];
 
   if (keyword) {

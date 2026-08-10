@@ -6,6 +6,7 @@ import { buildWorkspaceAgentCacheKey } from "@/lib/agents/utils/build-workspace-
 import { createChatModel, parseChatModel } from "@/lib/langchain/models/create-chat-model";
 
 import { chatAgentContextSchema, type ChatAgentContext } from "../schema";
+import { buildChatAgentKnowledgeTool } from "../tools/build-chat-agent-knowledge-tool";
 import { buildChatAgentTools } from "../tools/build-chat-agent-tools";
 import { getChatAgentCheckpointer } from "../utils/get-chat-agent-checkpointer";
 import type { ChatAgentConfig } from "../schema";
@@ -20,17 +21,28 @@ function getDefaultChatModel() {
 }
 
 async function buildChatAgent(config: ChatAgentConfig) {
-  const [checkpointer, model] = await Promise.all([
+  const [checkpointer, model, workspaceTools, knowledgeTool] = await Promise.all([
     getChatAgentCheckpointer(),
     Promise.resolve(createChatModel(getDefaultChatModel(), { temperature: 0.5 })),
-  ]);
-
-  return createAgent({
-    model,
-    tools: await buildChatAgentTools({
+    buildChatAgentTools({
       workspaceId: config.workspaceId,
       toolSlugs: config.toolSlugs,
     }),
+    Promise.resolve(
+      buildChatAgentKnowledgeTool({
+        workspaceId: config.workspaceId,
+        knowledgeBaseIds: config.knowledgeBaseIds,
+      }),
+    ),
+  ]);
+
+  const tools = knowledgeTool
+    ? [...workspaceTools, knowledgeTool]
+    : workspaceTools;
+
+  return createAgent({
+    model,
+    tools,
     contextSchema: chatAgentContextSchema,
     middleware: [
       dynamicSystemPromptMiddleware<ChatAgentContext>(() => config.systemPrompt),

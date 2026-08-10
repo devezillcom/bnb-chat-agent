@@ -9,6 +9,11 @@ export const chatAgentImageAttachmentSchema = z.object({
   fileName: z.string().optional(),
 });
 
+export const chatAgentImageUploadUrlRequestSchema = z.object({
+  contentType: z.string().trim().min(1, { error: "Content type is required." }),
+  contentLength: z.int().positive({ error: "Image size is required." }),
+});
+
 export const chatAgentMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
   content: z.string(),
@@ -35,6 +40,8 @@ export const chatAgentConfigSchema = z.object({
   workspaceId: z.uuid(),
   systemPrompt: z.string(),
   toolSlugs: z.array(z.string()).default([]),
+  knowledgeBaseIds: z.array(z.uuid()).default([]),
+  citationsEnabled: z.boolean().default(true),
 });
 
 export const chatAgentContextSchema = z.object({
@@ -45,6 +52,9 @@ export const chatAgentContextSchema = z.object({
 
 export type ChatAgentImageAttachment = z.infer<
   typeof chatAgentImageAttachmentSchema
+>;
+export type ChatAgentImageUploadUrlRequest = z.infer<
+  typeof chatAgentImageUploadUrlRequestSchema
 >;
 export type ChatAgentMessage = z.infer<typeof chatAgentMessageSchema>;
 export type ChatWithAgentRequest = z.infer<typeof chatWithAgentRequestSchema>;

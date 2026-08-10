@@ -96,6 +96,9 @@ export const chatAgentSessions = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    agentId: uuid("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
     /** Preview label, typically the first user message. */
     title: text("title").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -109,6 +112,11 @@ export const chatAgentSessions = pgTable(
     index("chat_agent_sessions_workspace_id_user_id_idx").on(
       table.workspaceId,
       table.userId,
+    ),
+    index("chat_agent_sessions_workspace_id_user_id_agent_id_idx").on(
+      table.workspaceId,
+      table.userId,
+      table.agentId,
     ),
     index("chat_agent_sessions_updated_at_idx").on(table.updatedAt),
   ],

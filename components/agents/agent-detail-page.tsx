@@ -3,6 +3,7 @@
 import {
   ArrowLeftIcon,
   Loader2Icon,
+  MessageCircleIcon,
   PencilIcon,
   PlusIcon,
 } from "lucide-react";
@@ -65,6 +66,7 @@ export function AgentDetailPage({
   const [deleting, setDeleting] = useState(false);
   const agentsHref = getDashboardNavHref(workspaceIndex, "agents");
   const connectionsHref = getDashboardNavHref(workspaceIndex, "connections");
+  const chatHref = `${agentsHref}/${agent.id}/chat`;
   const leading = getAgentListLeading(agent.name);
 
   async function handleDelete() {
@@ -129,6 +131,14 @@ export function AgentDetailPage({
                 </p>
               ) : null}
             </div>
+            <Button
+              className="ml-auto"
+              nativeButton={false}
+              render={<Link href={chatHref} />}
+            >
+              <MessageCircleIcon data-icon="inline-start" />
+              Chat
+            </Button>
           </div>
         </div>
 

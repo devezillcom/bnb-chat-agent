@@ -27,6 +27,7 @@ export async function chatWithAgent(
     sessionId,
     workspaceId: params.workspaceId,
     userId: params.userId,
+    agentId: params.agentId,
     message: params.message,
   });
 

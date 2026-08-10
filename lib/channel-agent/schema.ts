@@ -15,6 +15,8 @@ export const channelAgentConfigSchema = z.object({
   workspaceId: z.uuid(),
   systemPrompt: z.string(),
   toolSlugs: z.array(z.string()).default([]),
+  knowledgeBaseIds: z.array(z.uuid()).default([]),
+  citationsEnabled: z.boolean().default(false),
 });
 
 export type ChannelAgentConfig = z.infer<typeof channelAgentConfigSchema>;

@@ -9,6 +9,7 @@ export type UpsertChatAgentSessionParams = {
   sessionId: string;
   workspaceId: string;
   userId: string;
+  agentId: string;
   message: string;
 };
 
@@ -24,6 +25,7 @@ export async function upsertChatAgentSession(
       id: params.sessionId,
       workspaceId: params.workspaceId,
       userId: params.userId,
+      agentId: params.agentId,
       title,
       createdAt: now,
       updatedAt: now,
@@ -33,6 +35,6 @@ export async function upsertChatAgentSession(
       set: {
         updatedAt: now,
       },
-      where: sql`${chatAgentSessions.workspaceId} = ${params.workspaceId} AND ${chatAgentSessions.userId} = ${params.userId}`,
+      where: sql`${chatAgentSessions.workspaceId} = ${params.workspaceId} AND ${chatAgentSessions.userId} = ${params.userId} AND ${chatAgentSessions.agentId} = ${params.agentId}`,
     });
 }

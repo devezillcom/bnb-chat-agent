@@ -167,3 +167,51 @@ export type DeleteKnowledgeBaseDocumentParams = {
 export type DeleteKnowledgeBaseDocumentResult = {
   message?: string;
 };
+
+export type ListAgentKnowledgeBaseIdsParams = {
+  workspaceId: string;
+  agentId: string;
+};
+
+export type KnowledgeBaseSearchHit = {
+  id: string;
+  score: number;
+  text: string;
+  filename: string;
+  sectionTitle: string | null;
+  headingPath: string | null;
+  documentId: string;
+  knowledgeBaseId: string;
+};
+
+export type SearchKnowledgeBaseChunksParams = {
+  workspaceId: string;
+  knowledgeBaseIds: string[];
+  query: string;
+  rewriteQuery?: boolean;
+  multiQuery?: boolean;
+};
+
+export type SearchKnowledgeBaseChunksResult = {
+  hits: KnowledgeBaseSearchHit[];
+  queriesUsed: string[];
+  strategiesUsed: {
+    rewriteQuery: boolean;
+    multiQuery: boolean;
+  };
+};
+
+export type SearchKnowledgeBaseToolResult = {
+  results: Array<{
+    text: string;
+    source: string;
+    filename: string;
+    sectionTitle: string | null;
+    score: number;
+  }>;
+  queriesUsed: string[];
+  strategiesUsed: {
+    rewriteQuery: boolean;
+    multiQuery: boolean;
+  };
+};

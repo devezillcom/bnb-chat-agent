@@ -18,6 +18,7 @@ export async function replyToChannelMessage(
     agentId: params.agent.id,
     workspaceId: params.context.workspaceId,
     systemPrompt: params.agent.systemPrompt,
+    citationsEnabled: false,
   });
 
   const agent = await getChannelAgent({
@@ -25,6 +26,8 @@ export async function replyToChannelMessage(
     workspaceId: params.context.workspaceId,
     systemPrompt: runtime.systemPrompt,
     toolSlugs: runtime.toolSlugs,
+    knowledgeBaseIds: runtime.knowledgeBaseIds,
+    citationsEnabled: runtime.citationsEnabled,
   });
 
   const runConfig = createChannelAgentRunConfig(params.sessionId, params.context);

@@ -30,6 +30,7 @@ export async function getChatAgentSessionMessages(
         eq(chatAgentSessions.id, params.sessionId),
         eq(chatAgentSessions.workspaceId, params.workspaceId),
         eq(chatAgentSessions.userId, params.userId),
+        eq(chatAgentSessions.agentId, params.agentId),
       ),
     )
     .limit(1);

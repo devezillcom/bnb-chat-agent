@@ -34,3 +34,13 @@ export type KnowledgeBaseDocumentUploadUrlBody = z.infer<
 export type KnowledgeBaseDocumentProcessQstashPayload = z.infer<
   typeof knowledgeBaseDocumentProcessQstashPayloadSchema
 >;
+
+export const searchKnowledgeBaseToolInputSchema = z.object({
+  query: z.string().trim().min(1, { error: "Query is required." }),
+  rewriteQuery: z.boolean().optional(),
+  multiQuery: z.boolean().optional(),
+});
+
+export type SearchKnowledgeBaseToolInput = z.infer<
+  typeof searchKnowledgeBaseToolInputSchema
+>;

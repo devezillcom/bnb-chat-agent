@@ -5,7 +5,10 @@ import { buildChatAgentHumanMessage } from "../utils/build-chat-agent-human-mess
 import { createChatAgentRunConfig } from "../utils/create-chat-agent-run-config";
 import { extractMessageContent } from "../utils/extract-message-content";
 import { getChatAgent } from "./create-chat-agent";
-import { resolveChatAgentContext } from "./resolve-chat-agent-context";
+import {
+  resolveChatAgentContext,
+  type ResolveChatAgentContextResult,
+} from "./resolve-chat-agent-context";
 import { upsertChatAgentSession } from "./upsert-chat-agent-session";
 
 type StreamedMessageChunk = {
@@ -40,11 +43,8 @@ function separatorBeforeNextMessageToken(
 async function* streamChatAgentTokens(
   params: ChatWithAgentParams,
   sessionId: string,
+  agentContext: ResolveChatAgentContextResult,
 ): AsyncGenerator<string> {
-  const agentContext = await resolveChatAgentContext({
-    agentId: params.agentId,
-    workspaceId: params.workspaceId,
-  });
   const agent = await getChatAgent(agentContext);
   const runConfig = createChatAgentRunConfig(sessionId, {
     userId: params.userId,
@@ -111,18 +111,28 @@ export async function* streamChatWithAgent(
   params: ChatWithAgentParams,
 ): AsyncGenerator<ChatAgentStreamEvent> {
   const sessionId = params.sessionId ?? randomUUID();
+  const agentContext = await resolveChatAgentContext({
+    agentId: params.agentId,
+    workspaceId: params.workspaceId,
+  });
+
   yield { type: "session", sessionId };
 
   await upsertChatAgentSession({
     sessionId,
     workspaceId: params.workspaceId,
     userId: params.userId,
+    agentId: params.agentId,
     message: params.message,
   });
 
   let fullMessage = "";
 
-  for await (const token of streamChatAgentTokens(params, sessionId)) {
+  for await (const token of streamChatAgentTokens(
+    params,
+    sessionId,
+    agentContext,
+  )) {
     fullMessage += token;
     yield { type: "token", content: token };
   }

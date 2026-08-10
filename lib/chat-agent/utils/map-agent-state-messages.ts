@@ -1,10 +1,20 @@
-import type { ChatAgentMessage } from "../schema";
+import type {
+  ChatAgentImageAttachment,
+  ChatAgentMessage,
+} from "../schema";
 import { extractMessageContent } from "./extract-message-content";
 
 type AgentStateMessage = {
   _getType?: () => string;
   type?: string;
   content?: unknown;
+};
+
+type ImageContentPart = {
+  type?: string;
+  image_url?: {
+    url?: unknown;
+  };
 };
 
 function getMessageType(message: AgentStateMessage): string {
@@ -20,6 +30,25 @@ function isAssistantMessageType(type: string): boolean {
   return type === "ai" || type === "aimessage";
 }
 
+function extractImageAttachments(
+  content: unknown,
+): ChatAgentImageAttachment[] | undefined {
+  if (!Array.isArray(content)) return undefined;
+
+  const images = content.flatMap((part) => {
+    const imagePart = part as ImageContentPart;
+    const url = imagePart.image_url?.url;
+
+    if (imagePart.type !== "image_url" || typeof url !== "string") {
+      return [];
+    }
+
+    return [{ url }];
+  });
+
+  return images.length > 0 ? images : undefined;
+}
+
 export function mapAgentStateMessagesToChatMessages(
   messages: unknown[],
 ): ChatAgentMessage[] {
@@ -29,10 +58,11 @@ export function mapAgentStateMessagesToChatMessages(
     const message = raw as AgentStateMessage;
     const type = getMessageType(message);
     const content = extractMessageContent(message.content).trim();
-    if (!content) continue;
+    const images = extractImageAttachments(message.content);
+    if (!content && !images) continue;
 
     if (isUserMessageType(type)) {
-      result.push({ role: "user", content });
+      result.push({ role: "user", content, images });
       continue;
     }
 

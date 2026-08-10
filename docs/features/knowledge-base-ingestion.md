@@ -243,9 +243,9 @@ If R2 deletion fails, the API returns an error and the DB row is kept.
 
 ## Not implemented yet
 
-- **Retrieval** — no search/query API; agents do not ingest KB context at chat time.
-- **Agent ↔ KB UI** — junction table exists; wiring lives in agent service.
 - **Re-process** — no public re-index endpoint (re-upload or add later).
+
+Retrieval at chat time is documented in [`knowledge-base-retrieval.md`](./knowledge-base-retrieval.md).
 
 ## Local testing checklist
 

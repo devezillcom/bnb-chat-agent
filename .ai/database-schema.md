@@ -115,6 +115,7 @@ Persisted chat/agent conversation sessions.
 | id | uuid | NO | — | LangGraph thread id (matches chat `sessionId`) |
 | workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
 | user_id | uuid | NO | — | Session owner (`users.id`) |
+| agent_id | uuid | NO | — | Agent that owns the conversation (`agents.id`) |
 | title | text | NO | — | Preview label, typically the first user message |
 | created_at | timestamptz | NO | `now()` | Row creation time |
 | updated_at | timestamptz | NO | `now()` | Last update time |
@@ -122,12 +123,14 @@ Persisted chat/agent conversation sessions.
 **Indexes**
 
 - `chat_agent_sessions_workspace_id_user_id_idx` — on `(workspace_id, user_id)`
+- `chat_agent_sessions_workspace_id_user_id_agent_id_idx` — on `(workspace_id, user_id, agent_id)`
 - `chat_agent_sessions_updated_at_idx` — on `updated_at`
 
 **Relations**
 
 - `workspace_id` → `workspaces.id` (ON DELETE CASCADE)
 - `user_id` → `users.id` (ON DELETE CASCADE)
+- `agent_id` → `agents.id` (ON DELETE CASCADE)
 
 ---
 
