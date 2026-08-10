@@ -73,10 +73,30 @@ export function AgentChatMessage({
             {isUser ? (
               content
             ) : (
-              <AgentChatMarkdown
-                content={content}
-                className={isStreaming && !message.content ? "shimmer text-muted-foreground" : undefined}
-              />
+              <>
+                {!isUser && message.images?.length ? (
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    {message.images.map((image, index) => (
+                      // R2 public URLs are not configured for next/image optimization.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={`${image.url}-${index}`}
+                        src={image.url}
+                        alt={image.fileName ?? "Generated image"}
+                        className="max-w-full rounded-lg border border-border object-cover"
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                <AgentChatMarkdown
+                  content={content}
+                  className={
+                    isStreaming && !message.content
+                      ? "shimmer text-muted-foreground"
+                      : undefined
+                  }
+                />
+              </>
             )}
           </BubbleContent>
         </Bubble>

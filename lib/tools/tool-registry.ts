@@ -1,7 +1,12 @@
 import { z } from "zod";
 
+import {
+  bienhinhCreateImageInputJsonSchema,
+  bienhinhCreateImageInputSchema,
+} from "./schemas/bienhinh-create-image-input-schema";
 import type { DataShape } from "./utils/data-shape";
 import { dataShapeToJsonSchema } from "./utils/data-shape";
+import { dataShapeToZodSchema } from "./utils/data-shape-to-zod-schema";
 
 export type ToolConfigFieldDefinition = {
   key: string;
@@ -10,6 +15,8 @@ export type ToolConfigFieldDefinition = {
   /** Render as password input when true. */
   secret?: boolean;
   required?: boolean;
+  /** Pre-filled in create/edit forms when the field is empty. */
+  defaultValue?: string;
 };
 
 export type ToolDefinition = {
@@ -19,6 +26,10 @@ export type ToolDefinition = {
   description: string;
   /** Fixed input JSON Schema for the runtime AI agent. */
   inputShape: DataShape;
+  /** Optional Zod schema when inputShape cannot express the tool input. */
+  inputZodSchema?: z.ZodType;
+  /** Optional JSON Schema override paired with inputZodSchema. */
+  inputJsonSchema?: Record<string, unknown>;
   /** Fixed output JSON Schema for the runtime AI agent. */
   outputShape?: DataShape;
   /** Validates workspace config when adding this tool. */
@@ -142,6 +153,104 @@ export const TOOL_REGISTRY: ToolDefinition[] = [
       ],
     },
   },
+  {
+    id: "bienhinh_create_image",
+    name: "Bienhinh/createImage",
+    description:
+      "Generate an image via Bienhinh using user provided reference images from attachments.",
+    configSchema: z.object({
+      projectId: z
+        .string()
+        .trim()
+        .min(1, { error: "Project ID is required." }),
+      templateGroupId: z
+        .string()
+        .trim()
+        .default("default-template-group"),
+      templateId: z
+        .string()
+        .trim()
+        .min(1, { error: "Template ID is required." }),
+      styleId: z.string().trim().min(1, { error: "Style ID is required." }),
+      imageWorkflow: z.string().trim().default("standard-image"),
+      outputAspectRatio: z.string().trim().default("4:5"),
+      "fields.projectName": z.string().trim().optional(),
+      "fields.phone": z.string().trim().optional(),
+      "fields.headline": z.string().trim().optional(),
+      "fields.extraPrompt": z.string().trim().optional(),
+    }),
+    configFields: [
+      {
+        key: "projectId",
+        label: "Project ID",
+        required: true,
+      },
+      {
+        key: "templateGroupId",
+        label: "Template group ID",
+        defaultValue: "default-template-group",
+      },
+      {
+        key: "templateId",
+        label: "Template ID",
+        required: true,
+      },
+      {
+        key: "styleId",
+        label: "Style ID",
+        required: true,
+      },
+      {
+        key: "imageWorkflow",
+        label: "Image workflow",
+        defaultValue: "standard-image",
+      },
+      {
+        key: "outputAspectRatio",
+        label: "Output aspect ratio",
+        defaultValue: "4:5",
+      },
+      {
+        key: "fields.projectName",
+        label: "Project name",
+        description: "Optional value sent in the fields.projectName payload.",
+      },
+      {
+        key: "fields.phone",
+        label: "Phone",
+        description: "Optional value sent in the fields.phone payload.",
+      },
+      {
+        key: "fields.headline",
+        label: "Headline",
+        description: "Optional value sent in the fields.headline payload.",
+      },
+      {
+        key: "fields.extraPrompt",
+        label: "Extra prompt",
+        description: "Optional value sent in the fields.extraPrompt payload.",
+      },
+    ],
+    inputShape: { fields: [] },
+    inputZodSchema: bienhinhCreateImageInputSchema,
+    inputJsonSchema: bienhinhCreateImageInputJsonSchema,
+    outputShape: {
+      fields: [
+        {
+          name: "status",
+          type: "integer",
+          description: "HTTP status code.",
+          required: true,
+        },
+        {
+          name: "body",
+          type: "string",
+          description: "Response body from Bienhinh.",
+          required: true,
+        },
+      ],
+    },
+  },
 ];
 
 export const TOOL_REGISTRY_IDS = TOOL_REGISTRY.map((entry) => entry.id);
@@ -160,12 +269,29 @@ export function isKnownToolRegistryId(
   return TOOL_REGISTRY.some((entry) => entry.id === toolId);
 }
 
+export function getToolInputZodSchema(toolId: string): z.ZodType {
+  const definition = getToolDefinition(toolId);
+  if (!definition) {
+    return z.object({});
+  }
+
+  if (definition.inputZodSchema) {
+    return definition.inputZodSchema;
+  }
+
+  return dataShapeToZodSchema(definition.inputShape);
+}
+
 export function getToolInputSchema(
   toolId: string,
 ): Record<string, unknown> {
   const definition = getToolDefinition(toolId);
   if (!definition) {
     return { type: "object", properties: {} };
+  }
+
+  if (definition.inputJsonSchema) {
+    return definition.inputJsonSchema;
   }
 
   return dataShapeToJsonSchema(definition.inputShape);

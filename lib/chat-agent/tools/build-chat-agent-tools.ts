@@ -1,15 +1,20 @@
 import "server-only";
 
+import type { RunnableConfig } from "@langchain/core/runnables";
 import { tool } from "langchain";
 
+import type { ChatAgentRunContext } from "@/lib/chat-agent/schema";
 import { executeWorkspaceTool } from "@/lib/tools/executors/execute-workspace-tool";
 import { listToolsBySlugs } from "@/lib/tools/services/list-tools-by-slugs";
-import { getToolDefinition } from "@/lib/tools/tool-registry";
-import { dataShapeToZodSchema } from "@/lib/tools/utils/data-shape-to-zod-schema";
+import { getToolInputZodSchema } from "@/lib/tools/tool-registry";
 
 export type BuildChatAgentToolsParams = {
   workspaceId: string;
   toolSlugs: string[];
+};
+
+type ChatAgentToolRunnableConfig = RunnableConfig & {
+  context?: ChatAgentRunContext;
 };
 
 export async function buildChatAgentTools(params: BuildChatAgentToolsParams) {
@@ -23,13 +28,24 @@ export async function buildChatAgentTools(params: BuildChatAgentToolsParams) {
   });
 
   return workspaceTools.map((workspaceTool) => {
-    const definition = getToolDefinition(workspaceTool.registryToolId)!;
-    const schema = dataShapeToZodSchema(definition.inputShape);
+    const schema = getToolInputZodSchema(workspaceTool.registryToolId);
 
     return tool(
-      async (input) => {
+      async (input, config: ChatAgentToolRunnableConfig) => {
         try {
-          return await executeWorkspaceTool(workspaceTool, input);
+          const sessionId =
+            typeof config.configurable?.thread_id === "string"
+              ? config.configurable.thread_id
+              : undefined;
+
+          return await executeWorkspaceTool(
+            workspaceTool,
+            input as Record<string, unknown>,
+            {
+              sessionId,
+              runContext: config.context,
+            },
+          );
         } catch (error) {
           const message =
             error instanceof Error ? error.message : "Tool execution failed.";

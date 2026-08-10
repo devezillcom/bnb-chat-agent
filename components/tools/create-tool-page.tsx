@@ -71,7 +71,10 @@ function createDefaultValues(registryToolId?: string): CreateToolFormValues {
     registryToolId: registryTool?.id ?? "",
     description: registryTool?.description ?? "",
     config: Object.fromEntries(
-      (registryTool?.configFields ?? []).map((field) => [field.key, ""]),
+      (registryTool?.configFields ?? []).map((field) => [
+        field.key,
+        field.defaultValue ?? "",
+      ]),
     ),
   };
 }
@@ -277,7 +280,7 @@ export function CreateToolPage({
 
               <ToolConfigFields
                 fields={selectedRegistryTool.configFields}
-                register={form.register}
+                control={form.control}
                 disabled={isSubmitting}
                 errors={configError}
               />

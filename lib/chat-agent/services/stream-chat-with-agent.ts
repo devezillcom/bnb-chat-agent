@@ -56,6 +56,7 @@ async function* streamChatAgentTokens(
   const humanMessage = await buildChatAgentHumanMessage(
     params.message,
     params.images,
+    params.workspaceId,
   );
 
   const stream = await agent.stream(

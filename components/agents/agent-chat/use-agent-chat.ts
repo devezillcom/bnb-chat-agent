@@ -17,13 +17,20 @@ import {
   CHAT_AGENT_IMAGE_MAX_COUNT,
   CHAT_AGENT_IMAGE_UPLOAD_RULES,
 } from "@/lib/chat-agent/constants/chat-agent-image-upload-rules";
+import {
+  agentSessionNotificationPayloadSchema,
+  getAgentSessionNotificationPath,
+  type AgentSessionNotificationPayload,
+} from "@/lib/chat-agent/constants/agent-session-notification";
 import type { ChatAgentImageAttachment } from "@/lib/chat-agent/schema";
 import type {
   ChatWithAgentResult,
   GetChatAgentSessionMessagesResult,
 } from "@/lib/chat-agent/types";
+import type { ChannelNotificationRecord } from "@/lib/notification/types";
 import type { GetUploadSignedUrlResult } from "@/lib/r2/types";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
+import { useChannelNotification } from "@/hooks/use-channel-notification";
 
 import type { AgentChatMessage, PendingChatImage } from "./types";
 
@@ -61,6 +68,38 @@ export function useAgentChat({
     () => resolveChatEnvRuntime(chatEnv).delivery === "stream",
     [chatEnv],
   );
+  const notificationPath = useMemo(
+    () => (sessionId ? getAgentSessionNotificationPath(sessionId) : ""),
+    [sessionId],
+  );
+
+  const handleAgentSessionNotification = useCallback(
+    (
+      record:
+        | ChannelNotificationRecord<AgentSessionNotificationPayload>
+        | null
+        | undefined,
+    ) => {
+      const payload = record?.payload;
+      if (!payload?.message) return;
+
+      setMessages((current) => [
+        ...current,
+        {
+          id: createMessageId(),
+          role: "assistant",
+          content: payload.message
+        },
+      ]);
+    },
+    [],
+  );
+
+  useChannelNotification<AgentSessionNotificationPayload>({
+    path: notificationPath,
+    payloadSchema: agentSessionNotificationPayloadSchema,
+    onDataChange: handleAgentSessionNotification,
+  });
 
   const pendingImagesRef = useRef(pendingImages);
 
@@ -375,6 +414,7 @@ export function useAgentChat({
             id: createMessageId(),
             role: message.role,
             content: message.content,
+            ...(message.images?.length ? { images: message.images } : {}),
           })),
         );
       } catch {

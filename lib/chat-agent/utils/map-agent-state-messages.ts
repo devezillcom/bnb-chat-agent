@@ -2,7 +2,9 @@ import type {
   ChatAgentImageAttachment,
   ChatAgentMessage,
 } from "../schema";
+import { stripAttachedImageTags } from "./attached-image-tag";
 import { extractMessageContent } from "./extract-message-content";
+import { stripSystemEventTags } from "./system-event-tag";
 
 type AgentStateMessage = {
   _getType?: () => string;
@@ -57,7 +59,8 @@ export function mapAgentStateMessagesToChatMessages(
   for (const raw of messages) {
     const message = raw as AgentStateMessage;
     const type = getMessageType(message);
-    const content = extractMessageContent(message.content).trim();
+    const rawContent = extractMessageContent(message.content);
+    const content = stripSystemEventTags(stripAttachedImageTags(rawContent)).trim();
     const images = extractImageAttachments(message.content);
     if (!content && !images) continue;
 

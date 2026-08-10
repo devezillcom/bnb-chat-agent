@@ -27,6 +27,7 @@ export async function invokeAgentTurn(
   const humanMessage = await buildChatAgentHumanMessage(
     params.message,
     params.images,
+    params.runContext.workspaceId,
   );
 
   const result = await agent.invoke(

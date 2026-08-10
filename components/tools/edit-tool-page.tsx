@@ -85,7 +85,7 @@ function createEditDefaultValues(tool: ToolDetail): CreateToolFormValues {
     config: Object.fromEntries(
       (registryTool?.configFields ?? []).map((field) => [
         field.key,
-        tool.config[field.key] ?? "",
+        tool.config[field.key] ?? field.defaultValue ?? "",
       ]),
     ),
   };
@@ -318,7 +318,7 @@ export function EditToolPage({
 
               <ToolConfigFields
                 fields={registryTool.configFields}
-                register={form.register}
+                control={form.control}
                 disabled={isSubmitting}
                 errors={configError}
               />

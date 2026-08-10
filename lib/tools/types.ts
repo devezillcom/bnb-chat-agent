@@ -1,5 +1,12 @@
+import type { ChatAgentRunContext } from "@/lib/chat-agent/schema";
+
 import type { CreateToolFormValues } from "./schema";
 import type { ToolRegistryId } from "./tool-registry";
+
+export type ToolExecutionContext = {
+  sessionId?: string;
+  runContext?: ChatAgentRunContext;
+};
 
 export type ToolListItem = {
   id: string;

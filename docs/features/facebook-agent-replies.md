@@ -24,7 +24,7 @@ When Facebook sends a webhook event to `/api/webhooks/facebook`:
 | Get Started postback | Always handled when an agent is assigned; sends the agent's `first_message` (or default greeting) without invoking the LLM |
 | Async processing | QStash from the first version; webhook never waits for LLM latency |
 | Sender actions | Webhook: `mark_seen` on receive; QStash job: `typing_on` before processing; Messenger clears typing when the reply is delivered — `typing_off` only on job failure |
-| Inbound images | Download from Facebook → store on R2 → vision via Cloudflare resize URL (fallback: direct fetch/base64 if R2 unavailable) |
+| Inbound images | Download from Facebook → store on R2 → vision via Cloudflare resize URL |
 
 ## Data model
 
@@ -64,8 +64,8 @@ When a customer sends Facebook image attachments:
 2. The inbound job downloads each image from Facebook (retries with the page access token if needed).
 3. If R2 is configured, images are stored under `facebook-inbound/{workspaceId}/{connectionId}/`.
 4. Vision input uses the Cloudflare Image Resizing URL (`/cdn-cgi/image/width=…`) when `R2_IMAGE_RESIZE_WIDTH` is set (default `1568`). This fetches a smaller image for the LLM instead of base64-encoding the full original when possible.
-5. If R2 is not configured, the job falls back to fetching the Facebook CDN URL directly for vision.
-6. If resize fetch fails, `resolveImageSourceForVision` retries the original public R2 URL.
+5. Non-R2 attachment URLs are downloaded and stored on R2 by `downloadAttachments` before vision input is built.
+6. R2-hosted attachment URLs are passed through directly (including Cloudflare resize URLs when configured).
 
 Requires a **vision-capable** `CHAT_AGENT_MODEL` (e.g. `gpt-4o`, `claude-sonnet-4-6`). Video, audio, and non-image files still receive a static fallback reply.
 

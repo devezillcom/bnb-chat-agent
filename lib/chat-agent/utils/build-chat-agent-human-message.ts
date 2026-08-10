@@ -2,7 +2,8 @@ import "server-only";
 
 import { HumanMessage } from "@langchain/core/messages";
 
-import { resolveImageSourceForVision } from "@/lib/r2/utils/resolve-image-source-for-vision";
+import { wrapAttachedImage } from "./attached-image-tag";
+import { downloadAttachments } from "./download-attachments";
 
 import type { ChatAgentImageAttachment } from "../schema";
 
@@ -12,36 +13,33 @@ type MultimodalContentPart =
 
 export async function buildChatAgentHumanMessage(
   message: string,
-  images?: ChatAgentImageAttachment[],
+  images: ChatAgentImageAttachment[] | undefined,
+  workspaceId: string,
 ): Promise<HumanMessage> {
-  const trimmed = message.trim();
+  let trimmed = message.trim();
   const attachments = images ?? [];
 
   if (attachments.length === 0) {
     return new HumanMessage(trimmed);
   }
 
+  const resolvedAttachments = await downloadAttachments({
+    attachments,
+    workspaceId,
+  });
   const content: MultimodalContentPart[] = [];
+
+  for (let index = 0; index < resolvedAttachments.length; index++) {
+    const image = resolvedAttachments[index];
+    content.push({
+      type: "image_url",
+      image_url: { url: image.url },
+    });
+    trimmed += `\n\n${wrapAttachedImage(attachments[index].url)}`;
+  }
 
   if (trimmed) {
     content.push({ type: "text", text: trimmed });
-  }
-
-  const visionUrls = await Promise.all(
-    attachments.map((image) =>
-      resolveImageSourceForVision({
-        url: image.url,
-        key: image.key,
-        mimeType: image.mimeType,
-      }),
-    ),
-  );
-
-  for (const dataUrl of visionUrls) {
-    content.push({
-      type: "image_url",
-      image_url: { url: dataUrl },
-    });
   }
 
   return new HumanMessage({ content });

@@ -31,6 +31,30 @@ async function callFacebookMessengerSendApi(
   }
 }
 
+export async function sendFacebookMessengerImageMessage(params: {
+  pageAccessToken: string;
+  psid: string;
+  imageUrl: string;
+}): Promise<void> {
+  await callFacebookMessengerSendApi({
+    pageAccessToken: params.pageAccessToken,
+    psid: params.psid,
+    requestBody: {
+      recipient: { id: params.psid },
+      messaging_type: "RESPONSE",
+      message: {
+        attachment: {
+          type: "image",
+          payload: {
+            url: params.imageUrl,
+            is_reusable: true,
+          },
+        },
+      },
+    },
+  });
+}
+
 export async function sendFacebookMessengerTextMessage(params: {
   pageAccessToken: string;
   psid: string;

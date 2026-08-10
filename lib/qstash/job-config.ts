@@ -1,3 +1,5 @@
+import { handleBienhinhImagePollQstashJob } from "@/lib/tools/services/handle-bienhinh-image-poll-qstash-job";
+
 import { handleRefreshConnectionConnectQstashJob } from "@/lib/connections/services/handle-refresh-connection-connect-qstash-job";
 import { handleFacebookMessengerInboundQstashJob } from "@/lib/connections/services/handle-facebook-messenger-inbound-qstash-job";
 import { handleKnowledgeBaseDocumentProcessQstashJob } from "@/lib/knowledge-base/services/handle-knowledge-base-document-process-qstash-job";
@@ -22,4 +24,5 @@ export const qstashJobHandlers: Record<string, QstashJobHandler> = {
   "refresh-connection-connect": handleRefreshConnectionConnectQstashJob,
   "facebook-messenger-inbound": handleFacebookMessengerInboundQstashJob,
   "knowledge-base-document-process": handleKnowledgeBaseDocumentProcessQstashJob,
+  "bienhinh-image-poll": handleBienhinhImagePollQstashJob,
 };
