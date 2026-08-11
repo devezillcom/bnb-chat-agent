@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { SettingsPageLayout } from "@/components/dashboard/settings-page-layout";
+import { WorkspaceMembersSection } from "@/components/workspace/workspace-members-section";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -125,6 +126,8 @@ export function WorkspaceSettings({
           </dl>
         </CardContent>
       </Card>
+
+      <WorkspaceMembersSection workspace={workspace} />
 
       {isOwner ? (
         <Card>

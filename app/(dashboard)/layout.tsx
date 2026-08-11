@@ -20,7 +20,7 @@ export default function DashboardLayout({
   }, [loading, user, router]);
 
   // Wait until the user is loaded before rendering the layout, so that children never have to handle a "loading user" state.
-  if (loading || !user) {
+  if (!user) {
     return (
       <div className="flex h-screen items-center justify-center text-xs">
         Authenticating...

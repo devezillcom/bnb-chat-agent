@@ -48,3 +48,42 @@ export type DeleteWorkspaceParams = {
 export type DeleteWorkspaceResult = {
   message: string;
 };
+
+export type WorkspaceMemberListItem = {
+  userId: string;
+  email: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  permission: WorkspacePermission;
+  isOwner: boolean;
+  createdAt: string;
+};
+
+export type ListWorkspaceMembersParams = {
+  workspaceId: string;
+};
+
+export type ListWorkspaceMembersResult = {
+  items: WorkspaceMemberListItem[];
+};
+
+export type AddWorkspaceMemberParams = {
+  workspaceId: string;
+  grantedByUserId: string;
+  email: string;
+  permission: WorkspacePermission;
+};
+
+export type AddWorkspaceMemberResult = {
+  userId: string;
+  message: string;
+};
+
+export type RemoveWorkspaceMemberParams = {
+  workspaceId: string;
+  userId: string;
+};
+
+export type RemoveWorkspaceMemberResult = {
+  message: string;
+};

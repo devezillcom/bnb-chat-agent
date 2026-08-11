@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2Icon, SettingsIcon, UserIcon } from "lucide-react";
+import { SettingsIcon, UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";

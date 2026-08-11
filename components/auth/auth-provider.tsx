@@ -68,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const token = await fbUser.getIdToken();
           await syncSessionAction(token);
         } catch {
+          console.error("Sync failed; cookie may be stale.");
           // Sync failed; cookie may be stale.
         }
       } else {
