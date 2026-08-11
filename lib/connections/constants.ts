@@ -43,6 +43,15 @@ export const REFRESH_CONNECTION_CONNECT_QSTASH_JOB_NAME =
 export const FACEBOOK_MESSENGER_INBOUND_QSTASH_JOB_NAME =
   "facebook-messenger-inbound";
 
+export const FACEBOOK_MESSENGER_INBOUND_FLUSH_QSTASH_JOB_NAME =
+  "facebook-messenger-inbound-flush";
+
+/** Wait this long after the last inbound message before flushing the pending box. */
+export const FACEBOOK_MESSENGER_PENDING_DEBOUNCE_SECONDS = 3;
+
+/** TTL for Redis pending-box keys so orphaned state expires. */
+export const FACEBOOK_MESSENGER_PENDING_REDIS_TTL_SECONDS = 60 * 60;
+
 export const FACEBOOK_GET_STARTED_POSTBACK_PAYLOADS = [
   "GET_STARTED",
   "GET_STARTED_PAYLOAD",

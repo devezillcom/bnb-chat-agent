@@ -1,6 +1,5 @@
 import type { FacebookWebhookBody } from "../types";
-import { handleFacebookMessengerMessage } from "./handle-facebook-messenger-message";
-import { handleFacebookMessengerPostback } from "./handle-facebook-messenger-message";
+import { handleFacebookMessagingEvent } from "./handle-facebook-messenger-message";
 
 export async function handleFacebookMessengerWebhook(
   body: FacebookWebhookBody,
@@ -15,22 +14,7 @@ export async function handleFacebookMessengerWebhook(
         continue;
       }
 
-      if (event.message) {
-        await handleFacebookMessengerMessage({
-          pageId: event.recipient.id,
-          psid: event.sender.id,
-          message: event.message,
-        });
-        continue;
-      }
-
-      if (event.postback) {
-        await handleFacebookMessengerPostback({
-          pageId: event.recipient.id,
-          psid: event.sender.id,
-          postback: event.postback,
-        });
-      }
+      await handleFacebookMessagingEvent(event);
     }
   }
 }

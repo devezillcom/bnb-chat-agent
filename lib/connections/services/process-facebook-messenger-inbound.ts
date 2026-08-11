@@ -73,12 +73,21 @@ export async function processFacebookMessengerInbound(
   });
 
   if (payload.kind === "message") {
-    const claimed = await claimConnectionInboundDedup({
-      connectionId: connection.id,
-      externalMessageId: payload.mid,
-    });
+    const mids = payload.mids ?? [payload.mid];
+    let anyClaimed = false;
 
-    if (!claimed) {
+    for (const externalMessageId of mids) {
+      const claimed = await claimConnectionInboundDedup({
+        connectionId: connection.id,
+        externalMessageId,
+      });
+
+      if (claimed) {
+        anyClaimed = true;
+      }
+    }
+
+    if (!anyClaimed) {
       return;
     }
   }

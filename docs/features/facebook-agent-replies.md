@@ -12,8 +12,10 @@ When Facebook sends a webhook event to `/api/webhooks/facebook`:
    - Resolve the Facebook Page connection.
    - Always send `mark_seen` to the participant.
    - If the connection has **no assigned agent** → stop (no reply, no QStash job).
-   - If an agent is assigned → enqueue a QStash job (`facebook-messenger-inbound`).
-4. The QStash callback invokes the agent and sends the reply through the Facebook Send API.
+   - If an agent is assigned:
+     - **Get Started postback** → enqueue `facebook-messenger-inbound` immediately.
+     - **Text/image message** → append to a Redis pending box, cancel any scheduled flush job, and schedule a new flush job (`facebook-messenger-inbound-flush`) after 3 seconds of debounce.
+4. The flush job merges pending messages into one user turn, then invokes the agent and sends the reply through the Facebook Send API.
 
 ## Decisions implemented
 
@@ -23,7 +25,8 @@ When Facebook sends a webhook event to `/api/webhooks/facebook`:
 | Agent reassignment | All channel `chat_agent_sessions` rows for that connection are deleted; next message creates a fresh session |
 | Get Started postback | Always handled when an agent is assigned; sends the agent's `first_message` (or default greeting) without invoking the LLM |
 | Async processing | QStash from the first version; webhook never waits for LLM latency |
-| Sender actions | Webhook: `mark_seen` on receive; QStash job: `typing_on` before processing; Messenger clears typing when the reply is delivered — `typing_off` only on job failure |
+| Sender actions | Webhook: `mark_seen` on receive; flush job: `typing_on` before processing (after debounce); Messenger clears typing when the reply is delivered — `typing_off` only on job failure |
+| Rapid messages | Redis pending box + 3s debounce; multiple messages merged into one LLM turn; Get Started bypasses batching |
 | Inbound images | Download from Facebook → store on R2 → vision via Cloudflare resize URL |
 
 ## Data model
@@ -75,9 +78,12 @@ Requires a **vision-capable** `CHAT_AGENT_MODEL` (e.g. `gpt-4o`, `claude-sonnet-
 | ---- | -------- |
 | Webhook entry | `app/api/webhooks/facebook/route.ts` |
 | Event routing | `lib/connections/services/handle-facebook-messenger-webhook.ts` |
-| Sync webhook step (mark_seen, enqueue) | `lib/connections/services/handle-facebook-messenger-message.ts` |
-| QStash enqueue | `lib/connections/services/enqueue-facebook-messenger-inbound-job.ts` |
-| QStash handler | `lib/connections/services/handle-facebook-messenger-inbound-qstash-job.ts` |
+| Sync webhook step (mark_seen, buffer/enqueue) | `lib/connections/services/handle-facebook-messenger-message.ts` |
+| Pending message buffer | `lib/connections/services/buffer-facebook-messenger-inbound-message.ts` |
+| Flush scheduling | `lib/connections/services/reschedule-facebook-messenger-pending-flush.ts` |
+| QStash flush handler | `lib/connections/services/handle-facebook-messenger-inbound-flush-qstash-job.ts` |
+| QStash enqueue (Get Started / Redis fallback) | `lib/connections/services/enqueue-facebook-messenger-inbound-job.ts` |
+| QStash handler (Get Started / Redis fallback) | `lib/connections/services/handle-facebook-messenger-inbound-qstash-job.ts` |
 | Reply orchestration | `lib/connections/services/process-facebook-messenger-inbound.ts` |
 | Facebook image storage | `lib/connections/services/store-facebook-inbound-images.ts` |
 | LangGraph core + channel adapter | `lib/chat-agent/`, `lib/channel-agent/services/reply-to-channel-message.ts` |
@@ -87,7 +93,8 @@ Requires a **vision-capable** `CHAT_AGENT_MODEL` (e.g. `gpt-4o`, `claude-sonnet-
 
 | Variable | Purpose |
 | -------- | ------- |
-| `QSTASH_TOKEN` | Publish inbound jobs |
+| `QSTASH_TOKEN` | Publish inbound and flush jobs |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Pending message box for debounce/batching (falls back to immediate processing when unset) |
 | `QSTASH_CURRENT_SIGNING_KEY` / `QSTASH_NEXT_SIGNING_KEY` | Verify callback (required in production) |
 | `QSTASH_CALLBACK_URL` or `NEXT_PUBLIC_APP_URL` | Callback base URL |
 | `DATABASE_URL` | Postgres checkpointer + session tables |
@@ -124,9 +131,11 @@ sequenceDiagram
     alt no agentId
         WH-->>FB: done
     else has agentId
-        WH->>QS: publish facebook-messenger-inbound
-        QS->>Job: POST /api/qstash/callback
-        Job->>Job: dedup mid (messages only)
+        WH->>WH: append to Redis pending box
+        WH->>QS: cancel prior flush + schedule flush t+3s
+        QS->>Job: POST facebook-messenger-inbound-flush
+        Job->>Job: verify generation + merge pending messages
+        Job->>Job: dedup mids (messages only)
         Job->>Send: typing_on
         Job->>Job: get/create conversation session
         alt get_started postback
@@ -151,7 +160,7 @@ These are intentional gaps for follow-up work:
 - **Human handoff / pause agent** — No way to disable auto-reply per conversation or escalate to a human.
 - **Conversation UI** — In-app sandbox can test `facebook_page` env per agent; no admin view of production channel sessions yet.
 - **Agent tools / skills / knowledge** — Wired through the shared chat agent runtime for both web and channel envs.
-- **Concurrent rapid messages** — QStash flow control serializes per `(connection, psid)` but does not debounce/batch multiple messages into one LLM turn.
+- **Concurrent rapid messages** — Debounced via Redis pending box + `facebook-messenger-inbound-flush` (3s window). Without Redis env vars, messages are processed one-by-one as before.
 - **Error surfacing** — Failures are logged; `connections.last_error` is not updated on reply failures.
 - **Get Started without prior conversation seed** — First message is sent as plain text only; it is not added to the LangGraph checkpoint (first user text message starts LLM history).
 

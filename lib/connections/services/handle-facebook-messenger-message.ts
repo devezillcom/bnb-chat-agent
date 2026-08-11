@@ -4,6 +4,7 @@ import type {
   FacebookPostback,
 } from "../types";
 import { getFacebookConnectionByPageId } from "./get-facebook-connection-by-page-id";
+import { bufferFacebookMessengerInboundMessage } from "./buffer-facebook-messenger-inbound-message";
 import { enqueueFacebookMessengerInboundJob } from "./enqueue-facebook-messenger-inbound-job";
 import { resolveFacebookInboundPageAccessToken } from "./resolve-facebook-inbound-page-access-token";
 import { sendFacebookMessengerSenderAction } from "../utils/send-facebook-messenger-message";
@@ -20,7 +21,7 @@ async function markFacebookParticipantSeen(params: {
   });
 }
 
-async function handleFacebookMessagingEvent(
+export async function handleFacebookMessagingEvent(
   event: FacebookMessagingEvent,
 ): Promise<void> {
   const pageId = event.recipient.id;
@@ -93,7 +94,7 @@ async function enqueueFacebookMessageEvent(params: {
     (attachment) => attachment.type !== "image",
   );
 
-  await enqueueFacebookMessengerInboundJob({
+  await bufferFacebookMessengerInboundMessage({
     userId: params.connection.userId,
     payload: {
       kind: "message",
@@ -121,31 +122,5 @@ async function enqueueFacebookGetStartedPostback(params: {
       psid: params.psid,
       postbackPayload: params.postback.payload,
     },
-  });
-}
-
-export async function handleFacebookMessengerMessage(params: {
-  pageId: string;
-  psid: string;
-  message: FacebookIncomingMessage;
-}): Promise<void> {
-  await handleFacebookMessagingEvent({
-    sender: { id: params.psid },
-    recipient: { id: params.pageId },
-    timestamp: Date.now(),
-    message: params.message,
-  });
-}
-
-export async function handleFacebookMessengerPostback(params: {
-  pageId: string;
-  psid: string;
-  postback: FacebookPostback;
-}): Promise<void> {
-  await handleFacebookMessagingEvent({
-    sender: { id: params.psid },
-    recipient: { id: params.pageId },
-    timestamp: Date.now(),
-    postback: params.postback,
   });
 }

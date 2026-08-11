@@ -27,26 +27,34 @@ export const refreshConnectionConnectQstashPayloadSchema = z.object({
   connectionId: z.uuid(),
 });
 
+const facebookMessengerImageAttachmentSchema = z.object({
+  type: z.string(),
+  url: z.url(),
+});
+
+export const facebookMessengerPendingMessageSchema = z.object({
+  mid: z.string().min(1),
+  text: z.string().optional(),
+  imageAttachments: z.array(facebookMessengerImageAttachmentSchema).optional(),
+  hasUnsupportedAttachments: z.boolean().optional(),
+  receivedAt: z.number(),
+});
+
+export const facebookMessengerInboundMessagePayloadSchema = z.object({
+  kind: z.literal("message"),
+  connectionId: z.uuid(),
+  psid: z.string().min(1),
+  mid: z.string().min(1),
+  mids: z.array(z.string().min(1)).min(1).optional(),
+  text: z.string().optional(),
+  imageAttachments: z.array(facebookMessengerImageAttachmentSchema).max(5).optional(),
+  hasUnsupportedAttachments: z.boolean().optional(),
+});
+
 export const facebookMessengerInboundQstashPayloadSchema = z.discriminatedUnion(
   "kind",
   [
-    z.object({
-      kind: z.literal("message"),
-      connectionId: z.uuid(),
-      psid: z.string().min(1),
-      mid: z.string().min(1),
-      text: z.string().optional(),
-      imageAttachments: z
-        .array(
-          z.object({
-            type: z.string(),
-            url: z.url(),
-          }),
-        )
-        .max(5)
-        .optional(),
-      hasUnsupportedAttachments: z.boolean().optional(),
-    }),
+    facebookMessengerInboundMessagePayloadSchema,
     z.object({
       kind: z.literal("postback_get_started"),
       connectionId: z.uuid(),
@@ -56,8 +64,23 @@ export const facebookMessengerInboundQstashPayloadSchema = z.discriminatedUnion(
   ],
 );
 
+export const facebookMessengerInboundFlushQstashPayloadSchema = z.object({
+  kind: z.literal("flush"),
+  connectionId: z.uuid(),
+  psid: z.string().min(1),
+  generation: z.number().int().positive(),
+});
+
+export type FacebookMessengerPendingMessage = z.infer<
+  typeof facebookMessengerPendingMessageSchema
+>;
+
 export type FacebookMessengerInboundQstashPayload = z.infer<
   typeof facebookMessengerInboundQstashPayloadSchema
+>;
+
+export type FacebookMessengerInboundFlushQstashPayload = z.infer<
+  typeof facebookMessengerInboundFlushQstashPayloadSchema
 >;
 
 export type ConnectionFormValues = z.infer<typeof connectionFormSchema>;
