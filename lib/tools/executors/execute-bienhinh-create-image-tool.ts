@@ -8,11 +8,11 @@ import { enqueueBienhinhImagePollJob } from "../services/enqueue-bienhinh-image-
 import type { ToolExecutionContext, WorkspaceToolRuntime } from "../types";
 import {
   BIENHINH_IMAGES_API_URL,
-  fetchBienhinhImageRequest,
   formatBienhinhImageToolResult,
   getBienhinhApiToken,
   parseBienhinhImageResponseBody,
 } from "../utils/bienhinh-image-api";
+import { storeBienhinhResultImageOnR2 } from "../utils/store-bienhinh-result-image-on-r2";
 
 const DEFAULT_TEMPLATE_GROUP_ID = "default-template-group";
 const DEFAULT_IMAGE_WORKFLOW = "standard-image";
@@ -131,6 +131,10 @@ export async function executeBienhinhCreateImageTool(
       requestId: parsed.requestId,
       executionContext,
     });
+  }
+
+  if (parsed.status === "completed" && parsed.imageUrl) {
+    parsed.imageUrl = await storeBienhinhResultImageOnR2(parsed.imageUrl);
   }
 
   return formatBienhinhImageToolResult(parsed, response.status);

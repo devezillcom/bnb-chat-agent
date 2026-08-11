@@ -1,6 +1,6 @@
 const SYSTEM_EVENT_TAG = "system-event";
 const SYSTEM_EVENT_TAG_PATTERN = new RegExp(
-  `<${SYSTEM_EVENT_TAG}>[\\s\\S]*?<\\/${SYSTEM_EVENT_TAG}>`,
+  `<${SYSTEM_EVENT_TAG}(?:\\s[^>]*)?>[\\s\\S]*?<\\/${SYSTEM_EVENT_TAG}>`,
   "g",
 );
 

@@ -7,6 +7,7 @@ import { bienhinhImagePollQstashPayloadSchema } from "../schemas/bienhinh-image-
 import { enqueueBienhinhImagePollJob } from "./enqueue-bienhinh-image-poll-job";
 import { deliverBienhinhImageResult } from "@/lib/chat-agent/services/deliver-bienhinh-image-result";
 import { fetchBienhinhImageRequest } from "../utils/bienhinh-image-api";
+import { storeBienhinhResultImageOnR2 } from "../utils/store-bienhinh-result-image-on-r2";
 
 export async function handleBienhinhImagePollQstashJob(
   payload: unknown,
@@ -51,6 +52,8 @@ export async function handleBienhinhImagePollQstashJob(
       return;
     }
 
+    const imageUrl = await storeBienhinhResultImageOnR2(pollResult.imageUrl);
+
     await deliverBienhinhImageResult({
       requestId: parsed.requestId,
       sessionId: parsed.sessionId,
@@ -58,7 +61,7 @@ export async function handleBienhinhImagePollQstashJob(
       outcome: {
         kind: "completed",
         templateName: pollResult.templateName,
-        imageUrl: pollResult.imageUrl,
+        imageUrl,
       },
     });
     return;

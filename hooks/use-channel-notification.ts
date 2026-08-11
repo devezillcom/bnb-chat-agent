@@ -45,7 +45,13 @@ export function useChannelNotification<TPayload extends Record<string, unknown>>
 
   const subscribe = useCallback(
     (onChange: () => void) => {
-      if (!dbPath || !isFirebaseRtdbConfigured()) {
+
+      // the dbPath still not ready, so we don't subscribe yet
+      if (!dbPath) {
+        return () => { };
+      }
+
+      if (!isFirebaseRtdbConfigured()) {
         snapshotRef.current = null;
         onChange();
         return () => { };

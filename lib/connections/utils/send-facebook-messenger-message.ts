@@ -26,7 +26,10 @@ async function callFacebookMessengerSendApi(
       error?: { message?: string };
     } | null;
     const message = data?.error?.message ?? response.statusText;
-    console.error("Facebook Send API error:", message);
+    console.error("Facebook Send API error:", message, {
+      psid: params.psid,
+      requestBody: params.requestBody,
+    });
     throw new Error(`Facebook Send API failed (${response.status}): ${message}`);
   }
 }
@@ -36,6 +39,11 @@ export async function sendFacebookMessengerImageMessage(params: {
   psid: string;
   imageUrl: string;
 }): Promise<void> {
+  console.log("[facebook-messenger] send image", {
+    psid: params.psid,
+    imageUrl: params.imageUrl,
+  });
+
   await callFacebookMessengerSendApi({
     pageAccessToken: params.pageAccessToken,
     psid: params.psid,
@@ -53,6 +61,11 @@ export async function sendFacebookMessengerImageMessage(params: {
       },
     },
   });
+
+  console.log("[facebook-messenger] send image ok", {
+    psid: params.psid,
+    imageUrl: params.imageUrl,
+  });
 }
 
 export async function sendFacebookMessengerTextMessage(params: {
@@ -60,6 +73,12 @@ export async function sendFacebookMessengerTextMessage(params: {
   psid: string;
   text: string;
 }): Promise<void> {
+  console.log("[facebook-messenger] send message", {
+    psid: params.psid,
+    textLength: params.text.length,
+    textPreview: params.text.slice(0, 120),
+  });
+
   await callFacebookMessengerSendApi({
     pageAccessToken: params.pageAccessToken,
     psid: params.psid,
@@ -68,6 +87,11 @@ export async function sendFacebookMessengerTextMessage(params: {
       messaging_type: "RESPONSE",
       message: { text: params.text },
     },
+  });
+
+  console.log("[facebook-messenger] send message ok", {
+    psid: params.psid,
+    textLength: params.text.length,
   });
 }
 
