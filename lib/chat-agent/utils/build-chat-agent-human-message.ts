@@ -2,6 +2,11 @@ import "server-only";
 
 import { HumanMessage } from "@langchain/core/messages";
 
+import {
+  getChatModelDefinition,
+  type ChatModelId,
+} from "@/lib/langchain/models/registry";
+
 import { wrapAttachedImage } from "./attached-image-tag";
 import { downloadAttachments } from "./download-attachments";
 
@@ -15,6 +20,7 @@ export async function buildChatAgentHumanMessage(
   message: string,
   images: ChatAgentImageAttachment[] | undefined,
   workspaceId: string,
+  model: ChatModelId,
 ): Promise<HumanMessage> {
   let trimmed = message.trim();
   const attachments = images ?? [];
@@ -27,15 +33,21 @@ export async function buildChatAgentHumanMessage(
     attachments,
     workspaceId,
   });
+  const supportsVision = getChatModelDefinition(model).supportsVision;
   const content: MultimodalContentPart[] = [];
 
-  for (let index = 0; index < resolvedAttachments.length; index++) {
-    const image = resolvedAttachments[index];
-    content.push({
-      type: "image_url",
-      image_url: { url: image.url },
-    });
-    trimmed += `\n\n${wrapAttachedImage(attachments[index].url)}`;
+  for (const image of resolvedAttachments) {
+    if (supportsVision) {
+      content.push({
+        type: "image_url",
+        image_url: { url: image.url },
+      });
+    }
+    trimmed += `\n\n${wrapAttachedImage(image.url)}`;
+  }
+
+  if (!supportsVision) {
+    return new HumanMessage(trimmed);
   }
 
   if (trimmed) {

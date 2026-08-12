@@ -57,6 +57,7 @@ async function* streamChatAgentTokens(
     params.message,
     params.images,
     params.workspaceId,
+    agentContext.model,
   );
 
   const stream = await agent.stream(

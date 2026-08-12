@@ -30,6 +30,8 @@ export type ChatModelDefinition = {
   modelName: string;
   /** When false, omit temperature (reasoning models). */
   supportsTemperature: boolean;
+  /** When false, omit image_url content parts (text-only models). */
+  supportsVision: boolean;
   /** Purpose and approximate API pricing (USD per 1M tokens). */
   description: string;
 };
@@ -44,6 +46,7 @@ export const chatModelRegistry: Record<ChatModelId, ChatModelDefinition> = {
     provider: "openai",
     modelName: "gpt-5.5",
     supportsTemperature: false,
+    supportsVision: true,
     description:
       "OpenAI frontier reasoning model for complex agentic research, tool use, and multi-step analysis. ~$5/MTok input, ~$30/MTok output (reasoning tokens billed at output rate).",
   },
@@ -52,6 +55,7 @@ export const chatModelRegistry: Record<ChatModelId, ChatModelDefinition> = {
     provider: "openai",
     modelName: "gpt-5.5-pro",
     supportsTemperature: false,
+    supportsVision: true,
     description:
       "OpenAI maximum-capability reasoning model for the hardest research tasks. ~$30/MTok input, ~$180/MTok output — highest cost, best accuracy.",
   },
@@ -60,6 +64,7 @@ export const chatModelRegistry: Record<ChatModelId, ChatModelDefinition> = {
     provider: "openai",
     modelName: "gpt-4.1",
     supportsTemperature: true,
+    supportsVision: true,
     description:
       "Balanced OpenAI production model with 1M-token context for long documents and reliable everyday research. ~$2/MTok input, ~$8/MTok output.",
   },
@@ -68,6 +73,7 @@ export const chatModelRegistry: Record<ChatModelId, ChatModelDefinition> = {
     provider: "openai",
     modelName: "gpt-4o",
     supportsTemperature: true,
+    supportsVision: true,
     description:
       "Legacy OpenAI multimodal model for general tasks. ~$2.50/MTok input, ~$10/MTok output. Prefer GPT-4.1 unless you need GPT-4o specifically.",
   },
@@ -76,6 +82,7 @@ export const chatModelRegistry: Record<ChatModelId, ChatModelDefinition> = {
     provider: "openai",
     modelName: "o3-mini",
     supportsTemperature: false,
+    supportsVision: false,
     description:
       "Lightweight OpenAI reasoning model for structured analysis on a budget. ~$1.10/MTok input, ~$4.40/MTok output (reasoning tokens add to cost).",
   },
@@ -84,6 +91,7 @@ export const chatModelRegistry: Record<ChatModelId, ChatModelDefinition> = {
     provider: "anthropic",
     modelName: "claude-sonnet-4-6",
     supportsTemperature: true,
+    supportsVision: true,
     description:
       "Anthropic balanced model for coding, agents, and everyday research with 1M-token context. ~$3/MTok input, ~$15/MTok output.",
   },
@@ -92,6 +100,7 @@ export const chatModelRegistry: Record<ChatModelId, ChatModelDefinition> = {
     provider: "anthropic",
     modelName: "claude-opus-4-6",
     supportsTemperature: true,
+    supportsVision: true,
     description:
       "Anthropic flagship for the most complex research, long-horizon reasoning, and high-stakes analysis. ~$5/MTok input, ~$25/MTok output.",
   },
@@ -100,6 +109,7 @@ export const chatModelRegistry: Record<ChatModelId, ChatModelDefinition> = {
     provider: "deepseek",
     modelName: "deepseek-v4-flash",
     supportsTemperature: true,
+    supportsVision: false,
     description:
       "DeepSeek cost-efficient V4 model for high-volume chat, coding help, and lightweight agents with 1M-token context. ~$0.14/MTok input, ~$0.28/MTok output.",
   },
@@ -108,6 +118,7 @@ export const chatModelRegistry: Record<ChatModelId, ChatModelDefinition> = {
     provider: "deepseek",
     modelName: "deepseek-v4-pro",
     supportsTemperature: true,
+    supportsVision: false,
     description:
       "DeepSeek higher-capability V4 model for complex reasoning, coding, and agentic workflows with 1M-token context. ~$0.435/MTok input, ~$0.87/MTok output.",
   },

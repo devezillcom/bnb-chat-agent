@@ -28,6 +28,7 @@ export async function invokeAgentTurn(
     params.message,
     params.images,
     params.runContext.workspaceId,
+    params.agentContext.model,
   );
 
   const result = await agent.invoke(
