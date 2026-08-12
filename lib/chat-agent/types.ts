@@ -67,6 +67,7 @@ export type ReplyToChannelMessageParams = {
   agent: {
     id: string;
     systemPrompt: string;
+    model: string;
   };
   context: {
     workspaceId: string;

@@ -19,10 +19,6 @@ type ChatAgent = Awaited<ReturnType<typeof buildChatAgent>>;
 const agentCache = new Map<string, Promise<ChatAgent>>();
 const agentCacheKeyByAgentId = new Map<string, string>();
 
-function getDefaultChatModel() {
-  return parseChatModel(process.env.CHAT_AGENT_MODEL);
-}
-
 function getSummarizationModel() {
   return parseChatModel(process.env.CHAT_AGENT_MODEL, "gpt-4o");
 }
@@ -31,7 +27,7 @@ async function buildChatAgent(config: ChatAgentConfig) {
   const [checkpointer, model, summarizationModel, workspaceTools, knowledgeTool] =
     await Promise.all([
       getChatAgentCheckpointer(),
-      Promise.resolve(createChatModel(getDefaultChatModel(), { temperature: 0.5 })),
+      Promise.resolve(createChatModel(config.model, { temperature: 0.5 })),
       Promise.resolve(createChatModel(getSummarizationModel(), { temperature: 0.2 })),
       buildChatAgentTools({
         workspaceId: config.workspaceId,

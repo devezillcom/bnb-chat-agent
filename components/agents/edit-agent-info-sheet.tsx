@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
+import { AgentModelField } from "@/components/agents/agent-model-field";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -51,6 +52,7 @@ export function EditAgentInfoSheet({
       name: agent.name,
       description: agent.description ?? "",
       systemPrompt: agent.systemPrompt,
+      model: agent.model,
       firstMessage: agent.firstMessage ?? "",
     },
   });
@@ -61,6 +63,7 @@ export function EditAgentInfoSheet({
         name: agent.name,
         description: agent.description ?? "",
         systemPrompt: agent.systemPrompt,
+        model: agent.model,
         firstMessage: agent.firstMessage ?? "",
       });
     }
@@ -106,8 +109,8 @@ export function EditAgentInfoSheet({
           <SheetHeader>
             <SheetTitle>Edit info</SheetTitle>
             <SheetDescription>
-              Update the name, description, system prompt, and first message for
-              this agent.
+              Update the name, description, model, system prompt, and first
+              message for this agent.
             </SheetDescription>
           </SheetHeader>
 
@@ -153,6 +156,13 @@ export function EditAgentInfoSheet({
                 />
                 <FieldError errors={[systemPromptError]} />
               </Field>
+
+              <AgentModelField
+                control={form.control}
+                name="model"
+                id="edit-agent-model"
+                disabled={isSubmitting}
+              />
 
               <Field data-invalid={!!firstMessageError || undefined}>
                 <FieldLabel htmlFor="edit-agent-first-message">

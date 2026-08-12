@@ -39,6 +39,7 @@ import { toast } from "@/components/ui/toast";
 import type { AgentListItem } from "@/lib/agents/types";
 import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
 import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
+import { getChatModelDefinition } from "@/lib/langchain/models/registry";
 import { cn } from "@/lib/utils";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
@@ -170,6 +171,12 @@ export function AgentDetailPage({
                   <dt className="text-sm text-muted-foreground">Description</dt>
                   <dd className="text-sm font-medium sm:max-w-sm sm:text-right">
                     {agent.description ?? "—"}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between">
+                  <dt className="text-sm text-muted-foreground">Model</dt>
+                  <dd className="text-sm font-medium sm:max-w-sm sm:text-right">
+                    {getChatModelDefinition(agent.model).label}
                   </dd>
                 </div>
                 <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between">

@@ -1,3 +1,5 @@
+import type { ChatModelId } from "@/lib/langchain/models/registry";
+
 import type { CreateAgentFormValues } from "./schema";
 
 export type AgentListItem = {
@@ -5,6 +7,7 @@ export type AgentListItem = {
   name: string;
   description: string | null;
   systemPrompt: string;
+  model: ChatModelId;
   firstMessage: string | null;
   createdAt: string;
   updatedAt: string;

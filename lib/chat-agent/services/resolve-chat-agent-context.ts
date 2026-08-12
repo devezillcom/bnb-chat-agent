@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getAgent } from "@/lib/agents/services/get-agent";
+import type { ChatModelId } from "@/lib/langchain/models/registry";
 
 import type { ActiveChatEnv } from "../config/chat-env";
 import { resolveWorkspaceAgentRuntime } from "../utils/resolve-workspace-agent-runtime";
@@ -16,6 +17,7 @@ export type ResolveChatAgentContextResult = {
   workspaceId: string;
   chatEnv: ActiveChatEnv;
   systemPrompt: string;
+  model: ChatModelId;
   toolSlugs: string[];
   knowledgeBaseIds: string[];
   citationsEnabled: boolean;
@@ -41,6 +43,7 @@ export async function resolveChatAgentContext(
     workspaceId: params.workspaceId,
     chatEnv: params.chatEnv,
     systemPrompt: runtime.systemPrompt,
+    model: agent.model,
     toolSlugs: runtime.toolSlugs,
     knowledgeBaseIds: runtime.knowledgeBaseIds,
     citationsEnabled: runtime.citationsEnabled,

@@ -31,6 +31,7 @@ async function loadConnectionWithAgent(connectionId: string) {
       metadata: connections.metadata,
       agentName: agents.name,
       systemPrompt: agents.systemPrompt,
+      model: agents.model,
       firstMessage: agents.firstMessage,
     })
     .from(connections)
@@ -172,6 +173,7 @@ export async function processFacebookMessengerInbound(
           agent: {
             id: connection.agentId,
             systemPrompt: connection.systemPrompt,
+            model: connection.model,
           },
           context,
         });

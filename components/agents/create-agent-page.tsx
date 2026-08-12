@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
+import { AgentModelField } from "@/components/agents/agent-model-field";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,6 +29,7 @@ import {
   type CreateAgentFormValues,
 } from "@/lib/agents/schema";
 import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
+import { defaultChatModel } from "@/lib/langchain/models/registry";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
 type CreateAgentPageProps = {
@@ -48,6 +50,7 @@ export function CreateAgentPage({
       name: "",
       description: "",
       systemPrompt: "",
+      model: defaultChatModel,
       firstMessage: "",
     },
   });
@@ -155,6 +158,13 @@ export function CreateAgentPage({
                 />
                 <FieldError errors={[systemPromptError]} />
               </Field>
+
+              <AgentModelField
+                control={form.control}
+                name="model"
+                id="agent-model"
+                disabled={isSubmitting}
+              />
 
               <Field data-invalid={!!firstMessageError || undefined}>
                 <FieldLabel htmlFor="agent-first-message">

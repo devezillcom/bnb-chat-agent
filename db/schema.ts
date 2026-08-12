@@ -149,6 +149,8 @@ export const agents = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     systemPrompt: text("system_prompt").notNull(),
+    /** Registry chat model id used when chatting with this agent. */
+    model: text("model").notNull().default("claude-sonnet-4-6"),
     /** Greeting sent on Messenger Get Started (and similar channel openers). */
     firstMessage: text("first_message"),
     createdAt: timestamp("created_at", { withTimezone: true })

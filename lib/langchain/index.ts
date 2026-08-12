@@ -1,5 +1,6 @@
 export {
   chatModelIds,
+  chatModelIdSchema,
   chatModelRegistry,
   defaultChatModel,
   getChatModelDefinition,

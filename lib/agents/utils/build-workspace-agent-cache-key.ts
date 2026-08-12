@@ -3,6 +3,7 @@ import { createHash } from "crypto";
 export type WorkspaceAgentCacheConfig = {
   agentId: string;
   systemPrompt: string;
+  model: string;
   toolSlugs: string[];
   knowledgeBaseIds: string[];
   citationsEnabled: boolean;
@@ -13,6 +14,7 @@ export function buildWorkspaceAgentCacheKey(
 ): string {
   const content = JSON.stringify({
     systemPrompt: config.systemPrompt,
+    model: config.model,
     toolSlugs: [...config.toolSlugs].sort(),
     knowledgeBaseIds: [...config.knowledgeBaseIds].sort(),
     citationsEnabled: config.citationsEnabled,

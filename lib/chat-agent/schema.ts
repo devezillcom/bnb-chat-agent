@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { chatModelIdSchema } from "@/lib/langchain/models/registry";
+
 import { activeChatEnvSchema, type ActiveChatEnv } from "./config/chat-env";
 import { CHAT_AGENT_IMAGE_MAX_COUNT } from "./constants/chat-agent-image-upload-rules";
 
@@ -42,6 +44,7 @@ export const chatAgentConfigSchema = z.object({
   workspaceId: z.uuid(),
   chatEnv: activeChatEnvSchema,
   systemPrompt: z.string(),
+  model: chatModelIdSchema,
   toolSlugs: z.array(z.string()).default([]),
   knowledgeBaseIds: z.array(z.uuid()).default([]),
   citationsEnabled: z.boolean().default(true),

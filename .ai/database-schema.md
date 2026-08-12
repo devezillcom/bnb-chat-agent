@@ -157,6 +157,7 @@ Configured chat agents for a workspace.
 | name | text | NO | — | Display name |
 | description | text | YES | — | Short summary of the agent's purpose |
 | system_prompt | text | NO | — | Instructions that define agent behavior |
+| model | text | NO | `claude-sonnet-4-6` | Registry chat model id used for this agent |
 | first_message | text | YES | — | Greeting for channel openers (e.g. Messenger Get Started) |
 | created_at | timestamptz | NO | `now()` | Row creation time |
 | updated_at | timestamptz | NO | `now()` | Last update time |

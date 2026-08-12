@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { agents } from "@/db/schema";
 import { db } from "@/lib/db";
 import { APIError } from "@/lib/exposers/api-error";
+import { parseChatModel } from "@/lib/langchain/models/registry";
 
 import type { GetAgentParams, GetAgentResult } from "../types";
 
@@ -13,6 +14,7 @@ export async function getAgent(params: GetAgentParams): Promise<GetAgentResult> 
       name: agents.name,
       description: agents.description,
       systemPrompt: agents.systemPrompt,
+      model: agents.model,
       firstMessage: agents.firstMessage,
       createdAt: agents.createdAt,
       updatedAt: agents.updatedAt,
@@ -35,6 +37,7 @@ export async function getAgent(params: GetAgentParams): Promise<GetAgentResult> 
     name: row.name,
     description: row.description,
     systemPrompt: row.systemPrompt,
+    model: parseChatModel(row.model),
     firstMessage: row.firstMessage,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),

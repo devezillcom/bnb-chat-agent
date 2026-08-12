@@ -2,6 +2,7 @@ import { and, asc, count, desc, eq, ilike, or } from "drizzle-orm";
 
 import { agents } from "@/db/schema";
 import { db } from "@/lib/db";
+import { parseChatModel } from "@/lib/langchain/models/registry";
 
 import type { ListAgentsParams, ListAgentsResult } from "../types";
 
@@ -45,6 +46,7 @@ export async function listAgents(
       name: agents.name,
       description: agents.description,
       systemPrompt: agents.systemPrompt,
+      model: agents.model,
       firstMessage: agents.firstMessage,
       createdAt: agents.createdAt,
       updatedAt: agents.updatedAt,
@@ -64,6 +66,7 @@ export async function listAgents(
       name: row.name,
       description: row.description,
       systemPrompt: row.systemPrompt,
+      model: parseChatModel(row.model),
       firstMessage: row.firstMessage,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),

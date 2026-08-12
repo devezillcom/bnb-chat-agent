@@ -13,6 +13,7 @@ export async function createAgent(
       name: params.name.trim(),
       description: params.description?.trim() || null,
       systemPrompt: params.systemPrompt.trim(),
+      model: params.model,
       firstMessage: params.firstMessage?.trim() || null,
     })
     .returning({ id: agents.id });

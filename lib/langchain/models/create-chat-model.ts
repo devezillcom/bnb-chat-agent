@@ -2,6 +2,7 @@ import "server-only";
 
 import { ChatAnthropic } from "@langchain/anthropic";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { ChatDeepSeek } from "@langchain/deepseek";
 import { ChatOpenAI } from "@langchain/openai";
 
 import { APIError } from "@/lib/exposers/api-error";
@@ -26,6 +27,10 @@ export function isChatModelConfigured(model: ChatModelId): boolean {
     return Boolean(process.env.OPENAI_API_KEY?.trim());
   }
 
+  if (provider === "deepseek") {
+    return Boolean(process.env.DEEPSEEK_API_KEY?.trim());
+  }
+
   return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
 }
 
@@ -45,6 +50,14 @@ function assertProviderApiKey(provider: ChatModelProvider) {
       500,
     );
   }
+
+  if (provider === "deepseek" && !process.env.DEEPSEEK_API_KEY) {
+    throw new APIError(
+      "ERR_DEEPSEEK_NOT_CONFIGURED",
+      "DeepSeek is not configured. Please set DEEPSEEK_API_KEY.",
+      500,
+    );
+  }
 }
 
 export function createChatModel(
@@ -54,16 +67,24 @@ export function createChatModel(
   const definition = getChatModelDefinition(model);
   assertProviderApiKey(definition.provider);
   const temperature = options?.temperature ?? 0.2;
+  const modelOptions = definition.supportsTemperature ? { temperature } : {};
 
   if (definition.provider === "openai") {
     return new ChatOpenAI({
       model: definition.modelName,
-      ...(definition.supportsTemperature ? { temperature } : {}),
+      ...modelOptions,
+    });
+  }
+
+  if (definition.provider === "deepseek") {
+    return new ChatDeepSeek({
+      model: definition.modelName,
+      ...modelOptions,
     });
   }
 
   return new ChatAnthropic({
     model: definition.modelName,
-    ...(definition.supportsTemperature ? { temperature } : {}),
+    ...modelOptions,
   });
 }
