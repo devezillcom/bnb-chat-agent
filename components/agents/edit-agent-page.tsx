@@ -1,13 +1,21 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2Icon } from "lucide-react";
+import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 import { AgentModelField } from "@/components/agents/agent-model-field";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Field,
   FieldError,
@@ -15,36 +23,29 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { toast } from "@/components/ui/toast";
 import {
   createAgentFormSchema,
   type CreateAgentFormValues,
 } from "@/lib/agents/schema";
 import type { AgentListItem } from "@/lib/agents/types";
+import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
-type EditAgentInfoSheetProps = {
+type EditAgentPageProps = {
   agent: AgentListItem;
   workspaceId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  workspaceIndex: number;
 };
 
-export function EditAgentInfoSheet({
+export function EditAgentPage({
   agent,
   workspaceId,
-  open,
-  onOpenChange,
-}: EditAgentInfoSheetProps) {
+  workspaceIndex,
+}: EditAgentPageProps) {
   const router = useRouter();
+  const agentsHref = getDashboardNavHref(workspaceIndex, "agents");
+  const agentHref = `${agentsHref}/${agent.id}`;
 
   const form = useForm<CreateAgentFormValues>({
     resolver: zodResolver(createAgentFormSchema),
@@ -56,18 +57,6 @@ export function EditAgentInfoSheet({
       firstMessage: agent.firstMessage ?? "",
     },
   });
-
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        name: agent.name,
-        description: agent.description ?? "",
-        systemPrompt: agent.systemPrompt,
-        model: agent.model,
-        firstMessage: agent.firstMessage ?? "",
-      });
-    }
-  }, [open, agent, form]);
 
   async function onSubmit(values: CreateAgentFormValues) {
     const res = await workspaceFetch(workspaceId, `/api/agents/${agent.id}`, {
@@ -82,7 +71,7 @@ export function EditAgentInfoSheet({
         title: data.message ?? "Agent updated.",
         type: "success",
       });
-      onOpenChange(false);
+      router.push(agentHref);
       router.refresh();
       return;
     }
@@ -100,21 +89,35 @@ export function EditAgentInfoSheet({
   const firstMessageError = form.formState.errors.firstMessage;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md">
-        <form
-          className="flex h-full flex-col"
-          onSubmit={form.handleSubmit(onSubmit)}
+    <div className="mx-auto w-full max-w-2xl px-4 py-8 md:px-8">
+      <div className="mb-6 space-y-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          nativeButton={false}
+          render={<Link href={agentHref} />}
         >
-          <SheetHeader>
-            <SheetTitle>Edit info</SheetTitle>
-            <SheetDescription>
-              Update the name, description, model, system prompt, and first
-              message for this agent.
-            </SheetDescription>
-          </SheetHeader>
+          <ArrowLeftIcon data-icon="inline-start" />
+          Back to agent
+        </Button>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Edit agent</h1>
+          <p className="text-sm text-muted-foreground">
+            Update the basic information for {agent.name}.
+          </p>
+        </div>
+      </div>
 
-          <div className="flex-1 overflow-y-auto px-4">
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Info</CardTitle>
+            <CardDescription>
+              Name, description, and instructions that define how this agent
+              behaves.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <FieldGroup>
               <Field data-invalid={!!nameError || undefined}>
                 <FieldLabel htmlFor="edit-agent-name">Name</FieldLabel>
@@ -148,7 +151,7 @@ export function EditAgentInfoSheet({
                 </FieldLabel>
                 <textarea
                   id="edit-agent-system-prompt"
-                  rows={8}
+                  rows={6}
                   aria-invalid={!!systemPromptError}
                   disabled={isSubmitting}
                   className="flex min-h-32 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
@@ -180,14 +183,14 @@ export function EditAgentInfoSheet({
                 <FieldError errors={[firstMessageError]} />
               </Field>
             </FieldGroup>
-          </div>
-
-          <SheetFooter className="flex-row justify-end gap-2 border-t pt-4">
+          </CardContent>
+          <CardFooter className="justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               disabled={isSubmitting}
-              onClick={() => onOpenChange(false)}
+              nativeButton={false}
+              render={<Link href={agentHref} />}
             >
               Cancel
             </Button>
@@ -201,9 +204,9 @@ export function EditAgentInfoSheet({
                 "Save changes"
               )}
             </Button>
-          </SheetFooter>
-        </form>
-      </SheetContent>
-    </Sheet>
+          </CardFooter>
+        </Card>
+      </form>
+    </div>
   );
 }

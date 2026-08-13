@@ -11,7 +11,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { EditAgentInfoSheet } from "@/components/agents/edit-agent-info-sheet";
 import { AgentCapabilitiesCard } from "@/components/agents/agent-capabilities-card";
 import { AgentConnectionsCard } from "@/components/agents/agent-connections-card";
 import {
@@ -62,14 +61,15 @@ export function AgentDetailPage({
   workspaceIndex,
 }: AgentDetailPageProps) {
   const router = useRouter();
-  const [infoEditOpen, setInfoEditOpen] = useState(false);
   const [clearContextOpen, setClearContextOpen] = useState(false);
   const [clearingContext, setClearingContext] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const agentsHref = getDashboardNavHref(workspaceIndex, "agents");
+  const agentHref = `${agentsHref}/${agent.id}`;
+  const editHref = `${agentHref}/edit`;
   const connectionsHref = getDashboardNavHref(workspaceIndex, "connections");
-  const chatHref = `${agentsHref}/${agent.id}/chat`;
+  const chatHref = `${agentHref}/chat`;
   const leading = getAgentListLeading(agent.name);
 
   async function handleClearContext() {
@@ -183,7 +183,8 @@ export function AgentDetailPage({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setInfoEditOpen(true)}
+                  nativeButton={false}
+                  render={<Link href={editHref} />}
                 >
                   <PencilIcon data-icon="inline-start" />
                   Edit
@@ -200,7 +201,7 @@ export function AgentDetailPage({
                 </div>
                 <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between">
                   <dt className="text-sm text-muted-foreground">Description</dt>
-                  <dd className="text-sm font-medium sm:max-w-sm sm:text-right">
+                  <dd className="line-clamp-2 wrap-break-word text-sm font-medium sm:max-w-sm sm:text-right">
                     {agent.description ?? "—"}
                   </dd>
                 </div>
@@ -214,7 +215,7 @@ export function AgentDetailPage({
                   <dt className="text-sm text-muted-foreground">
                     System prompt
                   </dt>
-                  <dd className="whitespace-pre-wrap text-sm font-medium sm:max-w-sm sm:text-right">
+                  <dd className="line-clamp-4 wrap-break-word text-sm font-medium sm:max-w-sm sm:text-right">
                     {agent.systemPrompt}
                   </dd>
                 </div>
@@ -396,13 +397,6 @@ export function AgentDetailPage({
           </Card>
         </div>
       </div>
-
-      <EditAgentInfoSheet
-        agent={agent}
-        workspaceId={workspaceId}
-        open={infoEditOpen}
-        onOpenChange={setInfoEditOpen}
-      />
     </>
   );
 }

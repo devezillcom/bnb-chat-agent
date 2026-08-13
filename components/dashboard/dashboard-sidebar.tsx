@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { SettingsMenu } from "@/components/dashboard/settings-menu";
@@ -36,7 +37,6 @@ export function DashboardSidebar({
   workspaces,
   workspaceIndex,
 }: DashboardSidebarProps) {
-  const router = useRouter();
   const pathname = usePathname();
 
   return (
@@ -63,7 +63,7 @@ export function DashboardSidebar({
                     <SidebarMenuButton
                       tooltip={label}
                       isActive={isActive}
-                      onClick={() => router.push(href)}
+                      render={<Link href={href} />}
                     >
                       <Icon />
                       <span>{label}</span>
