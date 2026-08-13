@@ -10,6 +10,7 @@ import { db } from "@/lib/db";
 
 import type { FacebookMessengerInboundQstashPayload } from "../schema";
 import { sendFacebookMessengerSenderAction } from "../utils/send-facebook-messenger-message";
+import { withFacebookTypingHeartbeat } from "../utils/with-facebook-typing-heartbeat";
 import { claimConnectionInboundDedup } from "./claim-connection-inbound-dedup";
 import { resolveFacebookInboundPageAccessToken } from "./resolve-facebook-inbound-page-access-token";
 import { sendFacebookInboundReply } from "./send-facebook-inbound-reply";
@@ -110,78 +111,81 @@ export async function processFacebookMessengerInbound(
     return;
   }
 
-  await sendFacebookTypingIndicator({
-    pageAccessToken,
-    psid: payload.psid,
-    action: "typing_on",
-  });
-
   try {
-    const title =
-      payload.kind === "message"
-        ? payload.text?.trim().slice(0, 120) ||
-          (hasImageAttachments ? "Facebook image" : "Facebook message")
-        : "Get Started";
+    const replyText = await withFacebookTypingHeartbeat(
+      {
+        pageAccessToken,
+        psid: payload.psid,
+      },
+      async () => {
+        const title =
+          payload.kind === "message"
+            ? payload.text?.trim().slice(0, 120) ||
+              (hasImageAttachments ? "Facebook image" : "Facebook message")
+            : "Get Started";
 
-    const chatEnv: ActiveChatEnv = "facebook_page";
+        const chatEnv: ActiveChatEnv = "facebook_page";
 
-    const { sessionId } = await getOrCreateChannelAgentSession({
-      connectionId: connection.id,
-      workspaceId: connection.workspaceId,
-      agentId: connection.agentId,
-      chatEnv,
-      externalParticipantId: payload.psid,
-      title,
-    });
-
-    const context = {
-      workspaceId: connection.workspaceId,
-      connectionId: connection.id,
-      agentId: connection.agentId,
-      chatEnv,
-      channelType: connection.channelType,
-      externalParticipantId: payload.psid,
-    };
-
-    let replyText: string;
-
-    if (payload.kind === "postback_get_started") {
-      replyText = resolveAgentFirstMessage(connection.firstMessage);
-    } else if (payload.kind === "message" && (hasText || hasImageAttachments)) {
-      const images = hasImageAttachments
-        ? await storeFacebookInboundImages({
-            attachments: payload.imageAttachments ?? [],
-            pageAccessToken,
-            workspaceId: connection.workspaceId,
-            connectionId: connection.id,
-          })
-        : [];
-
-      if (!hasText && images.length === 0 && hasUnsupportedAttachments) {
-        replyText = FACEBOOK_UNSUPPORTED_ATTACHMENT_REPLY;
-      } else if (!hasText && images.length === 0) {
-        replyText =
-          "I couldn't read the image. Please try sending it again or describe your question as text.";
-      } else {
-        const result = await replyToChannelMessage({
-          sessionId,
+        const { sessionId } = await getOrCreateChannelAgentSession({
+          connectionId: connection.id,
+          workspaceId: connection.workspaceId,
+          agentId: connection.agentId,
           chatEnv,
-          message: payload.text?.trim()
-            ? payload.text.trim()
-            : FACEBOOK_IMAGE_ONLY_USER_MESSAGE,
-          images: images.length > 0 ? images : undefined,
-          agent: {
-            id: connection.agentId,
-            systemPrompt: connection.systemPrompt,
-            model: connection.model,
-          },
-          context,
+          externalParticipantId: payload.psid,
+          title,
         });
-        replyText = result.message;
-      }
-    } else {
-      replyText = FACEBOOK_UNSUPPORTED_ATTACHMENT_REPLY;
-    }
+
+        const context = {
+          workspaceId: connection.workspaceId,
+          connectionId: connection.id,
+          agentId: connection.agentId,
+          chatEnv,
+          channelType: connection.channelType,
+          externalParticipantId: payload.psid,
+        };
+
+        if (payload.kind === "postback_get_started") {
+          return resolveAgentFirstMessage(connection.firstMessage);
+        }
+
+        if (payload.kind === "message" && (hasText || hasImageAttachments)) {
+          const images = hasImageAttachments
+            ? await storeFacebookInboundImages({
+                attachments: payload.imageAttachments ?? [],
+                pageAccessToken,
+                workspaceId: connection.workspaceId,
+                connectionId: connection.id,
+              })
+            : [];
+
+          if (!hasText && images.length === 0 && hasUnsupportedAttachments) {
+            return FACEBOOK_UNSUPPORTED_ATTACHMENT_REPLY;
+          }
+
+          if (!hasText && images.length === 0) {
+            return "I couldn't read the image. Please try sending it again or describe your question as text.";
+          }
+
+          const result = await replyToChannelMessage({
+            sessionId,
+            chatEnv,
+            message: payload.text?.trim()
+              ? payload.text.trim()
+              : FACEBOOK_IMAGE_ONLY_USER_MESSAGE,
+            images: images.length > 0 ? images : undefined,
+            agent: {
+              id: connection.agentId,
+              systemPrompt: connection.systemPrompt,
+              model: connection.model,
+            },
+            context,
+          });
+          return result.message;
+        }
+
+        return FACEBOOK_UNSUPPORTED_ATTACHMENT_REPLY;
+      },
+    );
 
     const chunks = splitFacebookMessageText(replyText);
 

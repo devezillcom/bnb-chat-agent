@@ -63,12 +63,43 @@ export function AgentDetailPage({
 }: AgentDetailPageProps) {
   const router = useRouter();
   const [infoEditOpen, setInfoEditOpen] = useState(false);
+  const [clearContextOpen, setClearContextOpen] = useState(false);
+  const [clearingContext, setClearingContext] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const agentsHref = getDashboardNavHref(workspaceIndex, "agents");
   const connectionsHref = getDashboardNavHref(workspaceIndex, "connections");
   const chatHref = `${agentsHref}/${agent.id}/chat`;
   const leading = getAgentListLeading(agent.name);
+
+  async function handleClearContext() {
+    setClearingContext(true);
+
+    try {
+      const res = await workspaceFetch(
+        workspaceId,
+        `/api/agents/${agent.id}/chat-context`,
+        { method: "DELETE" },
+      );
+      const data = (await res.json()) as { message?: string; error?: string };
+
+      if (!res.ok) {
+        toast.add({
+          title: data.message ?? data.error ?? "Could not clear chat context.",
+          type: "error",
+        });
+        return;
+      }
+
+      toast.add({
+        title: data.message ?? "Chat context cleared.",
+        type: "success",
+      });
+      setClearContextOpen(false);
+    } finally {
+      setClearingContext(false);
+    }
+  }
 
   async function handleDelete() {
     setDeleting(true);
@@ -246,6 +277,67 @@ export function AgentDetailPage({
                 workspaceIndex={workspaceIndex}
               />
             </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Clear all chat context</CardTitle>
+              <CardDescription>
+                Remove all chat sessions and the agent cache for this agent.
+                This action cannot be undone.
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className="justify-end">
+              <AlertDialog
+                open={clearContextOpen}
+                onOpenChange={setClearContextOpen}
+              >
+                <AlertDialogTrigger
+                  render={
+                    <Button variant="outline" disabled={clearingContext} />
+                  }
+                >
+                  Clear chat context
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Clear all chat context?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete all chat sessions and cached
+                      conversation memory for{" "}
+                      <span className="font-medium text-foreground">
+                        {agent.name}
+                      </span>
+                      . The agent itself will not be deleted.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={clearingContext}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      disabled={clearingContext}
+                      onClick={handleClearContext}
+                    >
+                      {clearingContext ? (
+                        <>
+                          <Loader2Icon
+                            className="animate-spin"
+                            data-icon="inline-start"
+                          />
+                          Clearing…
+                        </>
+                      ) : (
+                        "Clear chat context"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardFooter>
           </Card>
 
           <Card>

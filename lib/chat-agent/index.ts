@@ -2,7 +2,11 @@ export * from "./schema";
 export * from "./types";
 export * from "./constants";
 export * from "./config/chat-env";
-export { getChatAgent } from "./services/create-chat-agent";
+export {
+  getChatAgent,
+  invalidateChatAgentCache,
+} from "./services/create-chat-agent";
+export { clearAgentChatContext } from "./services/clear-agent-chat-context";
 export { chatWithAgent, shouldStreamChatEnv } from "./services/chat-with-agent";
 export { invokeAgentTurn } from "./services/invoke-agent-turn";
 export { streamChatWithAgent } from "./services/stream-chat-with-agent";

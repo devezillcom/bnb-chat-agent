@@ -82,3 +82,12 @@ export type ReplyToChannelMessageParams = {
 export type ReplyToChannelMessageResult = {
   message: string;
 };
+
+export type ClearAgentChatContextParams = {
+  workspaceId: string;
+  agentId: string;
+};
+
+export type ClearAgentChatContextResult = {
+  message: string;
+};

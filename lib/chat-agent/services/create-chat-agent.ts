@@ -61,6 +61,17 @@ async function buildChatAgent(config: ChatAgentConfig) {
   });
 }
 
+export function invalidateChatAgentCache(agentId: string) {
+  agentCacheKeyByAgentId.delete(agentId);
+
+  const prefix = `${agentId}:`;
+  for (const cacheKey of agentCache.keys()) {
+    if (cacheKey.startsWith(prefix)) {
+      agentCache.delete(cacheKey);
+    }
+  }
+}
+
 export function getChatAgent(config: ChatAgentConfig): Promise<ChatAgent> {
   const cacheKey = buildWorkspaceAgentCacheKey(config);
   const cachedAgent = agentCache.get(cacheKey);

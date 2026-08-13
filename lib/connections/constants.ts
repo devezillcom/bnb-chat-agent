@@ -49,6 +49,9 @@ export const FACEBOOK_MESSENGER_INBOUND_FLUSH_QSTASH_JOB_NAME =
 /** Wait this long after the last inbound message before flushing the pending box. */
 export const FACEBOOK_MESSENGER_PENDING_DEBOUNCE_SECONDS = 3;
 
+/** Refresh typing_on before Facebook's ~20s indicator timeout. */
+export const FACEBOOK_MESSENGER_TYPING_HEARTBEAT_INTERVAL_MS = 15_000;
+
 /** TTL for Redis pending-box keys so orphaned state expires. */
 export const FACEBOOK_MESSENGER_PENDING_REDIS_TTL_SECONDS = 60 * 60;
 

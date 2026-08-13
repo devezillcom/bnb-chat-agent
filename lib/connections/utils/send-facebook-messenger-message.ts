@@ -10,27 +10,46 @@ type SendFacebookMessengerMessageParams = {
 
 async function callFacebookMessengerSendApi(
   params: SendFacebookMessengerMessageParams,
-): Promise<void> {
+): Promise<number> {
   const url = new URL(FACEBOOK_MESSENGER_SEND_API_URL);
   url.searchParams.set("access_token", params.pageAccessToken);
+  const startedAt = Date.now();
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params.requestBody),
-    cache: "no-store",
-  });
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params.requestBody),
+      cache: "no-store",
+    });
 
-  if (!response.ok) {
-    const data = (await response.json().catch(() => null)) as {
-      error?: { message?: string };
-    } | null;
-    const message = data?.error?.message ?? response.statusText;
-    console.error("Facebook Send API error:", message, {
+    const durationMs = Date.now() - startedAt;
+
+    if (!response.ok) {
+      const data = (await response.json().catch(() => null)) as {
+        error?: { message?: string };
+      } | null;
+      const message = data?.error?.message ?? response.statusText;
+      console.error("Facebook Send API error:", message, {
+        psid: params.psid,
+        durationMs,
+        requestBody: params.requestBody,
+      });
+      throw new Error(`Facebook Send API failed (${response.status}): ${message}`);
+    }
+
+    return durationMs;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Facebook Send API failed")) {
+      throw error;
+    }
+
+    console.error("Facebook Send API error:", error, {
       psid: params.psid,
+      durationMs: Date.now() - startedAt,
       requestBody: params.requestBody,
     });
-    throw new Error(`Facebook Send API failed (${response.status}): ${message}`);
+    throw error;
   }
 }
 
@@ -44,7 +63,7 @@ export async function sendFacebookMessengerImageMessage(params: {
     imageUrl: params.imageUrl,
   });
 
-  await callFacebookMessengerSendApi({
+  const durationMs = await callFacebookMessengerSendApi({
     pageAccessToken: params.pageAccessToken,
     psid: params.psid,
     requestBody: {
@@ -65,6 +84,7 @@ export async function sendFacebookMessengerImageMessage(params: {
   console.log("[facebook-messenger] send image ok", {
     psid: params.psid,
     imageUrl: params.imageUrl,
+    durationMs,
   });
 }
 
@@ -79,7 +99,7 @@ export async function sendFacebookMessengerTextMessage(params: {
     textPreview: params.text.slice(0, 120),
   });
 
-  await callFacebookMessengerSendApi({
+  const durationMs = await callFacebookMessengerSendApi({
     pageAccessToken: params.pageAccessToken,
     psid: params.psid,
     requestBody: {
@@ -92,6 +112,7 @@ export async function sendFacebookMessengerTextMessage(params: {
   console.log("[facebook-messenger] send message ok", {
     psid: params.psid,
     textLength: params.text.length,
+    durationMs,
   });
 }
 

@@ -25,7 +25,7 @@ When Facebook sends a webhook event to `/api/webhooks/facebook`:
 | Agent reassignment | All channel `chat_agent_sessions` rows for that connection are deleted; next message creates a fresh session |
 | Get Started postback | Always handled when an agent is assigned; sends the agent's `first_message` (or default greeting) without invoking the LLM |
 | Async processing | QStash from the first version; webhook never waits for LLM latency |
-| Sender actions | Webhook: `mark_seen` on receive; flush job: `typing_on` before processing (after debounce); Messenger clears typing when the reply is delivered — `typing_off` only on job failure |
+| Sender actions | Webhook: `mark_seen` on receive; flush job: `typing_on` before processing (after debounce), refreshed every 15s until the reply is ready; Messenger clears typing when the reply is delivered — `typing_off` only on job failure |
 | Rapid messages | Redis pending box + 3s debounce; multiple messages merged into one LLM turn; Get Started bypasses batching |
 | Inbound images | Download from Facebook → store on R2 → vision via Cloudflare resize URL |
 
