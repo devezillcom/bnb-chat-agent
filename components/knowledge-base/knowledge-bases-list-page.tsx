@@ -11,6 +11,17 @@ import Link from "next/link";
 import { useMemo, useState, type ChangeEvent } from "react";
 
 import { ResourceListEmpty } from "@/components/dashboard/resource-list-empty";
+import { EditKnowledgeBaseSheet } from "@/components/knowledge-base/edit-knowledge-base-sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,6 +52,17 @@ import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
 import { knowledgeBaseFormSchema } from "@/lib/knowledge-base/schema";
 import type { ListKnowledgeBasesResult } from "@/lib/knowledge-base/types";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
+
+type KnowledgeBaseToEdit = {
+  id: string;
+  name: string;
+};
+
+type KnowledgeBaseToDelete = {
+  id: string;
+  name: string;
+  documentCount: number;
+};
 
 type KnowledgeBasesListPageProps = {
   workspaceId: string;
@@ -78,6 +100,9 @@ export function KnowledgeBasesListPage({
   const [sort, setSort] = useState<ListSortOption>("created-desc");
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [editingKb, setEditingKb] = useState<KnowledgeBaseToEdit | null>(null);
+  const [kbToDelete, setKbToDelete] = useState<KnowledgeBaseToDelete | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -150,6 +175,48 @@ export function KnowledgeBasesListPage({
       });
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleDeleteKnowledgeBase() {
+    if (!kbToDelete) {
+      return;
+    }
+
+    setDeleting(true);
+
+    try {
+      const res = await workspaceFetch(
+        workspaceId,
+        `/api/knowledge-bases/${kbToDelete.id}`,
+        { method: "DELETE" },
+      );
+      const responseData = (await res.json()) as {
+        message?: string;
+        error?: string;
+      };
+
+      if (!res.ok) {
+        toast.add({
+          title:
+            responseData.error ??
+            responseData.message ??
+            "Could not delete knowledge base.",
+          type: "error",
+        });
+        return;
+      }
+
+      toast.add({
+        title: responseData.message ?? "Knowledge base deleted.",
+        type: "success",
+      });
+      setKbToDelete(null);
+      await queryClient.invalidateQueries({
+        queryKey: ["knowledge-bases", workspaceId],
+      });
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -250,33 +317,130 @@ export function KnowledgeBasesListPage({
             <ul className="flex flex-col gap-2.5">
               {filteredItems.map((item) => (
                 <li key={item.id}>
-                  <Link
-                    href={`${knowledgeBaseBaseHref}/${item.id}`}
-                    className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:bg-muted/30 sm:gap-4 sm:px-5"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{item.name}</p>
-                      {item.description ? (
-                        <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
-                          {item.description}
+                  <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:bg-muted/30 sm:gap-4 sm:px-5">
+                    <Link
+                      href={`${knowledgeBaseBaseHref}/${item.id}`}
+                      className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium">{item.name}</p>
+                        {item.description ? (
+                          <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+                            {item.description}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="hidden shrink-0 text-right sm:block">
+                        {item.meta ? (
+                          <p className="text-xs text-muted-foreground">{item.meta}</p>
+                        ) : null}
+                        <p className="text-xs text-muted-foreground">
+                          {formatListDate(item.createdAt)}
                         </p>
-                      ) : null}
+                      </div>
+                    </Link>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setEditingKb({
+                            id: item.id,
+                            name: item.name,
+                          })
+                        }
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          const knowledgeBase = data?.items.find(
+                            (entry) => entry.id === item.id,
+                          );
+
+                          setKbToDelete({
+                            id: item.id,
+                            name: item.name,
+                            documentCount: knowledgeBase?.documentCount ?? 0,
+                          });
+                        }}
+                      >
+                        Delete
+                      </Button>
                     </div>
-                    <div className="hidden shrink-0 text-right sm:block">
-                      {item.meta ? (
-                        <p className="text-xs text-muted-foreground">{item.meta}</p>
-                      ) : null}
-                      <p className="text-xs text-muted-foreground">
-                        {formatListDate(item.createdAt)}
-                      </p>
-                    </div>
-                  </Link>
+                  </div>
                 </li>
               ))}
             </ul>
           )}
         </>
       )}
+
+      <EditKnowledgeBaseSheet
+        knowledgeBase={editingKb}
+        workspaceId={workspaceId}
+        open={editingKb !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingKb(null);
+          }
+        }}
+      />
+
+      <AlertDialog
+        open={kbToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) {
+            setKbToDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete knowledge base?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                This will permanently delete{" "}
+                <span className="font-medium text-foreground">
+                  {kbToDelete?.name}
+                </span>
+                .
+              </span>
+              <span className="block font-medium text-destructive">
+                All{" "}
+                {kbToDelete?.documentCount === 1
+                  ? "1 document"
+                  : `${kbToDelete?.documentCount ?? 0} documents`}{" "}
+                in this knowledge base will be removed, including uploaded
+                files and search indexes.
+              </span>
+              <span className="block">
+                Agents linked to this knowledge base will lose access. This
+                action cannot be undone.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleting}
+              onClick={handleDeleteKnowledgeBase}
+            >
+              {deleting ? (
+                <>
+                  <Loader2Icon className="animate-spin" data-icon="inline-start" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete knowledge base"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-md">

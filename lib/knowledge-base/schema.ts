@@ -5,6 +5,10 @@ export const knowledgeBaseFormSchema = z.object({
   description: z.string().trim().optional(),
 });
 
+export const updateKnowledgeBaseNameSchema = z.object({
+  name: z.string().trim().min(1, { error: "Name is required." }),
+});
+
 export const createKnowledgeBaseDocumentSchema = z.object({
   key: z.string().trim().min(1, { error: "Upload key is required." }),
   filename: z.string().trim().min(1, { error: "Filename is required." }),
@@ -25,6 +29,9 @@ export const knowledgeBaseDocumentProcessQstashPayloadSchema = z.object({
 });
 
 export type KnowledgeBaseFormValues = z.infer<typeof knowledgeBaseFormSchema>;
+export type UpdateKnowledgeBaseNameValues = z.infer<
+  typeof updateKnowledgeBaseNameSchema
+>;
 export type CreateKnowledgeBaseDocumentBody = z.infer<
   typeof createKnowledgeBaseDocumentSchema
 >;

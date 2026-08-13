@@ -104,13 +104,23 @@ function DocumentStatusBadge({ status }: { status: string }) {
   );
 }
 
+function getKnowledgeBaseDocumentViewHref(
+  workspaceIndex: number,
+  knowledgeBaseId: string,
+  documentId: string,
+): string {
+  return `/w/${workspaceIndex}/knowledge-base/${knowledgeBaseId}/documents/${documentId}/view`;
+}
+
 function DocumentRow({
   workspaceId,
+  workspaceIndex,
   knowledgeBaseId,
   document,
   onDeleted,
 }: {
   workspaceId: string;
+  workspaceIndex: number;
   knowledgeBaseId: string;
   document: KnowledgeBaseDocumentListItem;
   onDeleted: () => void;
@@ -155,7 +165,22 @@ function DocumentRow({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate font-medium">{document.filename}</p>
+            {document.status === "pending_upload" ? (
+              <p className="truncate font-medium">{document.filename}</p>
+            ) : (
+              <a
+                href={getKnowledgeBaseDocumentViewHref(
+                  workspaceIndex,
+                  knowledgeBaseId,
+                  document.id,
+                )}
+                target="_blank"
+                rel="noreferrer"
+                className="truncate font-medium hover:text-primary hover:underline"
+              >
+                {document.filename}
+              </a>
+            )}
             <DocumentStatusBadge status={liveStatus} />
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -414,6 +439,7 @@ export function KnowledgeBaseDetailPage({
             <DocumentRow
               key={document.id}
               workspaceId={workspaceId}
+              workspaceIndex={workspaceIndex}
               knowledgeBaseId={knowledgeBaseId}
               document={document}
               onDeleted={() => {

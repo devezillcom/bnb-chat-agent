@@ -91,6 +91,25 @@ export type CreateKnowledgeBaseResult = {
   message?: string;
 };
 
+export type UpdateKnowledgeBaseParams = {
+  workspaceId: string;
+  knowledgeBaseId: string;
+  name: string;
+};
+
+export type UpdateKnowledgeBaseResult = {
+  message: string;
+};
+
+export type DeleteKnowledgeBaseParams = {
+  workspaceId: string;
+  knowledgeBaseId: string;
+};
+
+export type DeleteKnowledgeBaseResult = {
+  message: string;
+};
+
 export type ListKnowledgeBasesParams = {
   workspaceId: string;
   limit: number;
@@ -166,6 +185,17 @@ export type DeleteKnowledgeBaseDocumentParams = {
 
 export type DeleteKnowledgeBaseDocumentResult = {
   message?: string;
+};
+
+export type GetKnowledgeBaseDocumentViewUrlParams = {
+  workspaceId: string;
+  knowledgeBaseId: string;
+  documentId: string;
+};
+
+export type GetKnowledgeBaseDocumentViewUrlResult = {
+  viewUrl: string;
+  expiresAt: number;
 };
 
 export type ListAgentKnowledgeBaseIdsParams = {

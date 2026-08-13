@@ -15,3 +15,15 @@ export type GetUploadSignedUrlResult = {
   publicUrl: string;
   expiresAt: number;
 };
+
+export type GetDownloadSignedUrlParams = {
+  key: string;
+  contentType?: string;
+  filename?: string;
+  expiresInSec?: number;
+};
+
+export type GetDownloadSignedUrlResult = {
+  downloadUrl: string;
+  expiresAt: number;
+};
