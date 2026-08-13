@@ -69,6 +69,8 @@ export async function processFacebookMessengerInbound(
     return;
   }
 
+  const agentId = connection.agentId;
+
   const pageAccessToken = await resolveFacebookInboundPageAccessToken({
     metadata: connection.metadata,
     encryptedAuthData: connection.encryptedAuthData,
@@ -129,7 +131,7 @@ export async function processFacebookMessengerInbound(
         const { sessionId } = await getOrCreateChannelAgentSession({
           connectionId: connection.id,
           workspaceId: connection.workspaceId,
-          agentId: connection.agentId,
+          agentId,
           chatEnv,
           externalParticipantId: payload.psid,
           title,
@@ -138,7 +140,7 @@ export async function processFacebookMessengerInbound(
         const context = {
           workspaceId: connection.workspaceId,
           connectionId: connection.id,
-          agentId: connection.agentId,
+          agentId,
           chatEnv,
           channelType: connection.channelType,
           externalParticipantId: payload.psid,
@@ -174,7 +176,7 @@ export async function processFacebookMessengerInbound(
               : FACEBOOK_IMAGE_ONLY_USER_MESSAGE,
             images: images.length > 0 ? images : undefined,
             agent: {
-              id: connection.agentId,
+              id: agentId,
               systemPrompt: connection.systemPrompt,
               model: connection.model,
             },
