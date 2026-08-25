@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -27,6 +28,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "@/components/ui/toast";
+import { workspacesQueryKey } from "@/hooks/use-workspace-route-context";
 import type { WorkspaceListItem } from "@/lib/workspaces/types";
 
 type WorkspaceSettingsProps = {
@@ -48,6 +50,7 @@ export function WorkspaceSettings({
   workspaceIndex,
 }: WorkspaceSettingsProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -76,6 +79,7 @@ export function WorkspaceSettings({
         type: "success",
       });
       setDeleteOpen(false);
+      await queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
 
       const nextIndex = Math.min(workspaceIndex, workspaces.length - 2);
       router.push(`/w/${Math.max(nextIndex, 0)}`);

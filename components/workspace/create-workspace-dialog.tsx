@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
+import { workspacesQueryKey } from "@/hooks/use-workspace-route-context";
 import {
   createWorkspaceFormSchema,
   type CreateWorkspaceFormValues,
@@ -40,6 +42,7 @@ export function CreateWorkspaceDialog({
   workspaceCount,
 }: CreateWorkspaceDialogProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const form = useForm<CreateWorkspaceFormValues>({
     resolver: zodResolver(createWorkspaceFormSchema),
     defaultValues: { name: "" },
@@ -65,6 +68,7 @@ export function CreateWorkspaceDialog({
         type: "success",
       });
       onOpenChange(false);
+      await queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
       router.push(`/w/${workspaceCount}`);
       router.refresh();
       return;
