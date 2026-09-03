@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 
+import { McpAdvertisedTools } from "@/components/tools/mcp-advertised-tools";
 import { ToolConfigFields } from "@/components/tools/tool-config-fields";
 import { Button } from "@/components/ui/button";
 import {
@@ -253,12 +254,14 @@ export function EditToolPage({
               >
                 <FieldLabel htmlFor="edit-tool-slug">Slug</FieldLabel>
                 <FieldDescription>
-                  Unique identifier referenced in agent prompts (e.g.{" "}
-                  <code className="text-xs">get_weather</code>).
+                  {registryTool.id === "mcp"
+                    ? "Used to assign this MCP connection to agents and skills. Mention advertised tool names below in prompts, not this slug."
+                    : "Unique identifier referenced in agent prompts (e.g. get_weather)."}
                 </FieldDescription>
                 <div className="rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100">
-                  Changing the slug may break agent prompts that reference
-                  the old slug.
+                  {registryTool.id === "mcp"
+                    ? "Changing the slug only affects assignment to agents and skills."
+                    : "Changing the slug may break agent prompts that reference the old slug."}
                 </div>
                 <Input
                   id="edit-tool-slug"
@@ -322,6 +325,13 @@ export function EditToolPage({
                 disabled={isSubmitting}
                 errors={configError}
               />
+
+              {registryTool.id === "mcp" ? (
+                <McpAdvertisedTools
+                  workspaceId={workspaceId}
+                  toolId={toolId}
+                />
+              ) : null}
 
               <FieldError errors={[registryToolIdError]} />
             </FieldGroup>

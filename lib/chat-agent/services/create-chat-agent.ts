@@ -12,6 +12,7 @@ import {
 import { chatAgentRunContextSchema, type ChatAgentConfig } from "../schema";
 import { buildChatAgentKnowledgeTool } from "../tools/build-chat-agent-knowledge-tool";
 import { buildChatAgentTools } from "../tools/build-chat-agent-tools";
+import { buildChatAgentToolsPrompt } from "../tools/build-chat-agent-tools-prompt";
 import { getChatAgentCheckpointer } from "../utils/get-chat-agent-checkpointer";
 
 type ChatAgent = Awaited<ReturnType<typeof buildChatAgent>>;
@@ -44,13 +45,16 @@ async function buildChatAgent(config: ChatAgentConfig) {
   const tools = knowledgeTool
     ? [...workspaceTools, knowledgeTool]
     : workspaceTools;
+  const toolsPrompt = buildChatAgentToolsPrompt(tools);
 
   return createAgent({
     model,
     tools,
     contextSchema: chatAgentRunContextSchema,
     middleware: [
-      dynamicSystemPromptMiddleware(() => config.systemPrompt),
+      dynamicSystemPromptMiddleware(() =>
+        [config.systemPrompt, toolsPrompt].filter(Boolean).join("\n\n"),
+      ),
       summarizationMiddleware({
         model: summarizationModel,
         trigger: { tokens: CHAT_AGENT_SUMMARIZATION_TRIGGER_TOKENS },

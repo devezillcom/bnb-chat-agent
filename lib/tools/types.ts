@@ -1,7 +1,10 @@
 import type { ChatAgentRunContext } from "@/lib/chat-agent/schema";
 
 import type { CreateToolFormValues } from "./schema";
-import type { ToolRegistryId } from "./tool-registry";
+import type {
+  ToolConfigFieldDefinition,
+  ToolRegistryId,
+} from "./tool-registry";
 
 export type ToolExecutionContext = {
   sessionId?: string;
@@ -42,13 +45,7 @@ export type ToolRegistryListItem = {
   id: ToolRegistryId;
   name: string;
   description: string;
-  configFields: {
-    key: string;
-    label: string;
-    description?: string;
-    secret?: boolean;
-    required?: boolean;
-  }[];
+  configFields: ToolConfigFieldDefinition[];
 };
 
 export type ListToolsParams = {
@@ -118,3 +115,17 @@ export type ListToolsBySlugsParams = {
 };
 
 export type ListToolsBySlugsResult = WorkspaceToolRuntime[];
+
+export type McpAdvertisedToolItem = {
+  name: string;
+  description: string;
+};
+
+export type ListMcpAdvertisedToolsParams = {
+  workspaceId: string;
+  toolId: string;
+};
+
+export type ListMcpAdvertisedToolsResult = {
+  items: McpAdvertisedToolItem[];
+};

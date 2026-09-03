@@ -219,8 +219,9 @@ export function CreateToolPage({
               <Field data-invalid={!!slugError || slugTaken || undefined}>
                 <FieldLabel htmlFor="create-tool-slug">Slug</FieldLabel>
                 <FieldDescription>
-                  Unique identifier referenced in agent prompts (e.g.{" "}
-                  <code className="text-xs">get_weather</code>).
+                  {selectedRegistryTool.id === "mcp"
+                    ? "Used to assign this MCP connection to agents and skills. After saving, advertised MCP tool names appear on the tool page for prompts and skills."
+                    : "Unique identifier referenced in agent prompts (e.g. get_weather)."}
                 </FieldDescription>
                 <Input
                   id="create-tool-slug"

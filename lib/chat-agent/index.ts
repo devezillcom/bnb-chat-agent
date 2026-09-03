@@ -20,4 +20,5 @@ export { getChatAgentSessionMessages } from "./services/get-chat-agent-session-m
 export { createChatAgentStreamResponse } from "./utils/create-chat-agent-stream-response";
 export { createAgentRunConfig, createChatAgentRunConfig } from "./utils/create-agent-run-config";
 export { buildChatAgentTools } from "./tools/build-chat-agent-tools";
+export { buildChatAgentToolsPrompt } from "./tools/build-chat-agent-tools-prompt";
 export { buildChatAgentSkillsPrompt } from "./skills/build-chat-agent-skills";

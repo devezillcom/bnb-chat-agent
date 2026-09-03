@@ -1,6 +1,7 @@
 import "server-only";
 
 import { bienhinhCreateImageInputSchema } from "../schemas/bienhinh-create-image-input-schema";
+import { parseMcpToolArguments } from "../utils/parse-mcp-tool-arguments";
 import { executeBienhinhCreateImageTool } from "./execute-bienhinh-create-image-tool";
 import { executeBuiltinTool } from "./execute-builtin-tool";
 import { executeHttpApiTool } from "./execute-http-api-tool";
@@ -21,8 +22,8 @@ export async function executeWorkspaceTool(
       });
     case "mcp":
       return executeMcpTool(tool, {
-        tool_name: String(input.tool_name ?? ""),
-        arguments: input.arguments == null ? undefined : String(input.arguments),
+        toolName: String(input.tool_name ?? input.toolName ?? ""),
+        arguments: parseMcpToolArguments(input.arguments),
       });
     case "builtin":
       return executeBuiltinTool({

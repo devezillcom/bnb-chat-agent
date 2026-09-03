@@ -2,6 +2,7 @@
 
 import type { FieldErrors, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 
+import { McpAdvertisedTools } from "@/components/tools/mcp-advertised-tools";
 import {
   Field,
   FieldDescription,
@@ -20,6 +21,7 @@ type SkillFormFieldsProps = {
   setValue: UseFormSetValue<SkillFormValues>;
   errors: FieldErrors<SkillFormValues>;
   disabled?: boolean;
+  workspaceId: string;
   workspaceTools: ToolListItem[];
   usedSlugs: Set<string>;
   showSlugWarning?: boolean;
@@ -32,6 +34,7 @@ export function SkillFormFields({
   setValue,
   errors,
   disabled = false,
+  workspaceId,
   workspaceTools,
   usedSlugs,
   showSlugWarning = false,
@@ -143,7 +146,8 @@ export function SkillFormFields({
       <Field data-invalid={!!toolsError || undefined}>
         <FieldLabel>Tools</FieldLabel>
         <FieldDescription>
-          Optional workspace tools this skill may use at runtime.
+          Optional workspace tools this skill may use. For MCP connections,
+          mention advertised tool names in instructions, not the workspace slug.
         </FieldDescription>
         {workspaceTools.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -178,6 +182,13 @@ export function SkillFormFields({
                       <code>{tool.slug}</code>
                       {tool.description ? ` — ${tool.description}` : null}
                     </span>
+                    {checked && tool.registryToolId === "mcp" ? (
+                      <McpAdvertisedTools
+                        workspaceId={workspaceId}
+                        toolId={tool.id}
+                        compact
+                      />
+                    ) : null}
                   </span>
                 </label>
               );

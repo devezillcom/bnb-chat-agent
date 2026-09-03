@@ -158,6 +158,7 @@ export function CreateSkillPage({
               setValue={form.setValue}
               errors={form.formState.errors}
               disabled={isSubmitting}
+              workspaceId={workspaceId}
               workspaceTools={toolsData?.items ?? []}
               usedSlugs={usedSlugSet}
             />
