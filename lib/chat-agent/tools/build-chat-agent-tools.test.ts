@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { listToolsBySlugs, buildMcpChatAgentTools } = vi.hoisted(() => ({
-  listToolsBySlugs: vi.fn(),
-  buildMcpChatAgentTools: vi.fn(),
-}));
+const { listToolsBySlugs, buildMcpChatAgentTools, buildWebChatAgentTools } =
+  vi.hoisted(() => ({
+    listToolsBySlugs: vi.fn(),
+    buildMcpChatAgentTools: vi.fn(),
+    buildWebChatAgentTools: vi.fn(),
+  }));
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/tools/services/list-tools-by-slugs", () => ({
@@ -14,6 +16,9 @@ vi.mock("@/lib/tools/executors/execute-workspace-tool", () => ({
 }));
 vi.mock("./build-mcp-chat-agent-tools", () => ({
   buildMcpChatAgentTools,
+}));
+vi.mock("./build-web-chat-agent-tools", () => ({
+  buildWebChatAgentTools,
 }));
 
 import { tool } from "langchain";
@@ -62,5 +67,41 @@ describe("buildChatAgentTools", () => {
       "http_api",
     ]);
     expect(tools.map((item) => item.name)).not.toContain("docs_mcp");
+  });
+
+  it("expands web_research workspace tools into web_search and web_get_content", async () => {
+    listToolsBySlugs.mockResolvedValue([
+      {
+        slug: "company_web",
+        name: "Company web",
+        description: "Search the public web",
+        registryToolId: "web_research",
+        config: { exclude_domains: "example.com" },
+      },
+    ]);
+    buildWebChatAgentTools.mockReturnValue([
+      tool(async () => "search", {
+        name: "web_search",
+        description: "Search the web",
+        schema: z.object({ query: z.string() }),
+      }),
+      tool(async () => "content", {
+        name: "web_get_content",
+        description: "Fetch page content",
+        schema: z.object({ url: z.string() }),
+      }),
+    ]);
+
+    const tools = await buildChatAgentTools({
+      workspaceId: "11111111-1111-4111-8111-111111111111",
+      toolSlugs: ["company_web"],
+    });
+
+    expect(buildWebChatAgentTools).toHaveBeenCalledTimes(1);
+    expect(tools.map((item) => item.name)).toEqual([
+      "web_search",
+      "web_get_content",
+    ]);
+    expect(tools.map((item) => item.name)).not.toContain("company_web");
   });
 });

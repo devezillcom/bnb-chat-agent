@@ -5,6 +5,7 @@ import type { StructuredToolInterface } from "@langchain/core/tools";
 import { tool } from "langchain";
 
 import type { ChatAgentRunContext } from "@/lib/chat-agent/schema";
+import { WEB_SEARCH_TOOL_NAMES } from "@/lib/chat-agent/constants/web-tools";
 import { KNOWLEDGE_BASE_SEARCH_TOOL_NAME } from "@/lib/knowledge-base/constants";
 import { executeWorkspaceTool } from "@/lib/tools/executors/execute-workspace-tool";
 import { listToolsBySlugs } from "@/lib/tools/services/list-tools-by-slugs";
@@ -12,6 +13,7 @@ import { getToolInputZodSchema } from "@/lib/tools/tool-registry";
 import type { WorkspaceToolRuntime } from "@/lib/tools/types";
 
 import { buildMcpChatAgentTools } from "./build-mcp-chat-agent-tools";
+import { buildWebChatAgentTools } from "./build-web-chat-agent-tools";
 
 export type BuildChatAgentToolsParams = {
   workspaceId: string;
@@ -68,9 +70,15 @@ export async function buildChatAgentTools(
     slugs: params.toolSlugs,
   });
 
-  const usedNames = new Set<string>([KNOWLEDGE_BASE_SEARCH_TOOL_NAME]);
+  const usedNames = new Set<string>([
+    KNOWLEDGE_BASE_SEARCH_TOOL_NAME,
+    ...WEB_SEARCH_TOOL_NAMES,
+  ]);
   for (const workspaceTool of workspaceTools) {
-    if (workspaceTool.registryToolId !== "mcp") {
+    if (
+      workspaceTool.registryToolId !== "mcp" &&
+      workspaceTool.registryToolId !== "web_research"
+    ) {
       usedNames.add(workspaceTool.slug);
     }
   }
@@ -84,6 +92,16 @@ export async function buildChatAgentTools(
           workspaceTool,
           usedNames,
         })),
+      );
+      continue;
+    }
+
+    if (workspaceTool.registryToolId === "web_research") {
+      tools.push(
+        ...buildWebChatAgentTools({
+          workspaceTool,
+          usedNames,
+        }),
       );
       continue;
     }
