@@ -4,6 +4,7 @@ import { listAgentToolSlugs } from "@/lib/agents/services/list-agent-tool-slugs"
 import { listAgentKnowledgeBaseIds } from "@/lib/knowledge-base/services/list-agent-knowledge-base-ids";
 import { listAgentSkills } from "@/lib/skills/services/list-agent-skills";
 
+import { buildChartPrompt } from "../chart/build-chart-prompt";
 import {
   resolveChatEnvRuntime,
   type ActiveChatEnv,
@@ -60,11 +61,13 @@ export async function resolveWorkspaceAgentRuntime(
     knowledgeBaseCount: knowledgeBaseIds.length,
     citationsEnabled,
   });
+  const chartPrompt = params.chatEnv === "web" ? buildChartPrompt() : "";
   const systemPrompt = [
     params.systemPrompt.trim(),
     chatEnvRuntime.systemPromptSuffix,
     skillsPrompt,
     knowledgePrompt,
+    chartPrompt,
   ]
     .filter(Boolean)
     .join("\n\n");
