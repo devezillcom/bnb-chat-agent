@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ArrowDownIcon,
   ArrowRightIcon,
@@ -8,6 +10,7 @@ import {
   WrenchIcon,
   type LucideIcon,
 } from "lucide-react";
+import { useT } from "next-i18next/client";
 
 import { cn } from "@/lib/utils";
 
@@ -89,23 +92,25 @@ function FlowArrow({ className }: { className?: string }) {
 }
 
 export function DashboardHomeInfographic() {
+  const { t } = useT("dashboard");
+
   return (
     <div className="flex min-h-full flex-1 items-center justify-center px-4 py-10 md:px-8">
       <div className="flex w-full max-w-3xl flex-col items-center gap-6 md:flex-row md:items-center md:justify-center md:gap-5">
         <div className="flex w-full max-w-xs flex-col gap-3 md:w-auto md:max-w-none">
           <InfographicNode
             icon={SparklesIcon}
-            label="Skills"
+            label={t("homeInfographic.skills")}
             iconClassName="text-violet-600 dark:text-violet-400"
           />
           <InfographicNode
             icon={WrenchIcon}
-            label="Tools"
+            label={t("homeInfographic.tools")}
             iconClassName="text-sky-600 dark:text-sky-400"
           />
           <InfographicNode
             icon={BookOpenIcon}
-            label="Knowledge base"
+            label={t("homeInfographic.knowledgeBase")}
             iconClassName="text-amber-600 dark:text-amber-400"
           />
         </div>
@@ -114,7 +119,7 @@ export function DashboardHomeInfographic() {
 
         <InfographicNode
           icon={BotIcon}
-          label="Agent"
+          label={t("homeInfographic.agent")}
           featured
           iconClassName="text-primary"
           className="w-full max-w-xs md:w-auto md:max-w-none"
@@ -125,14 +130,16 @@ export function DashboardHomeInfographic() {
         <div className="flex w-full max-w-xs flex-col gap-3 md:w-auto md:max-w-none">
           <InfographicNode
             icon={GlobeIcon}
-            label="Web"
+            label={t("homeInfographic.web")}
             iconClassName="text-emerald-600 dark:text-emerald-400"
           />
           <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm ring-1 ring-foreground/5">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted">
               <FacebookIcon className="size-5 text-[#1877F2]" />
             </div>
-            <span className="text-sm font-medium">Facebook</span>
+            <span className="text-sm font-medium">
+              {t("homeInfographic.facebook")}
+            </span>
           </div>
         </div>
       </div>

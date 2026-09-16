@@ -1,15 +1,18 @@
 {
   "nav": {
-    "agents": "Chat agents",
+    "agents": "Assistants",
     "skills": "Skills",
     "tools": "Tools",
-    "knowledgeBase": "Knowledge base",
-    "connections": "Connections",
-    "workspace": "Workspace",
-    "settings": "Settings"
+    "knowledgeBase": "Knowledge",
+    "connections": "Chat channels",
+    "daily": "Daily",
+    "advanced": "Advanced",
+    "workspaceSettings": "Workspace settings"
   },
-  "settingsMenu": {
-    "profile": "Profile"
+  "accountMenu": {
+    "openMenu": "Open account menu",
+    "profile": "Profile",
+    "userFallback": "Account"
   },
   "logout": {
     "label": "Log out",
@@ -17,5 +20,64 @@
     "description": "You will need to sign in again to access your workspace.",
     "confirm": "Log out"
   },
-  "appName": "BNB Chat Agent"
+  "appName": "BNB Chat Agent",
+  "header": {
+    "homeAriaLabel": "Go to home",
+    "createAgent": "Create assistant",
+    "editAgent": "Edit assistant",
+    "agentDetail": "Assistant details",
+    "chat": "Chat",
+    "createSkill": "Create skill",
+    "editSkill": "Edit skill",
+    "createTool": "Create tool",
+    "editTool": "Edit tool",
+    "connectionDetail": "Channel details",
+    "connectFacebook": "Connect Facebook",
+    "selectFacebookPage": "Select Facebook page",
+    "knowledgeBaseDetail": "Knowledge details"
+  },
+  "homeInfographic": {
+    "skills": "Skills",
+    "tools": "Tools",
+    "knowledgeBase": "Knowledge",
+    "agent": "Assistant",
+    "web": "Web",
+    "facebook": "Facebook"
+  },
+  "resourceList": {
+    "searchPlaceholder": "Search by name...",
+    "searchAriaLabel": "Search list",
+    "sort": "Sort",
+    "create": "Create",
+    "emptyDefaultTitle": "Nothing here yet",
+    "emptyDefaultDescription": "Items will appear here once you add them.",
+    "loadErrorTitle": "Could not load items",
+    "noMatchTitle": "No matching results",
+    "noMatchDescription": "Try a different search term or clear the filter.",
+    "count": "{{count}} of {{total}}"
+  },
+  "sort": {
+    "nameAsc": "Name (A–Z)",
+    "nameDesc": "Name (Z–A)",
+    "createdDesc": "Newest first",
+    "createdAsc": "Oldest first"
+  },
+  "agentsList": {
+    "title": "Assistants",
+    "description": "Chat assistants configured for this workspace. Each assistant can have its own skills, tools, and knowledge.",
+    "emptyTitle": "No assistants yet",
+    "emptyDescription": "Create an assistant to start chatting, embedding on a site, or connecting to support channels.",
+    "createLabel": "Create assistant",
+    "chat": "Chat",
+    "edit": "Edit",
+    "view": "View"
+  },
+  "connectionsList": {
+    "title": "Chat channels",
+    "description": "Channels linked to your assistants, such as Facebook Messenger, website widgets, and messaging apps.",
+    "emptyTitle": "No chat channels yet",
+    "emptyDescription": "Connect Facebook pages or other channels to route conversations to assistants.",
+    "connect": "Connect",
+    "connectFacebookPages": "Connect {{label}} pages"
+  }
 }

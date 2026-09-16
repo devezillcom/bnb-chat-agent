@@ -1,5 +1,5 @@
 import type { ResourceListRowItem } from "@/components/dashboard/resource-list-page";
-import type { AgentListItem } from "@/lib/agents/types";
+import type { AgentListItemWithCapabilities } from "@/lib/agents/types";
 import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
 import type { ChatAgent, Connection } from "@/lib/dashboard/placeholder-data";
 import type { KnowledgeBaseListItem } from "@/lib/knowledge-base/types";
@@ -15,7 +15,7 @@ const CONNECTION_CHANNEL_LABELS: Record<Connection["channel"], string> = {
 };
 
 export function mapAgentsToListItems(
-  agents: AgentListItem[],
+  agents: AgentListItemWithCapabilities[],
 ): ResourceListRowItem[] {
   return agents.map((agent) => ({
     id: agent.id,

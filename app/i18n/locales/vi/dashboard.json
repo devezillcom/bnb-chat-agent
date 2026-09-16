@@ -1,15 +1,18 @@
 {
   "nav": {
-    "agents": "Agent chat",
+    "agents": "Trợ lý",
     "skills": "Kỹ năng",
     "tools": "Công cụ",
-    "knowledgeBase": "Cơ sở tri thức",
-    "connections": "Kết nối",
-    "workspace": "Không gian làm việc",
-    "settings": "Cài đặt"
+    "knowledgeBase": "Kiến thức",
+    "connections": "Kênh chat",
+    "daily": "Hằng ngày",
+    "advanced": "Nâng cao",
+    "workspaceSettings": "Cài đặt workspace"
   },
-  "settingsMenu": {
-    "profile": "Hồ sơ"
+  "accountMenu": {
+    "openMenu": "Mở menu tài khoản",
+    "profile": "Hồ sơ",
+    "userFallback": "Tài khoản"
   },
   "logout": {
     "label": "Đăng xuất",
@@ -17,5 +20,64 @@
     "description": "Bạn sẽ cần đăng nhập lại để truy cập không gian làm việc.",
     "confirm": "Đăng xuất"
   },
-  "appName": "BNB Chat Agent"
+  "appName": "BNB Chat Agent",
+  "header": {
+    "homeAriaLabel": "Về trang chủ",
+    "createAgent": "Tạo trợ lý",
+    "editAgent": "Chỉnh sửa trợ lý",
+    "agentDetail": "Chi tiết trợ lý",
+    "chat": "Trò chuyện",
+    "createSkill": "Tạo kỹ năng",
+    "editSkill": "Chỉnh sửa kỹ năng",
+    "createTool": "Tạo công cụ",
+    "editTool": "Chỉnh sửa công cụ",
+    "connectionDetail": "Chi tiết kênh chat",
+    "connectFacebook": "Kết nối Facebook",
+    "selectFacebookPage": "Chọn trang Facebook",
+    "knowledgeBaseDetail": "Chi tiết kiến thức"
+  },
+  "homeInfographic": {
+    "skills": "Kỹ năng",
+    "tools": "Công cụ",
+    "knowledgeBase": "Kiến thức",
+    "agent": "Trợ lý",
+    "web": "Web",
+    "facebook": "Facebook"
+  },
+  "resourceList": {
+    "searchPlaceholder": "Tìm theo tên...",
+    "searchAriaLabel": "Tìm kiếm danh sách",
+    "sort": "Sắp xếp",
+    "create": "Tạo mới",
+    "emptyDefaultTitle": "Chưa có gì ở đây",
+    "emptyDefaultDescription": "Mục sẽ xuất hiện khi bạn thêm chúng.",
+    "loadErrorTitle": "Không thể tải danh sách",
+    "noMatchTitle": "Không có kết quả phù hợp",
+    "noMatchDescription": "Thử từ khóa khác hoặc xóa bộ lọc.",
+    "count": "{{count}} / {{total}}"
+  },
+  "sort": {
+    "nameAsc": "Tên (A–Z)",
+    "nameDesc": "Tên (Z–A)",
+    "createdDesc": "Mới nhất trước",
+    "createdAsc": "Cũ nhất trước"
+  },
+  "agentsList": {
+    "title": "Trợ lý",
+    "description": "Các trợ lý chat trong không gian làm việc này. Mỗi trợ lý có thể có kỹ năng, công cụ và kiến thức riêng.",
+    "emptyTitle": "Chưa có trợ lý nào",
+    "emptyDescription": "Tạo trợ lý để bắt đầu chat, nhúng lên website hoặc kết nối kênh hỗ trợ.",
+    "createLabel": "Tạo trợ lý",
+    "chat": "Chat",
+    "edit": "Sửa",
+    "view": "Xem"
+  },
+  "connectionsList": {
+    "title": "Kênh chat",
+    "description": "Các kênh liên kết với trợ lý, như Facebook Messenger, widget website và ứng dụng nhắn tin.",
+    "emptyTitle": "Chưa có kênh chat nào",
+    "emptyDescription": "Kết nối trang Facebook hoặc kênh khác để chuyển hội thoại tới trợ lý.",
+    "connect": "Kết nối",
+    "connectFacebookPages": "Kết nối trang {{label}}"
+  }
 }

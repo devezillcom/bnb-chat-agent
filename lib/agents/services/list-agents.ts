@@ -4,6 +4,7 @@ import { agents } from "@/db/schema";
 import { db } from "@/lib/db";
 import { parseChatModel } from "@/lib/langchain/models/registry";
 
+import { listAgentCapabilityNamesByAgentIds } from "./list-agent-capability-names";
 import type { ListAgentsParams, ListAgentsResult } from "../types";
 
 export async function listAgents(
@@ -60,17 +61,33 @@ export async function listAgents(
   const nextOffset =
     params.offset + rows.length < total ? params.offset + rows.length : null;
 
+  const capabilityNamesByAgentId = await listAgentCapabilityNamesByAgentIds({
+    workspaceId: params.workspaceId,
+    agentIds: rows.map((row) => row.id),
+  });
+
   return {
-    items: rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      systemPrompt: row.systemPrompt,
-      model: parseChatModel(row.model),
-      firstMessage: row.firstMessage,
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-    })),
+    items: rows.map((row) => {
+      const capabilities = capabilityNamesByAgentId.get(row.id) ?? {
+        tools: [],
+        skills: [],
+        knowledgeBases: [],
+      };
+
+      return {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        systemPrompt: row.systemPrompt,
+        model: parseChatModel(row.model),
+        firstMessage: row.firstMessage,
+        createdAt: row.createdAt.toISOString(),
+        updatedAt: row.updatedAt.toISOString(),
+        tools: capabilities.tools,
+        skills: capabilities.skills,
+        knowledgeBases: capabilities.knowledgeBases,
+      };
+    }),
     nextOffset,
     total,
   };

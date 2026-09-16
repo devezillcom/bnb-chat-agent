@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDownIcon, Loader2Icon, PlusIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
+import { useT } from "next-i18next/client";
 import { useMemo, useState } from "react";
 
 import { ResourceListEmpty } from "@/components/dashboard/resource-list-empty";
@@ -83,6 +84,7 @@ export function SkillsListPage({
   const skillsBaseHref = getDashboardNavHref(workspaceIndex, "skills");
   const createHref = `${skillsBaseHref}/new`;
 
+  const { t } = useT("dashboard");
   const { data, isLoading, error } = useQuery({
     queryKey: ["skills", workspaceId],
     queryFn: () => fetchSkills(workspaceId),
@@ -95,7 +97,8 @@ export function SkillsListPage({
   );
 
   const activeSortLabel =
-    LIST_SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Sort";
+    LIST_SORT_OPTIONS.find((option) => option.value === sort)?.labelKey ??
+    "sort.createdDesc";
 
   const hasKeyword = keyword.trim().length > 0;
   const showEmptyState =
@@ -183,7 +186,7 @@ export function SkillsListPage({
               />
             }
           >
-            {activeSortLabel}
+            {t(activeSortLabel)}
             <ChevronDownIcon className="size-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
@@ -193,7 +196,7 @@ export function SkillsListPage({
             >
               {LIST_SORT_OPTIONS.map((option) => (
                 <DropdownMenuRadioItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.labelKey)}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>

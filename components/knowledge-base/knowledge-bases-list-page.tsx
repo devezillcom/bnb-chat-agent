@@ -8,6 +8,7 @@ import {
   SearchIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useT } from "next-i18next/client";
 import { useMemo, useState, type ChangeEvent } from "react";
 
 import { ResourceListEmpty } from "@/components/dashboard/resource-list-empty";
@@ -95,6 +96,7 @@ export function KnowledgeBasesListPage({
   workspaceId,
   workspaceIndex,
 }: KnowledgeBasesListPageProps) {
+  const { t } = useT("dashboard");
   const queryClient = useQueryClient();
   const [keyword, setKeyword] = useState("");
   const [sort, setSort] = useState<ListSortOption>("created-desc");
@@ -124,7 +126,8 @@ export function KnowledgeBasesListPage({
   );
 
   const activeSortLabel =
-    LIST_SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Sort";
+    LIST_SORT_OPTIONS.find((option) => option.value === sort)?.labelKey ??
+    "sort.createdDesc";
 
   const hasKeyword = keyword.trim().length > 0;
   const showEmptyState =
@@ -258,7 +261,7 @@ export function KnowledgeBasesListPage({
               />
             }
           >
-            {activeSortLabel}
+            {t(activeSortLabel)}
             <ChevronDownIcon className="size-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
@@ -268,7 +271,7 @@ export function KnowledgeBasesListPage({
             >
               {LIST_SORT_OPTIONS.map((option) => (
                 <DropdownMenuRadioItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.labelKey)}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>

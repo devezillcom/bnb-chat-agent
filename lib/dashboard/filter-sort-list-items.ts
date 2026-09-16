@@ -47,10 +47,10 @@ export function filterSortListItems<T extends FilterSortListItem>(
 
 export const LIST_SORT_OPTIONS: {
   value: ListSortOption;
-  label: string;
+  labelKey: string;
 }[] = [
-  { value: "name-asc", label: "Name (A–Z)" },
-  { value: "name-desc", label: "Name (Z–A)" },
-  { value: "created-desc", label: "Newest first" },
-  { value: "created-asc", label: "Oldest first" },
+  { value: "name-asc", labelKey: "sort.nameAsc" },
+  { value: "name-desc", labelKey: "sort.nameDesc" },
+  { value: "created-desc", labelKey: "sort.createdDesc" },
+  { value: "created-asc", labelKey: "sort.createdAsc" },
 ];

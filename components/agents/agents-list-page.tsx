@@ -1,7 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useT } from "next-i18next/client";
 
+import { AgentListCard } from "@/components/agents/agent-list-card";
 import { ResourceListPage } from "@/components/dashboard/resource-list-page";
 import { mapAgentsToListItems } from "@/lib/dashboard/map-resource-list-items";
 import type { ListAgentsResult } from "@/lib/agents/types";
@@ -31,26 +34,48 @@ export function AgentsListPage({
   workspaceId,
   workspaceIndex,
 }: AgentsListPageProps) {
+  const { t } = useT("dashboard");
   const { data, isLoading, error } = useQuery({
     queryKey: ["agents", workspaceId],
     queryFn: () => fetchAgents(workspaceId),
   });
 
-  const items = mapAgentsToListItems(data?.items ?? []);
-  const createHref = `${getDashboardNavHref(workspaceIndex, "agents")}/new`;
+  const { items, agentsById } = useMemo(() => {
+    const agents = data?.items ?? [];
+
+    return {
+      items: mapAgentsToListItems(agents),
+      agentsById: new Map(agents.map((agent) => [agent.id, agent])),
+    };
+  }, [data?.items]);
+  const agentsBaseHref = getDashboardNavHref(workspaceIndex, "agents");
+  const createHref = `${agentsBaseHref}/new`;
 
   return (
     <ResourceListPage
-      title="Chat agents"
-      description="Agents configured for this workspace. Each agent can have its own skills, tools, and knowledge base."
+      title={t("agentsList.title")}
+      description={t("agentsList.description")}
       items={items}
-      emptyTitle="No chat agents yet"
-      emptyDescription="Create an agent to start chatting, embedding on a site, or connecting to support channels."
+      emptyTitle={t("agentsList.emptyTitle")}
+      emptyDescription={t("agentsList.emptyDescription")}
       createHref={createHref}
-      createLabel="Create agent"
-      getItemHref={(item) =>
-        `${getDashboardNavHref(workspaceIndex, "agents")}/${item.id}`
-      }
+      createLabel={t("agentsList.createLabel")}
+      itemVariant="card"
+      renderCardItem={(item) => {
+        const agent = agentsById.get(item.id);
+
+        if (!agent) {
+          return null;
+        }
+
+        return (
+          <AgentListCard
+            agent={agent}
+            chatHref={`${agentsBaseHref}/${agent.id}/chat`}
+            detailHref={`${agentsBaseHref}/${agent.id}`}
+          />
+        );
+      }}
       isLoading={isLoading}
       errorMessage={error?.message}
     />

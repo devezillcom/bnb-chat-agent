@@ -13,6 +13,12 @@ export type AgentListItem = {
   updatedAt: string;
 };
 
+export type AgentListItemWithCapabilities = AgentListItem & {
+  tools: string[];
+  skills: string[];
+  knowledgeBases: string[];
+};
+
 export type ListAgentsParams = {
   workspaceId: string;
   limit: number;
@@ -23,7 +29,7 @@ export type ListAgentsParams = {
 };
 
 export type ListAgentsResult = {
-  items: AgentListItem[];
+  items: AgentListItemWithCapabilities[];
   nextOffset: number | null;
   total: number;
 };

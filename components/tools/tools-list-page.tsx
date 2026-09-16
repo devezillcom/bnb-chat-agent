@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2Icon, PlusIcon, SearchIcon, ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
+import { useT } from "next-i18next/client";
 import { useMemo, useState } from "react";
 
 import { ResourceListEmpty } from "@/components/dashboard/resource-list-empty";
@@ -94,6 +95,7 @@ export function ToolsListPage({
   workspaceId,
   workspaceIndex,
 }: ToolsListPageProps) {
+  const { t } = useT("dashboard");
   const queryClient = useQueryClient();
   const [keyword, setKeyword] = useState("");
   const [sort, setSort] = useState<ListSortOption>("created-desc");
@@ -145,7 +147,8 @@ export function ToolsListPage({
   }, [registryData?.items, keyword]);
 
   const activeSortLabel =
-    LIST_SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Sort";
+    LIST_SORT_OPTIONS.find((option) => option.value === sort)?.labelKey ??
+    "sort.createdDesc";
 
   const isLoading =
     activeTab === "workspace" ? isLoadingWorkspaceTools : isLoadingRegistry;
@@ -235,7 +238,7 @@ export function ToolsListPage({
                   />
                 }
               >
-                {activeSortLabel}
+                {t(activeSortLabel)}
                 <ChevronDownIcon className="size-4 text-muted-foreground" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-40">
@@ -245,7 +248,7 @@ export function ToolsListPage({
                 >
                   {LIST_SORT_OPTIONS.map((option) => (
                     <DropdownMenuRadioItem key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.labelKey)}
                     </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>

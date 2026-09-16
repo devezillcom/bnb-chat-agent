@@ -2,6 +2,7 @@
 
 import { ChevronDownIcon, PlusIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
+import { useT } from "next-i18next/client";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
@@ -14,13 +15,18 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   filterSortListItems,
   LIST_SORT_OPTIONS,
   type ListSortOption,
 } from "@/lib/dashboard/filter-sort-list-items";
+import { formatListDate } from "@/lib/dashboard/format-list-date";
 import { cn } from "@/lib/utils";
 
 export type ResourceListRowItem = {
@@ -41,7 +47,9 @@ export type ResourceListRowItem = {
   avatarUrl?: string;
 };
 
-type ResourceListPageProps = {
+export type ResourceListItemVariant = "row" | "card";
+
+type ResourceListPageBaseProps = {
   title: string;
   description?: string;
   items: ResourceListRowItem[];
@@ -55,11 +63,15 @@ type ResourceListPageProps = {
   errorMessage?: string;
 };
 
-function formatListDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-  }).format(new Date(value));
-}
+type ResourceListPageProps =
+  | (ResourceListPageBaseProps & {
+      itemVariant?: "row";
+      renderCardItem?: never;
+    })
+  | (ResourceListPageBaseProps & {
+      itemVariant: "card";
+      renderCardItem: (item: ResourceListRowItem) => ReactNode;
+    });
 
 function ResourceListRow({
   item,
@@ -146,17 +158,26 @@ export function ResourceListPage({
   title,
   description,
   items,
-  emptyTitle = "Nothing here yet",
-  emptyDescription = "Items will appear here once you add them.",
+  emptyTitle,
+  emptyDescription,
   createHref,
-  createLabel = "Create",
+  createLabel,
   headerAction,
   getItemHref,
+  itemVariant = "row",
+  renderCardItem,
   isLoading = false,
   errorMessage,
 }: ResourceListPageProps) {
+  const { t } = useT("dashboard");
   const [keyword, setKeyword] = useState("");
   const [sort, setSort] = useState<ListSortOption>("created-desc");
+
+  const resolvedEmptyTitle =
+    emptyTitle ?? t("resourceList.emptyDefaultTitle");
+  const resolvedEmptyDescription =
+    emptyDescription ?? t("resourceList.emptyDefaultDescription");
+  const resolvedCreateLabel = createLabel ?? t("resourceList.create");
 
   const filteredItems = useMemo(
     () => filterSortListItems(items, keyword, sort),
@@ -164,13 +185,21 @@ export function ResourceListPage({
   );
 
   const activeSortLabel =
-    LIST_SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Sort";
+    LIST_SORT_OPTIONS.find((option) => option.value === sort)?.labelKey ??
+    "sort.createdDesc";
 
   const hasKeyword = keyword.trim().length > 0;
   const showEmptyState = !isLoading && !errorMessage && filteredItems.length === 0;
 
+  const isCardGrid = itemVariant === "card";
+
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
+    <div
+      className={cn(
+        "mx-auto w-full px-4 py-8 md:px-8",
+        isCardGrid ? "max-w-7xl" : "max-w-3xl",
+      )}
+    >
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
@@ -186,23 +215,24 @@ export function ResourceListPage({
               className="shrink-0"
             >
               <PlusIcon data-icon="inline-start" />
-              {createLabel}
+              {resolvedCreateLabel}
             </Button>
           ) : null)}
       </div>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative min-w-0 flex-1">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+        <InputGroup className="max-w-xs">
+          <InputGroupInput
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
-            placeholder="Search by name..."
-            className="pl-8"
-            aria-label="Search list"
+            placeholder={t("resourceList.searchPlaceholder")}
+            aria-label={t("resourceList.searchAriaLabel")}
             disabled={isLoading}
           />
-        </div>
+          <InputGroupAddon>
+            <SearchIcon />
+          </InputGroupAddon>
+        </InputGroup>
 
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -214,7 +244,7 @@ export function ResourceListPage({
               />
             }
           >
-            {activeSortLabel}
+            {t(activeSortLabel)}
             <ChevronDownIcon className="size-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
@@ -224,7 +254,7 @@ export function ResourceListPage({
             >
               {LIST_SORT_OPTIONS.map((option) => (
                 <DropdownMenuRadioItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.labelKey)}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
@@ -234,44 +264,72 @@ export function ResourceListPage({
 
       {errorMessage ? (
         <ResourceListEmpty
-          title="Could not load items"
+          title={t("resourceList.loadErrorTitle")}
           description={errorMessage}
         />
       ) : isLoading ? (
-        <ul className="flex flex-col gap-2.5">
-          {Array.from({ length: 4 }).map((_, index) => (
+        <ul
+          className={cn(
+            isCardGrid
+              ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              : "flex flex-col gap-2.5",
+          )}
+        >
+          {Array.from({ length: isCardGrid ? 8 : 4 }).map((_, index) => (
             <li key={index}>
-              <Skeleton className="h-[74px] w-full rounded-xl" />
+              <Skeleton
+                className={cn(
+                  "w-full rounded-xl",
+                  isCardGrid ? "h-44" : "h-18.5",
+                )}
+              />
             </li>
           ))}
         </ul>
       ) : (
         <>
           <p className="mb-3 text-xs text-muted-foreground">
-            {filteredItems.length} of {items.length}
+            {t("resourceList.count", {
+              count: filteredItems.length,
+              total: items.length,
+            })}
           </p>
 
           {showEmptyState ? (
             <ResourceListEmpty
-              title={hasKeyword ? "No matching results" : emptyTitle}
+              title={
+                hasKeyword
+                  ? t("resourceList.noMatchTitle")
+                  : resolvedEmptyTitle
+              }
               description={
                 hasKeyword
-                  ? "Try a different search term or clear the filter."
-                  : emptyDescription
+                  ? t("resourceList.noMatchDescription")
+                  : resolvedEmptyDescription
               }
               actionLabel={
-                !hasKeyword && createHref ? createLabel : undefined
+                !hasKeyword && createHref ? resolvedCreateLabel : undefined
               }
               actionHref={!hasKeyword && createHref ? createHref : undefined}
             />
           ) : (
-            <ul className="flex flex-col gap-2.5">
+            <ul
+              className={cn(
+                isCardGrid
+                  ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  : "flex flex-col gap-2.5",
+              )}
+            >
               {filteredItems.map((item) => (
-                <li key={item.id}>
-                  <ResourceListRow
-                    item={item}
-                    href={getItemHref?.(item)}
-                  />
+                <li key={item.id} className={isCardGrid ? "min-h-0" : undefined}>
+                  {isCardGrid ? (
+                    renderCardItem?.(item)
+                  ) : (
+                    <ResourceListRow
+                      item={item}
+                      href={getItemHref?.(item)}
+                    />
+                  )}
                 </li>
               ))}
             </ul>

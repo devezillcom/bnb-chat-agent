@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ChevronDownIcon, PlugIcon } from "lucide-react";
+import { useT } from "next-i18next/client";
 
 import { ResourceListPage } from "@/components/dashboard/resource-list-page";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ export function ConnectionsListPage({
   workspaceId,
   workspaceIndex,
 }: ConnectionsListPageProps) {
+  const { t } = useT("dashboard");
   const { data, isLoading, error } = useQuery({
     queryKey: ["connections", workspaceId],
     queryFn: () => fetchConnections(workspaceId),
@@ -53,11 +55,11 @@ export function ConnectionsListPage({
 
   return (
     <ResourceListPage
-      title="Connections"
-      description="Channels linked to your agents, such as Facebook Messenger, website widgets, and messaging apps."
+      title={t("connectionsList.title")}
+      description={t("connectionsList.description")}
       items={items}
-      emptyTitle="No connections yet"
-      emptyDescription="Connect Facebook pages or other channels to route conversations to agents."
+      emptyTitle={t("connectionsList.emptyTitle")}
+      emptyDescription={t("connectionsList.emptyDescription")}
       getItemHref={(item) =>
         `${getDashboardNavHref(workspaceIndex, "connections")}/${item.id}`
       }
@@ -69,7 +71,7 @@ export function ConnectionsListPage({
             render={
               <Button className="shrink-0">
                 <PlugIcon data-icon="inline-start" />
-                Connect
+                {t("connectionsList.connect")}
                 <ChevronDownIcon className="size-4 text-muted-foreground" />
               </Button>
             }
@@ -80,7 +82,9 @@ export function ConnectionsListPage({
                 key={type}
                 render={<Link href={facebookConnectHref} />}
               >
-                Connect {config.label} Pages
+                {t("connectionsList.connectFacebookPages", {
+                  label: config.label,
+                })}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

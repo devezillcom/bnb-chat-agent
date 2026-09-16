@@ -64,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (fbUser) {
         try {
           const token = await fbUser.getIdToken();
+          console.log("syncing token", token);
           await syncSessionAction(token);
         } catch {
           console.error("Sync failed; cookie may be stale.");
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signOutAction();
       }
 
+      console.log("setUser", fbUser);
       setUser(fbUser);
       setLoading(false);
     });
