@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "agents": "Agent chat",
+    "skills": "Kỹ năng",
+    "tools": "Công cụ",
+    "knowledgeBase": "Cơ sở tri thức",
+    "connections": "Kết nối",
+    "workspace": "Không gian làm việc",
+    "settings": "Cài đặt"
+  },
+  "settingsMenu": {
+    "profile": "Hồ sơ"
+  },
+  "logout": {
+    "label": "Đăng xuất",
+    "title": "Đăng xuất?",
+    "description": "Bạn sẽ cần đăng nhập lại để truy cập không gian làm việc.",
+    "confirm": "Đăng xuất"
+  },
+  "appName": "BNB Chat Agent"
+}

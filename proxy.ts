@@ -1,18 +1,24 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createProxy } from "next-i18next/proxy";
 
 import { AUTH_COOKIE_NAME } from "@/lib/auth/constants";
-import { isTokenNotExpired } from "@/lib/auth/token";
 import { isProtected } from "@/lib/auth/utils";
+import { DEFAULT_LOCALE } from "@/lib/i18n/constants";
+import i18nConfig from "./i18n.config";
+
+const i18nProxy = createProxy({
+  ...i18nConfig,
+  fallbackLng: DEFAULT_LOCALE,
+});
 
 export function proxy(req: NextRequest) {
   const token = req.cookies.get(AUTH_COOKIE_NAME)?.value;
   const hasToken = !!token;
-  // const hasAuth = token ? isTokenNotExpired(token) : false;
   const { pathname } = req.nextUrl;
 
   if (!isProtected(pathname)) {
-    return NextResponse.next();
+    return i18nProxy(req);
   }
 
   // Disabled because the refresh and sync token will trigger on client side and route protected by client side
@@ -30,7 +36,7 @@ export function proxy(req: NextRequest) {
   //   return NextResponse.redirect(signIn);
   // }
 
-  return NextResponse.next();
+  return i18nProxy(req);
 }
 
 export const config = {

@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "agents": "Chat agents",
+    "skills": "Skills",
+    "tools": "Tools",
+    "knowledgeBase": "Knowledge base",
+    "connections": "Connections",
+    "workspace": "Workspace",
+    "settings": "Settings"
+  },
+  "settingsMenu": {
+    "profile": "Profile"
+  },
+  "logout": {
+    "label": "Log out",
+    "title": "Log out?",
+    "description": "You will need to sign in again to access your workspace.",
+    "confirm": "Log out"
+  },
+  "appName": "BNB Chat Agent"
+}

@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "title": "BNB Chat Agent",
+    "description": "Nền tảng xây dựng và vận hành chat agent"
+  },
+  "authenticating": "Đang xác thực...",
+  "language": {
+    "label": "Ngôn ngữ",
+    "en": "Tiếng Anh",
+    "vi": "Tiếng Việt"
+  },
+  "theme": {
+    "label": "Giao diện",
+    "light": "Sáng",
+    "dark": "Tối",
+    "system": "Hệ thống"
+  },
+  "cancel": "Hủy"
+}

@@ -61,8 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.clear();
       }
 
-      setUser(fbUser);
-
       if (fbUser) {
         try {
           const token = await fbUser.getIdToken();
@@ -75,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signOutAction();
       }
 
+      setUser(fbUser);
       setLoading(false);
     });
 
