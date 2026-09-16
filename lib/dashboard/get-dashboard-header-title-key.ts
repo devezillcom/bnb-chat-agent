@@ -67,6 +67,16 @@ export function getDashboardHeaderTitleKey(pathname: string): string {
     return "header.chat";
   }
 
+  if (
+    section === "agents" &&
+    rest.length === 3 &&
+    ["instructions", "tools", "knowledge", "connections", "environments"].includes(
+      rest[2]!,
+    )
+  ) {
+    return "header.agentDetail";
+  }
+
   if (section === "connections" && rest[1] === "connect" && rest[2] === "facebook") {
     if (rest[3] === "select-page") {
       return "header.selectFacebookPage";

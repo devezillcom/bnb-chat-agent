@@ -18,6 +18,7 @@ export async function listAgentTools(
       slug: tools.slug,
       registryToolId: tools.registryToolId,
       description: tools.description,
+      config: tools.config,
     })
     .from(agentTools)
     .innerJoin(tools, eq(agentTools.toolId, tools.id))

@@ -1,34 +1,26 @@
 import { notFound } from "next/navigation";
 
-import { AgentDetailPage } from "@/components/agents/agent-detail-page";
+import { AgentGeneralPage } from "@/components/agents/agent-general-page";
+import type { AgentListItem } from "@/lib/agents/types";
 import { getAgent } from "@/lib/agents/services/get-agent";
 import { APIError } from "@/lib/exposers/api-error";
 import { getWorkspaceRouteContext } from "@/lib/workspaces/services/get-workspace-route-context";
 
-type AgentDetailRoutePageProps = {
+type AgentGeneralRoutePageProps = {
   params: Promise<{ workspaceIndex: string; agentId: string }>;
 };
 
-export default async function AgentDetailRoutePage({
+export default async function AgentGeneralRoutePage({
   params,
-}: AgentDetailRoutePageProps) {
+}: AgentGeneralRoutePageProps) {
   const { workspaceIndex: workspaceIndexParam, agentId } = await params;
   const { workspace, workspaceIndex } =
     await getWorkspaceRouteContext(workspaceIndexParam);
 
-  try {
-    const agent = await getAgent({
-      workspaceId: workspace.id,
-      agentId,
-    });
+  let agent: AgentListItem;
 
-    return (
-      <AgentDetailPage
-        agent={agent}
-        workspaceId={workspace.id}
-        workspaceIndex={workspaceIndex}
-      />
-    );
+  try {
+    agent = await getAgent({ workspaceId: workspace.id, agentId });
   } catch (error) {
     if (error instanceof APIError && error.statusCode === 404) {
       notFound();
@@ -36,4 +28,12 @@ export default async function AgentDetailRoutePage({
 
     throw error;
   }
+
+  return (
+    <AgentGeneralPage
+      agent={agent}
+      workspaceId={workspace.id}
+      workspaceIndex={workspaceIndex}
+    />
+  );
 }

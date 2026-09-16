@@ -1,54 +1,26 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeftIcon,
-  Loader2Icon,
-  Trash2Icon,
-  UploadIcon,
-} from "lucide-react";
+import { ArrowLeftIcon, Loader2Icon, UploadIcon } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 
+import { KnowledgeBaseDocumentRow } from "@/components/knowledge-base/knowledge-base-document-row";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { useJobStatusTracking } from "@/hooks/use-job-status-tracking";
 import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
 import type {
   GetKnowledgeBaseResult,
-  KnowledgeBaseDocumentListItem,
   ListKnowledgeBaseDocumentsResult,
 } from "@/lib/knowledge-base/types";
-import { cn } from "@/lib/utils";
+import { uploadKnowledgeBaseFile } from "@/lib/knowledge-base/utils/upload-knowledge-base-file";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
 type KnowledgeBaseDetailPageProps = {
   workspaceId: string;
   workspaceIndex: number;
   knowledgeBaseId: string;
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  pending_upload: "Pending upload",
-  uploaded: "Uploaded",
-  converting: "Converting",
-  classifying: "Classifying",
-  chunking: "Chunking",
-  indexing: "Indexing",
-  ready: "Ready",
-  failed: "Failed",
-};
-
-const STATUS_CLASSNAME: Record<string, string> = {
-  ready: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  failed: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
-  indexing: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
-  chunking: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
-  classifying: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
-  converting: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
-  uploaded: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  pending_upload: "bg-muted text-muted-foreground",
 };
 
 async function fetchKnowledgeBase(
@@ -91,129 +63,6 @@ async function fetchDocuments(
   return data;
 }
 
-function DocumentStatusBadge({ status }: { status: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium",
-        STATUS_CLASSNAME[status] ?? "bg-muted text-muted-foreground",
-      )}
-    >
-      {STATUS_LABELS[status] ?? status}
-    </span>
-  );
-}
-
-function getKnowledgeBaseDocumentViewHref(
-  workspaceIndex: number,
-  knowledgeBaseId: string,
-  documentId: string,
-): string {
-  return `/w/${workspaceIndex}/knowledge-base/${knowledgeBaseId}/documents/${documentId}/view`;
-}
-
-function DocumentRow({
-  workspaceId,
-  workspaceIndex,
-  knowledgeBaseId,
-  document,
-  onDeleted,
-}: {
-  workspaceId: string;
-  workspaceIndex: number;
-  knowledgeBaseId: string;
-  document: KnowledgeBaseDocumentListItem;
-  onDeleted: () => void;
-}) {
-  const [deleting, setDeleting] = useState(false);
-  const { job } = useJobStatusTracking(document.jobKey);
-  const liveStatus =
-    typeof job?.payload?.status === "string"
-      ? String(job.payload.status)
-      : document.status;
-  const liveStage =
-    typeof job?.payload?.stage === "string" ? String(job.payload.stage) : null;
-
-  async function handleDelete() {
-    setDeleting(true);
-    try {
-      const res = await workspaceFetch(
-        workspaceId,
-        `/api/knowledge-bases/${knowledgeBaseId}/documents/${document.id}`,
-        { method: "DELETE" },
-      );
-      const data = (await res.json()) as { message?: string; error?: string };
-      if (!res.ok) {
-        toast.add({
-          title: data.error ?? data.message ?? "Could not delete document.",
-          type: "error",
-        });
-        return;
-      }
-      toast.add({
-        title: data.message ?? "Document deleted.",
-        type: "success",
-      });
-      onDeleted();
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  return (
-    <li className="rounded-xl border border-border/50 bg-card px-4 py-3.5 sm:px-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            {document.status === "pending_upload" ? (
-              <p className="truncate font-medium">{document.filename}</p>
-            ) : (
-              <a
-                href={getKnowledgeBaseDocumentViewHref(
-                  workspaceIndex,
-                  knowledgeBaseId,
-                  document.id,
-                )}
-                target="_blank"
-                rel="noreferrer"
-                className="truncate font-medium hover:text-primary hover:underline"
-              >
-                {document.filename}
-              </a>
-            )}
-            <DocumentStatusBadge status={liveStatus} />
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {document.contentType} · {(document.sizeBytes / 1024).toFixed(1)} KB
-            {document.chunkCount != null ? ` · ${document.chunkCount} chunks` : ""}
-          </p>
-          {liveStage && liveStatus !== "ready" && liveStatus !== "failed" ? (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Stage: {liveStage}
-            </p>
-          ) : null}
-          {document.errorMessage ? (
-            <p className="mt-1 text-xs text-destructive">{document.errorMessage}</p>
-          ) : null}
-        </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => void handleDelete()}
-          disabled={deleting}
-          aria-label={`Delete ${document.filename}`}
-        >
-          {deleting ? (
-            <Loader2Icon className="size-4 animate-spin" />
-          ) : (
-            <Trash2Icon className="size-4" />
-          )}
-        </Button>
-      </div>
-    </li>
-  );
-}
-
 export function KnowledgeBaseDetailPage({
   workspaceId,
   workspaceIndex,
@@ -242,75 +91,6 @@ export function KnowledgeBaseDetailPage({
     },
   });
 
-  async function uploadFile(file: File) {
-    const uploadUrlRes = await workspaceFetch(
-      workspaceId,
-      `/api/knowledge-bases/${knowledgeBaseId}/documents/upload-url`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type || "application/octet-stream",
-          contentLength: file.size,
-        }),
-      },
-    );
-    const uploadUrlData = (await uploadUrlRes.json()) as {
-      uploadUrl?: string;
-      key?: string;
-      error?: string;
-      message?: string;
-    };
-
-    if (!uploadUrlRes.ok || !uploadUrlData.uploadUrl || !uploadUrlData.key) {
-      throw new Error(
-        uploadUrlData.message ??
-          uploadUrlData.error ??
-          `Could not prepare upload for ${file.name}.`,
-      );
-    }
-
-    const putRes = await fetch(uploadUrlData.uploadUrl, {
-      method: "PUT",
-      headers: {
-        "Content-Type": file.type || "application/octet-stream",
-      },
-      body: file,
-    });
-
-    if (!putRes.ok) {
-      throw new Error(`Upload failed for ${file.name}.`);
-    }
-
-    const createRes = await workspaceFetch(
-      workspaceId,
-      `/api/knowledge-bases/${knowledgeBaseId}/documents`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: uploadUrlData.key,
-          filename: file.name,
-          contentType: file.type || "application/octet-stream",
-          contentLength: file.size,
-        }),
-      },
-    );
-    const createData = (await createRes.json()) as {
-      message?: string;
-      error?: string;
-    };
-
-    if (!createRes.ok) {
-      throw new Error(
-        createData.message ??
-          createData.error ??
-          `Could not queue processing for ${file.name}.`,
-      );
-    }
-  }
-
   async function handleFilesSelected(files: FileList | null) {
     if (!files || files.length === 0) {
       return;
@@ -319,7 +99,7 @@ export function KnowledgeBaseDetailPage({
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
-        await uploadFile(file);
+        await uploadKnowledgeBaseFile(workspaceId, knowledgeBaseId, file);
       }
       toast.add({
         title:
@@ -436,7 +216,7 @@ export function KnowledgeBaseDetailPage({
       ) : (
         <ul className="flex flex-col gap-2.5">
           {documents.map((document) => (
-            <DocumentRow
+            <KnowledgeBaseDocumentRow
               key={document.id}
               workspaceId={workspaceId}
               workspaceIndex={workspaceIndex}

@@ -8,61 +8,74 @@ import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { toast } from "@/components/ui/toast";
 import {
-  updateKnowledgeBaseNameSchema,
-  type UpdateKnowledgeBaseNameValues,
+  updateKnowledgeBaseSchema,
+  type UpdateKnowledgeBaseValues,
 } from "@/lib/knowledge-base/schema";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
 type KnowledgeBaseToEdit = {
   id: string;
   name: string;
+  description: string | null;
 };
 
-type EditKnowledgeBaseSheetProps = {
+type EditKnowledgeBaseDialogProps = {
   knowledgeBase: KnowledgeBaseToEdit | null;
   workspaceId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUpdated?: () => void | Promise<void>;
 };
 
-export function EditKnowledgeBaseSheet({
+export function EditKnowledgeBaseDialog({
   knowledgeBase,
   workspaceId,
   open,
   onOpenChange,
-}: EditKnowledgeBaseSheetProps) {
+  onUpdated,
+}: EditKnowledgeBaseDialogProps) {
   const queryClient = useQueryClient();
 
-  const form = useForm<UpdateKnowledgeBaseNameValues>({
-    resolver: zodResolver(updateKnowledgeBaseNameSchema),
+  const form = useForm<UpdateKnowledgeBaseValues>({
+    resolver: zodResolver(updateKnowledgeBaseSchema),
     defaultValues: {
       name: knowledgeBase?.name ?? "",
+      description: knowledgeBase?.description ?? "",
     },
   });
 
   useEffect(() => {
     if (open && knowledgeBase) {
-      form.reset({ name: knowledgeBase.name });
+      form.reset({
+        name: knowledgeBase.name,
+        description: knowledgeBase.description ?? "",
+      });
     }
   }, [open, knowledgeBase, form]);
 
-  async function onSubmit(values: UpdateKnowledgeBaseNameValues) {
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen || !form.formState.isSubmitting) {
+      onOpenChange(nextOpen);
+    }
+  }
+
+  async function onSubmit(values: UpdateKnowledgeBaseValues) {
     if (!knowledgeBase) {
       return;
     }
@@ -87,6 +100,7 @@ export function EditKnowledgeBaseSheet({
       await queryClient.invalidateQueries({
         queryKey: ["knowledge-bases", workspaceId],
       });
+      await onUpdated?.();
       return;
     }
 
@@ -98,22 +112,20 @@ export function EditKnowledgeBaseSheet({
 
   const isSubmitting = form.formState.isSubmitting;
   const nameError = form.formState.errors.name;
+  const descriptionError = form.formState.errors.description;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md">
-        <form
-          className="flex h-full flex-col"
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <SheetHeader>
-            <SheetTitle>Edit knowledge base</SheetTitle>
-            <SheetDescription>
-              Update the name for this knowledge base collection.
-            </SheetDescription>
-          </SheetHeader>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent showCloseButton={!isSubmitting} className="sm:max-w-md">
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <DialogHeader>
+            <DialogTitle>Edit knowledge base</DialogTitle>
+            <DialogDescription>
+              Update the name and description for this knowledge base collection.
+            </DialogDescription>
+          </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-4">
+          <div className="space-y-4 py-4">
             <FieldGroup>
               <Field data-invalid={!!nameError || undefined}>
                 <FieldLabel htmlFor="edit-kb-name">Name</FieldLabel>
@@ -126,15 +138,28 @@ export function EditKnowledgeBaseSheet({
                 />
                 <FieldError errors={[nameError]} />
               </Field>
+
+              <Field data-invalid={!!descriptionError || undefined}>
+                <FieldLabel htmlFor="edit-kb-description">Description</FieldLabel>
+                <textarea
+                  id="edit-kb-description"
+                  rows={3}
+                  aria-invalid={!!descriptionError}
+                  disabled={isSubmitting}
+                  className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-20 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  {...form.register("description")}
+                />
+                <FieldError errors={[descriptionError]} />
+              </Field>
             </FieldGroup>
           </div>
 
-          <SheetFooter className="flex-row justify-end gap-2 border-t pt-4">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
               disabled={isSubmitting}
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleOpenChange(false)}
             >
               Cancel
             </Button>
@@ -148,9 +173,9 @@ export function EditKnowledgeBaseSheet({
                 "Save changes"
               )}
             </Button>
-          </SheetFooter>
+          </DialogFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

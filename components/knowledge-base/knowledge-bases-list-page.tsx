@@ -12,7 +12,7 @@ import { useT } from "next-i18next/client";
 import { useMemo, useState, type ChangeEvent } from "react";
 
 import { ResourceListEmpty } from "@/components/dashboard/resource-list-empty";
-import { EditKnowledgeBaseSheet } from "@/components/knowledge-base/edit-knowledge-base-sheet";
+import { EditKnowledgeBaseDialog } from "@/components/knowledge-base/edit-knowledge-base-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +57,7 @@ import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 type KnowledgeBaseToEdit = {
   id: string;
   name: string;
+  description: string | null;
 };
 
 type KnowledgeBaseToDelete = {
@@ -350,6 +351,7 @@ export function KnowledgeBasesListPage({
                           setEditingKb({
                             id: item.id,
                             name: item.name,
+                            description: item.description ?? null,
                           })
                         }
                       >
@@ -381,7 +383,7 @@ export function KnowledgeBasesListPage({
         </>
       )}
 
-      <EditKnowledgeBaseSheet
+      <EditKnowledgeBaseDialog
         knowledgeBase={editingKb}
         workspaceId={workspaceId}
         open={editingKb !== null}

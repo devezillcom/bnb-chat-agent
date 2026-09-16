@@ -32,6 +32,7 @@ export type AgentToolItem = {
   slug: string;
   registryToolId: string;
   description: string | null;
+  config: Record<string, string>;
 };
 
 export type ListAgentToolsParams = {

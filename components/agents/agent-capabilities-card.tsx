@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useT } from "next-i18next/client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -55,27 +56,8 @@ type AgentCapabilitiesCardProps = {
   kind: CapabilityKind;
 };
 
-function getCopy(kind: CapabilityKind) {
-  switch (kind) {
-    case "skill":
-      return {
-        title: "Skills",
-        description: "Capabilities assigned to this agent.",
-        empty: "No skills assigned yet.",
-      };
-    case "tool":
-      return {
-        title: "Tools",
-        description: "External integrations available to this agent.",
-        empty: "No tools assigned yet.",
-      };
-    case "knowledge-base":
-      return {
-        title: "Knowledge bases",
-        description: "Document collections assigned to this agent.",
-        empty: "No knowledge bases assigned yet.",
-      };
-  }
+function getCapabilityI18nKey(kind: CapabilityKind) {
+  return kind === "knowledge-base" ? "knowledgeBase" : kind;
 }
 
 async function fetchJson<Result>(
@@ -136,17 +118,20 @@ export function AgentCapabilitiesCard({
   kind,
 }: AgentCapabilitiesCardProps) {
   const queryClient = useQueryClient();
+  const { t } = useT("dashboard");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
-  const copy = getCopy(kind);
+  const i18nKey = getCapabilityI18nKey(kind);
+  const noun = t(`agentDetail.capabilities.${i18nKey}.noun`);
+  const copy = {
+    title: t(`agentDetail.capabilities.${i18nKey}.title`),
+    description: t(`agentDetail.capabilities.${i18nKey}.description`),
+    empty: t(`agentDetail.capabilities.${i18nKey}.empty`),
+  };
   const pathSegment =
     kind === "knowledge-base" ? "knowledge-bases" : `${kind}s`;
-  const pluralLabel =
-    kind === "knowledge-base" ? "knowledge bases" : `${kind}s`;
-  const singular =
-    kind === "knowledge-base" ? "Knowledge base" : kind === "skill" ? "Skill" : "Tool";
   const assignedQueryKey = ["agent-capabilities", workspaceId, agentId, kind];
 
   const {
@@ -220,7 +205,10 @@ export function AgentCapabilitiesCard({
         ),
       );
       toast.add({
-        title: `${selectedIds.length} ${pluralLabel} added to agent.`,
+        title: t("agentDetail.capabilities.added", {
+          count: selectedIds.length,
+          noun,
+        }),
         type: "success",
       });
       setSelectedIds([]);
@@ -231,7 +219,7 @@ export function AgentCapabilitiesCard({
         title:
           error instanceof Error
             ? error.message
-            : `Could not add ${pluralLabel}.`,
+            : t("agentDetail.capabilities.addError", { noun }),
         type: "error",
       });
     } finally {
@@ -255,7 +243,7 @@ export function AgentCapabilitiesCard({
         title:
           error instanceof Error
             ? error.message
-            : `Could not remove ${kind}.`,
+            : t("agentDetail.capabilities.removeError", { noun }),
         type: "error",
       });
     } finally {
@@ -276,14 +264,14 @@ export function AgentCapabilitiesCard({
               onClick={() => setDialogOpen(true)}
             >
               <PlusIcon data-icon="inline-start" />
-              Add
+              {t("agentDetail.capabilities.add")}
             </Button>
           </CardAction>
         </CardHeader>
         <CardContent>
           {isLoadingAssigned ? (
             <p className="text-sm text-muted-foreground">
-              Loading {pluralLabel}...
+              {t("agentDetail.capabilities.loading", { noun })}
             </p>
           ) : assignedError ? (
             <p className="text-sm text-destructive">{assignedError.message}</p>
@@ -323,7 +311,7 @@ export function AgentCapabilitiesCard({
                     ) : (
                       <Trash2Icon data-icon="inline-start" />
                     )}
-                    Remove
+                    {t("agentDetail.capabilities.remove")}
                   </Button>
                 </li>
               ))}
@@ -335,16 +323,18 @@ export function AgentCapabilitiesCard({
       <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent showCloseButton={!adding} className="max-h-[80vh] sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Add {pluralLabel}</DialogTitle>
+            <DialogTitle>
+              {t("agentDetail.capabilities.addNoun", { noun })}
+            </DialogTitle>
             <DialogDescription>
-              Select the {pluralLabel} this agent can use.
+              {t("agentDetail.capabilities.dialogDescription", { noun })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="max-h-[48vh] overflow-y-auto">
             {isLoadingAvailable ? (
               <p className="py-4 text-sm text-muted-foreground">
-                Loading available {pluralLabel}...
+                {t("agentDetail.capabilities.loadingAvailable", { noun })}
               </p>
             ) : availableError ? (
               <p className="py-4 text-sm text-destructive">
@@ -352,7 +342,7 @@ export function AgentCapabilitiesCard({
               </p>
             ) : unassigned.length === 0 ? (
               <p className="py-4 text-sm text-muted-foreground">
-                No additional {pluralLabel} are available.
+                {t("agentDetail.capabilities.noneAvailable", { noun })}
               </p>
             ) : (
               <ul className="flex flex-col gap-2 py-1">
@@ -412,7 +402,7 @@ export function AgentCapabilitiesCard({
               disabled={adding}
               onClick={() => handleDialogOpenChange(false)}
             >
-              Cancel
+              {t("agentDetail.cancel")}
             </Button>
             <Button
               type="button"
@@ -422,12 +412,15 @@ export function AgentCapabilitiesCard({
               {adding ? (
                 <>
                   <Loader2Icon className="animate-spin" data-icon="inline-start" />
-                  Adding…
+                  {t("agentDetail.capabilities.adding")}
                 </>
+              ) : selectedIds.length === 0 ? (
+                t("agentDetail.capabilities.addNoun", { noun })
               ) : (
-                selectedIds.length === 0
-                  ? `Add ${pluralLabel}`
-                  : `Add ${selectedIds.length} ${singular}${selectedIds.length === 1 ? "" : "s"}`
+                t("agentDetail.capabilities.addCount", {
+                  count: selectedIds.length,
+                  noun,
+                })
               )}
             </Button>
           </DialogFooter>

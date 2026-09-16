@@ -95,6 +95,7 @@ export type UpdateKnowledgeBaseParams = {
   workspaceId: string;
   knowledgeBaseId: string;
   name: string;
+  description?: string;
 };
 
 export type UpdateKnowledgeBaseResult = {

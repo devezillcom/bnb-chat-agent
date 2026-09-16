@@ -1,5 +1,7 @@
 import type { ChatModelId } from "@/lib/langchain/models/registry";
 
+import type { CreateToolFormValues } from "@/lib/tools/schema";
+
 import type { CreateAgentFormValues } from "./schema";
 
 export type AgentListItem = {
@@ -48,6 +50,16 @@ export type AssignAgentCapabilityParams = {
 };
 
 export type AssignAgentCapabilityResult = {
+  message: string;
+};
+
+export type CreateAgentToolParams = CreateToolFormValues & {
+  workspaceId: string;
+  agentId: string;
+};
+
+export type CreateAgentToolResult = {
+  id: string;
   message: string;
 };
 

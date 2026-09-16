@@ -42,6 +42,7 @@ export async function updateKnowledgeBase(
     .set({
       name,
       slug,
+      description: params.description?.trim() || null,
       updatedAt: new Date(),
     })
     .where(
