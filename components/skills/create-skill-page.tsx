@@ -25,7 +25,6 @@ import {
   type SkillFormValues,
 } from "@/lib/skills/schema";
 import type { ListSkillsResult } from "@/lib/skills/types";
-import type { ListToolsResult } from "@/lib/tools/types";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
 type CreateSkillPageProps = {
@@ -47,20 +46,6 @@ async function fetchSkills(workspaceId: string): Promise<ListSkillsResult> {
   return data;
 }
 
-async function fetchTools(workspaceId: string): Promise<ListToolsResult> {
-  const res = await workspaceFetch(workspaceId, "/api/tools?limit=100");
-  const data = (await res.json()) as ListToolsResult & {
-    error?: string;
-    message?: string;
-  };
-
-  if (!res.ok) {
-    throw new Error(data.message ?? data.error ?? "Could not load tools.");
-  }
-
-  return data;
-}
-
 export function CreateSkillPage({
   workspaceId,
   workspaceIndex,
@@ -71,11 +56,6 @@ export function CreateSkillPage({
   const { data: skillsData } = useQuery({
     queryKey: ["skills", workspaceId],
     queryFn: () => fetchSkills(workspaceId),
-  });
-
-  const { data: toolsData } = useQuery({
-    queryKey: ["tools", workspaceId],
-    queryFn: () => fetchTools(workspaceId),
   });
 
   const usedSlugSet = useMemo(
@@ -90,7 +70,6 @@ export function CreateSkillPage({
       slug: "",
       description: "",
       instructions: "",
-      tools: [],
     },
   });
 
@@ -147,7 +126,7 @@ export function CreateSkillPage({
           <CardHeader>
             <CardTitle>Skill details</CardTitle>
             <CardDescription>
-              Name, slug, instructions, and optional tools for this skill.
+              Name, slug, use cases, and instructions for this skill.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -155,11 +134,8 @@ export function CreateSkillPage({
               idPrefix="create-skill"
               register={form.register}
               watch={form.watch}
-              setValue={form.setValue}
               errors={form.formState.errors}
               disabled={isSubmitting}
-              workspaceId={workspaceId}
-              workspaceTools={toolsData?.items ?? []}
               usedSlugs={usedSlugSet}
             />
           </CardContent>

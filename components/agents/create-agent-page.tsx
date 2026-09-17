@@ -4,9 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 import { AgentModelField } from "@/components/agents/agent-model-field";
+import { PromptEditor } from "@/components/prompt-editor";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -147,14 +148,22 @@ export function CreateAgentPage({
                 <FieldLabel htmlFor="agent-system-prompt">
                   System prompt
                 </FieldLabel>
-                <textarea
-                  id="agent-system-prompt"
-                  rows={6}
-                  placeholder="You are a helpful guest support agent for a short-term rental business..."
-                  aria-invalid={!!systemPromptError}
-                  disabled={isSubmitting}
-                  className="flex min-h-32 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
-                  {...form.register("systemPrompt")}
+                <Controller
+                  control={form.control}
+                  name="systemPrompt"
+                  render={({ field }) => (
+                    <PromptEditor
+                      id="agent-system-prompt"
+                      ariaLabel="System prompt"
+                      ariaInvalid={!!systemPromptError}
+                      disabled={isSubmitting}
+                      placeholder="You are a helpful guest support agent for a short-term rental business..."
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      minHeightClassName="min-h-32"
+                    />
+                  )}
                 />
                 <FieldError errors={[systemPromptError]} />
               </Field>

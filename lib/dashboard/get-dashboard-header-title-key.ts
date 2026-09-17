@@ -70,9 +70,7 @@ export function getDashboardHeaderTitleKey(pathname: string): string {
   if (
     section === "agents" &&
     rest.length === 3 &&
-    ["instructions", "tools", "knowledge", "connections", "environments"].includes(
-      rest[2]!,
-    )
+    ["instructions", "skills", "tools", "knowledge", "connections"].includes(rest[2]!)
   ) {
     return "header.agentDetail";
   }

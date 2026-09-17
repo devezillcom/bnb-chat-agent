@@ -144,3 +144,33 @@ body {
     @apply font-sans;
   }
 }
+
+/* components/prompt-editor: Tiptap placeholder + @mention chip styling */
+.prompt-editor .ProseMirror > :first-child {
+  margin-block-start: 0;
+}
+
+.prompt-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--muted-foreground);
+}
+
+.prompt-editor .mention {
+  border-radius: var(--radius-sm);
+  padding: 0 0.25rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.prompt-editor .mention[data-mention-type="tool"] {
+  background-color: color-mix(in oklch, var(--chart-2) 20%, transparent);
+  color: var(--foreground);
+}
+
+.prompt-editor .mention[data-mention-type="skill"] {
+  background-color: color-mix(in oklch, var(--chart-5) 20%, transparent);
+  color: var(--foreground);
+}

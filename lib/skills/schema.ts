@@ -12,12 +12,14 @@ export const skillSlugSchema = z
 export const skillFormSchema = z.object({
   name: z.string().trim().min(1, { error: "Skill name is required." }),
   slug: skillSlugSchema,
-  description: z.string().trim().optional(),
+  description: z
+    .string()
+    .trim()
+    .min(1, { error: "Use cases are required." }),
   instructions: z
     .string()
     .trim()
     .min(1, { error: "Instructions are required." }),
-  tools: z.array(z.string().trim().min(1)),
 });
 
 export type SkillFormValues = z.infer<typeof skillFormSchema>;

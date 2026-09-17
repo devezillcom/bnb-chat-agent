@@ -80,15 +80,39 @@
     "connect": "Connect",
     "connectFacebookPages": "Connect {{label}} pages"
   },
+  "skillForm": {
+    "slug": {
+      "label": "Slug",
+      "description": "Unique identifier referenced in agent prompts (e.g. guest_support).",
+      "placeholder": "guest_support",
+      "changeWarning": "Changing the slug may break agent prompts that reference the old slug.",
+      "taken": "This slug is already used in the workspace."
+    },
+    "name": {
+      "label": "Name",
+      "description": "Display name shown in lists and agent skill pickers.",
+      "placeholder": "Guest support"
+    },
+    "useCases": {
+      "label": "When to use",
+      "description": "Describe the situations where the assistant should apply this skill.",
+      "placeholder": "Guest asks about check-in, house rules, or booking changes."
+    },
+    "instructions": {
+      "label": "Instructions",
+      "description": "Guidance injected into the agent system prompt when this skill is attached.",
+      "placeholder": "When handling guest support, prioritize booking details, house rules, and check-in instructions..."
+    }
+  },
   "agentDetail": {
     "back": "Back to assistants",
     "chat": "Chat",
     "nav": {
       "general": "General",
       "instructions": "Instructions",
+      "skills": "Skills",
       "tools": "Tools",
-      "knowledge": "Documents",
-      "environments": "Environments"
+      "knowledge": "Documents"
     },
     "saving": "Saving…",
     "save": "Save changes",
@@ -124,26 +148,33 @@
     },
     "instructions": {
       "helperTitle": "Teach your assistant how to behave",
-      "helperDescription": "Instructions describe who the assistant is and how it should reply. Skills are ready-made abilities you can turn on. Not sure where to start? Use guided mode and answer a few questions.",
+      "helperDescription": "Instructions describe who the assistant is and how it should reply.",
       "promptTitle": "Personality & instructions",
       "promptDescription": "Tell the assistant who it is and how it should behave.",
-      "modeGuided": "Guided",
-      "modeAdvanced": "Advanced",
-      "guidedRole": "Who is this assistant?",
-      "guidedRolePlaceholder": "a friendly support assistant for an online shop",
-      "guidedTone": "Tone & style",
-      "guidedTonePlaceholder": "Warm, concise, always polite. Reply in the customer's language.",
-      "guidedDos": "What should it do? (one per line)",
-      "guidedDosPlaceholder": "Help book appointments\nAnswer product questions",
-      "guidedDonts": "What should it never do? (one per line)",
-      "guidedDontsPlaceholder": "Never share internal pricing\nNever make promises about refunds",
-      "preview": "Preview (this is what gets saved)",
-      "previewEmpty": "Fill in the fields above to build the instructions.",
       "rawLabel": "Instructions",
       "improveWithAi": "Improve with AI",
-      "improveComingSoon": "AI suggestions are coming soon.",
-      "mentionHint": "Tip: type @ to mention a tool or skill (coming soon).",
-      "skillsHelper": "Skills are optional abilities the assistant can use while it works."
+      "improving": "Improving…",
+      "mentionHint": "Tip: type @ to mention a tool or skill. Markdown works too — headings, lists, and **bold**."
+    },
+    "skills": {
+      "helperTitle": "Add specialized abilities",
+      "helperDescription": "Skills are optional abilities for specific situations. Each skill defines when to use it and what the assistant should do.",
+      "add": "Add skill",
+      "addSkill": "Add skill",
+      "emptyTitle": "No skills yet",
+      "emptyDescription": "Add a skill to give this assistant use cases and extra instructions.",
+      "delete": "Delete",
+      "remove": "Remove",
+      "removing": "Removing…",
+      "removed": "Skill removed.",
+      "removeError": "Could not remove skill.",
+      "removeConfirmTitle": "Remove skill?",
+      "removeConfirmDescription": "This will remove {{name}} from this assistant and delete it if no other assistants use it.",
+      "removeDraftDescription": "Discard this unsaved skill?",
+      "saved": "Skill saved.",
+      "saveError": "Could not save skill.",
+      "slugTaken": "This slug is already used in the workspace.",
+      "untitled": "Untitled skill"
     },
     "tools": {
       "helperTitle": "Connect your assistant to outside apps",
@@ -205,12 +236,6 @@
       "addError": "Could not add knowledge base.",
       "createError": "Could not create knowledge base.",
       "createdAndAdded": "Knowledge base created and added to the assistant."
-    },
-    "environments": {
-      "helperTitle": "Environment variables",
-      "helperDescription": "Store values that change between environments (for example test vs. live), such as API keys or endpoints, without editing the assistant itself.",
-      "comingSoonTitle": "Coming soon",
-      "comingSoonDescription": "Environment variables are not available yet. This is where you'll manage per-environment settings for this assistant."
     },
     "capabilities": {
       "add": "Add",

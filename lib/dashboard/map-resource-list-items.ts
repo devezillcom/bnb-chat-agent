@@ -51,10 +51,8 @@ export function mapSkillsToListItems(
     description: skill.description ?? undefined,
     createdAt: skill.createdAt,
     subtitle: skill.slug,
-    meta: [
+    meta:
       skill.agentCount === 1 ? "1 agent" : `${skill.agentCount} agents`,
-      skill.tools.length === 1 ? "1 tool" : `${skill.tools.length} tools`,
-    ].join(" · "),
   }));
 }
 

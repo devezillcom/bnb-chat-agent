@@ -7,15 +7,14 @@ import { db } from "@/lib/db";
 import { APIError } from "@/lib/exposers/api-error";
 
 import type { CreateSkillParams, CreateSkillResult } from "../types";
-import { validateSkillToolSlugs } from "../utils/validate-skill-tool-slugs";
 
 export async function createSkill(
   params: CreateSkillParams,
 ): Promise<CreateSkillResult> {
   const trimmedName = params.name.trim();
   const slug = params.slug.trim();
+  const description = params.description.trim();
   const instructions = params.instructions.trim();
-  const toolSlugs = await validateSkillToolSlugs(params.workspaceId, params.tools);
 
   const [existing] = await db
     .select({ id: skills.id })
@@ -42,9 +41,9 @@ export async function createSkill(
       workspaceId: params.workspaceId,
       name: trimmedName,
       slug,
-      description: params.description?.trim() || null,
+      description,
       instructions,
-      tools: toolSlugs,
+      tools: [],
     })
     .returning({ id: skills.id });
 

@@ -54,8 +54,7 @@ export async function resolveWorkspaceAgentRuntime(
     }),
   ]);
 
-  const skillToolSlugs = agentSkills.flatMap((skill) => skill.tools);
-  const toolSlugs = uniqueToolSlugs([...directToolSlugs, ...skillToolSlugs]);
+  const toolSlugs = uniqueToolSlugs(directToolSlugs);
   const skillsPrompt = buildChatAgentSkillsPrompt(agentSkills);
   const knowledgePrompt = buildChatAgentKnowledgePrompt({
     knowledgeBaseCount: knowledgeBaseIds.length,

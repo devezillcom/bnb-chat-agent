@@ -36,7 +36,6 @@ export const PATCH = createApiHandler(
       slug: params.slug,
       description: params.description,
       instructions: params.instructions,
-      tools: params.tools,
       workspaceId: ctx.workspaceId,
       skillId: params.skillId,
     }),

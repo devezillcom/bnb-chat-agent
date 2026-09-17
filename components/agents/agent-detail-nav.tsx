@@ -2,8 +2,8 @@
 
 import {
   BookOpenIcon,
+  ScrollTextIcon,
   SettingsIcon,
-  SlidersHorizontalIcon,
   SparklesIcon,
   WrenchIcon,
   type LucideIcon,
@@ -42,6 +42,13 @@ export function AgentDetailNav({ agentBaseHref }: AgentDetailNavProps) {
       key: "instructions",
       labelKey: "agentDetail.nav.instructions",
       href: `${agentBaseHref}/instructions`,
+      icon: ScrollTextIcon,
+      prefix: true,
+    },
+    {
+      key: "skills",
+      labelKey: "agentDetail.nav.skills",
+      href: `${agentBaseHref}/skills`,
       icon: SparklesIcon,
       prefix: true,
     },
@@ -57,13 +64,6 @@ export function AgentDetailNav({ agentBaseHref }: AgentDetailNavProps) {
       labelKey: "agentDetail.nav.knowledge",
       href: `${agentBaseHref}/knowledge`,
       icon: BookOpenIcon,
-      prefix: true,
-    },
-    {
-      key: "environments",
-      labelKey: "agentDetail.nav.environments",
-      href: `${agentBaseHref}/environments`,
-      icon: SlidersHorizontalIcon,
       prefix: true,
     },
   ];

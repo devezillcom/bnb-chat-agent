@@ -1,5 +1,6 @@
 import type { ChatModelId } from "@/lib/langchain/models/registry";
 
+import type { SkillFormValues } from "@/lib/skills/schema";
 import type { CreateToolFormValues } from "@/lib/tools/schema";
 
 import type { CreateAgentFormValues } from "./schema";
@@ -43,6 +44,12 @@ export type GetAgentParams = {
 
 export type GetAgentResult = AgentListItem;
 
+export type AgentMentionItem = {
+  id: string;
+  type: "tool" | "skill";
+  name: string;
+};
+
 export type AssignAgentCapabilityParams = {
   workspaceId: string;
   agentId: string;
@@ -63,6 +70,16 @@ export type CreateAgentToolResult = {
   message: string;
 };
 
+export type CreateAgentSkillParams = SkillFormValues & {
+  workspaceId: string;
+  agentId: string;
+};
+
+export type CreateAgentSkillResult = {
+  id: string;
+  message: string;
+};
+
 export type CreateAgentParams = CreateAgentFormValues & {
   workspaceId: string;
 };
@@ -78,6 +95,17 @@ export type UpdateAgentParams = CreateAgentFormValues & {
 };
 
 export type UpdateAgentResult = {
+  message: string;
+};
+
+export type ImproveAgentInstructionsParams = {
+  workspaceId: string;
+  agentId: string;
+  systemPrompt: string;
+};
+
+export type ImproveAgentInstructionsResult = {
+  systemPrompt: string;
   message: string;
 };
 

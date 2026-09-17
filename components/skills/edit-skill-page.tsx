@@ -26,7 +26,6 @@ import {
   type SkillFormValues,
 } from "@/lib/skills/schema";
 import type { ListSkillsResult, SkillDetail } from "@/lib/skills/types";
-import type { ListToolsResult } from "@/lib/tools/types";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
 type EditSkillPageProps = {
@@ -66,27 +65,12 @@ async function fetchSkills(workspaceId: string): Promise<ListSkillsResult> {
   return data;
 }
 
-async function fetchTools(workspaceId: string): Promise<ListToolsResult> {
-  const res = await workspaceFetch(workspaceId, "/api/tools?limit=100");
-  const data = (await res.json()) as ListToolsResult & {
-    error?: string;
-    message?: string;
-  };
-
-  if (!res.ok) {
-    throw new Error(data.message ?? data.error ?? "Could not load tools.");
-  }
-
-  return data;
-}
-
 function createEditDefaultValues(skill: SkillDetail): SkillFormValues {
   return {
     name: skill.name,
     slug: skill.slug,
     description: skill.description ?? "",
     instructions: skill.instructions,
-    tools: skill.tools,
   };
 }
 
@@ -112,11 +96,6 @@ export function EditSkillPage({
     queryFn: () => fetchSkills(workspaceId),
   });
 
-  const { data: toolsData } = useQuery({
-    queryKey: ["tools", workspaceId],
-    queryFn: () => fetchTools(workspaceId),
-  });
-
   const usedSlugSet = useMemo(() => {
     const slugs = (skillsData?.items ?? [])
       .filter((item) => item.id !== skillId)
@@ -132,7 +111,6 @@ export function EditSkillPage({
       slug: "",
       description: "",
       instructions: "",
-      tools: [],
     },
   });
 
@@ -231,7 +209,7 @@ export function EditSkillPage({
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">Edit skill</h1>
           <p className="text-sm text-muted-foreground">
-            Update instructions and tool access for {skill.name}.
+            Update use cases and instructions for {skill.name}.
           </p>
         </div>
       </div>
@@ -241,7 +219,7 @@ export function EditSkillPage({
           <CardHeader>
             <CardTitle>Skill details</CardTitle>
             <CardDescription>
-              Name, slug, instructions, and optional tools for this skill.
+              Name, slug, use cases, and instructions for this skill.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -249,11 +227,8 @@ export function EditSkillPage({
               idPrefix="edit-skill"
               register={form.register}
               watch={form.watch}
-              setValue={form.setValue}
               errors={form.formState.errors}
               disabled={isSubmitting}
-              workspaceId={workspaceId}
-              workspaceTools={toolsData?.items ?? []}
               usedSlugs={usedSlugSet}
               showSlugWarning
             />

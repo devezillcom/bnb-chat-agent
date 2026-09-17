@@ -80,15 +80,39 @@
     "connect": "Kết nối",
     "connectFacebookPages": "Kết nối trang {{label}}"
   },
+  "skillForm": {
+    "slug": {
+      "label": "Slug",
+      "description": "Mã định danh duy nhất được nhắc trong hướng dẫn trợ lý (ví dụ: guest_support).",
+      "placeholder": "guest_support",
+      "changeWarning": "Đổi slug có thể làm hỏng hướng dẫn trợ lý đang tham chiếu slug cũ.",
+      "taken": "Slug này đã được dùng trong workspace."
+    },
+    "name": {
+      "label": "Tên",
+      "description": "Tên hiển thị trong danh sách và khi chọn kỹ năng.",
+      "placeholder": "Hỗ trợ khách"
+    },
+    "useCases": {
+      "label": "Khi nào dùng",
+      "description": "Mô tả các tình huống mà trợ lý nên áp dụng kỹ năng này.",
+      "placeholder": "Khách hỏi về check-in, nội quy nhà, hoặc thay đổi booking."
+    },
+    "instructions": {
+      "label": "Hướng dẫn",
+      "description": "Nội dung được thêm vào system prompt khi kỹ năng này được gắn với trợ lý.",
+      "placeholder": "Khi xử lý hỗ trợ khách, ưu tiên thông tin booking, nội quy nhà và hướng dẫn check-in..."
+    }
+  },
   "agentDetail": {
     "back": "Về danh sách trợ lý",
     "chat": "Trò chuyện",
     "nav": {
       "general": "Tổng quan",
       "instructions": "Hướng dẫn",
+      "skills": "Kỹ năng",
       "tools": "Công cụ",
-      "knowledge": "Tài liệu",
-      "environments": "Biến môi trường"
+      "knowledge": "Tài liệu"
     },
     "saving": "Đang lưu…",
     "save": "Lưu thay đổi",
@@ -124,26 +148,33 @@
     },
     "instructions": {
       "helperTitle": "Dạy trợ lý cách ứng xử",
-      "helperDescription": "Hướng dẫn mô tả trợ lý là ai và nên trả lời thế nào. Kỹ năng là những khả năng có sẵn mà bạn có thể bật lên. Chưa biết bắt đầu từ đâu? Hãy dùng chế độ Dẫn dắt và trả lời vài câu hỏi.",
+      "helperDescription": "Hướng dẫn mô tả trợ lý là ai và nên trả lời thế nào.",
       "promptTitle": "Tính cách & Hướng dẫn",
       "promptDescription": "Cho trợ lý biết nó là ai và nên hành xử ra sao.",
-      "modeGuided": "Dẫn dắt",
-      "modeAdvanced": "Nâng cao",
-      "guidedRole": "Trợ lý này là ai?",
-      "guidedRolePlaceholder": "một trợ lý hỗ trợ thân thiện cho cửa hàng online",
-      "guidedTone": "Giọng điệu & phong cách",
-      "guidedTonePlaceholder": "Ấm áp, ngắn gọn, luôn lịch sự. Trả lời bằng ngôn ngữ của khách.",
-      "guidedDos": "Trợ lý NÊN làm gì? (mỗi dòng một ý)",
-      "guidedDosPlaceholder": "Giúp đặt lịch hẹn\nTrả lời câu hỏi về sản phẩm",
-      "guidedDonts": "Trợ lý KHÔNG được làm gì? (mỗi dòng một ý)",
-      "guidedDontsPlaceholder": "Không tiết lộ giá nội bộ\nKhông hứa hẹn về việc hoàn tiền",
-      "preview": "Xem trước (đây là nội dung sẽ được lưu)",
-      "previewEmpty": "Điền các ô phía trên để tạo hướng dẫn.",
       "rawLabel": "Hướng dẫn",
       "improveWithAi": "Cải thiện bằng AI",
-      "improveComingSoon": "Tính năng AI gợi ý sắp ra mắt.",
-      "mentionHint": "Mẹo: gõ @ để nhắc tới công cụ hoặc kỹ năng (sắp có).",
-      "skillsHelper": "Kỹ năng là những khả năng tùy chọn mà trợ lý có thể dùng khi làm việc."
+      "improving": "Đang cải thiện…",
+      "mentionHint": "Mẹo: gõ @ để nhắc tới công cụ hoặc kỹ năng. Có thể dùng Markdown — tiêu đề, danh sách và **in đậm**."
+    },
+    "skills": {
+      "helperTitle": "Thêm khả năng chuyên biệt",
+      "helperDescription": "Kỹ năng là các khả năng tùy chọn cho từng tình huống cụ thể. Mỗi kỹ năng mô tả khi nào dùng và trợ lý nên làm gì.",
+      "add": "Thêm kỹ năng",
+      "addSkill": "Thêm kỹ năng",
+      "emptyTitle": "Chưa có kỹ năng nào",
+      "emptyDescription": "Thêm kỹ năng để bổ sung trường hợp sử dụng và hướng dẫn cho trợ lý này.",
+      "delete": "Xóa",
+      "remove": "Xóa",
+      "removing": "Đang xóa…",
+      "removed": "Đã xóa kỹ năng.",
+      "removeError": "Không thể xóa kỹ năng.",
+      "removeConfirmTitle": "Xóa kỹ năng?",
+      "removeConfirmDescription": "Thao tác này sẽ xóa {{name}} khỏi trợ lý và xóa kỹ năng nếu không còn trợ lý nào khác dùng.",
+      "removeDraftDescription": "Hủy kỹ năng chưa lưu này?",
+      "saved": "Đã lưu kỹ năng.",
+      "saveError": "Không thể lưu kỹ năng.",
+      "slugTaken": "Slug này đã được dùng trong workspace.",
+      "untitled": "Kỹ năng chưa đặt tên"
     },
     "tools": {
       "helperTitle": "Kết nối trợ lý với các ứng dụng bên ngoài",
@@ -159,12 +190,12 @@
       "loadingAvailable": "Đang tải công cụ khả dụng…",
       "noneAvailable": "Không có công cụ nào trong danh mục.",
       "delete": "Xóa",
-      "remove": "Gỡ",
-      "removing": "Đang gỡ…",
-      "removed": "Đã gỡ công cụ.",
-      "removeError": "Không thể gỡ công cụ.",
-      "removeConfirmTitle": "Gỡ công cụ?",
-      "removeConfirmDescription": "Thao tác này sẽ gỡ {{name}} khỏi trợ lý và xóa cấu hình của nó.",
+      "remove": "Xóa",
+      "removing": "Đang xóa…",
+      "removed": "Đã xóa công cụ.",
+      "removeError": "Không thể xóa công cụ.",
+      "removeConfirmTitle": "Xóa công cụ?",
+      "removeConfirmDescription": "Thao tác này sẽ xóa {{name}} khỏi trợ lý và toàn bộ cấu hình của nó.",
       "removeDraftDescription": "Hủy cấu hình công cụ chưa lưu này?",
       "saved": "Đã lưu công cụ.",
       "saveError": "Không thể lưu công cụ.",
@@ -206,16 +237,10 @@
       "createError": "Không thể tạo knowledge base.",
       "createdAndAdded": "Đã tạo knowledge base và thêm vào trợ lý."
     },
-    "environments": {
-      "helperTitle": "Biến môi trường",
-      "helperDescription": "Lưu các giá trị thay đổi theo môi trường (ví dụ thử nghiệm và thật), như khóa API hay endpoint, mà không cần sửa trợ lý.",
-      "comingSoonTitle": "Sắp ra mắt",
-      "comingSoonDescription": "Biến môi trường chưa khả dụng. Đây sẽ là nơi bạn quản lý cấu hình theo từng môi trường cho trợ lý này."
-    },
     "capabilities": {
       "add": "Thêm",
-      "remove": "Gỡ",
-      "removing": "Đang gỡ…",
+      "remove": "Xóa",
+      "removing": "Đang xóa…",
       "adding": "Đang thêm…",
       "loading": "Đang tải {{noun}}...",
       "loadingAvailable": "Đang tải {{noun}} khả dụng...",
@@ -225,7 +250,7 @@
       "addCount": "Thêm {{count}} {{noun}}",
       "added": "Đã thêm {{count}} {{noun}} vào trợ lý.",
       "addError": "Không thể thêm {{noun}}.",
-      "removeError": "Không thể gỡ {{noun}}.",
+      "removeError": "Không thể xóa {{noun}}.",
       "skill": {
         "title": "Kỹ năng",
         "description": "Các khả năng được gán cho trợ lý này.",

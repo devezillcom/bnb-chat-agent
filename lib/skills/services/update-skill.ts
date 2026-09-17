@@ -7,7 +7,6 @@ import { db } from "@/lib/db";
 import { APIError } from "@/lib/exposers/api-error";
 
 import type { UpdateSkillParams, UpdateSkillResult } from "../types";
-import { validateSkillToolSlugs } from "../utils/validate-skill-tool-slugs";
 
 export async function updateSkill(
   params: UpdateSkillParams,
@@ -29,8 +28,8 @@ export async function updateSkill(
 
   const trimmedName = params.name.trim();
   const slug = params.slug.trim();
+  const description = params.description.trim();
   const instructions = params.instructions.trim();
-  const toolSlugs = await validateSkillToolSlugs(params.workspaceId, params.tools);
 
   if (slug !== existing.slug) {
     const [duplicate] = await db
@@ -59,9 +58,9 @@ export async function updateSkill(
     .set({
       name: trimmedName,
       slug,
-      description: params.description?.trim() || null,
+      description,
       instructions,
-      tools: toolSlugs,
+      tools: [],
       updatedAt: new Date(),
     })
     .where(
