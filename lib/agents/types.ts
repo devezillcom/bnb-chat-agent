@@ -102,6 +102,8 @@ export type ImproveAgentInstructionsParams = {
   workspaceId: string;
   agentId: string;
   systemPrompt: string;
+  /** When set, the model improves only this excerpt and returns it alone. */
+  selectedText?: string;
 };
 
 export type ImproveAgentInstructionsResult = {

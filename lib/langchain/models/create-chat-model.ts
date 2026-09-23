@@ -20,6 +20,11 @@ export type CreateChatModelOptions = {
   temperature?: number;
 };
 
+/** DeepSeek V4 defaults to thinking mode, which rejects forced tool_choice. */
+const deepSeekStructuredOutputModelKwargs = {
+  thinking: { type: "disabled" as const },
+};
+
 export function isChatModelConfigured(model: ChatModelId): boolean {
   const { provider } = getChatModelDefinition(model);
 
@@ -79,6 +84,8 @@ export function createChatModel(
   if (definition.provider === "deepseek") {
     return new ChatDeepSeek({
       model: definition.modelName,
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      modelKwargs: deepSeekStructuredOutputModelKwargs,
       ...modelOptions,
     });
   }

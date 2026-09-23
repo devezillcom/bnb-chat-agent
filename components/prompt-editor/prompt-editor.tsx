@@ -5,11 +5,14 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
+import { FieldDescription } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
 import { createMentionExtension } from "./create-mention-extension";
+import { PromptEditorMentionTags } from "./prompt-editor-mention-tags";
+import { PromptEditorSelectionBubble } from "./prompt-editor-selection-bubble";
 import {
   getPromptMarkdown,
   parsePromptMarkdown,
@@ -31,6 +34,10 @@ export function PromptEditor({
   minHeightClassName = "min-h-16",
   ariaInvalid,
   items = EMPTY_ITEMS,
+  mentionTagsLabel,
+  mentionHint,
+  editorActions,
+  selectionImprove,
 }: PromptEditorProps) {
   // Created once and never mutated; the mention extension itself reads its
   // live items from `editor.storage.mention` (synced below), so it never
@@ -92,6 +99,13 @@ export function PromptEditor({
     },
   });
 
+  const handleMentionTagClick = useCallback(
+    (item: MentionItem) => {
+      editorRef.current?.commands.insertMention(item);
+    },
+    [],
+  );
+
   useEffect(() => {
     editorRef.current = editor;
   }, [editor]);
@@ -118,20 +132,48 @@ export function PromptEditor({
   }, [editor, disabled]);
 
   return (
-    <div
-      aria-invalid={ariaInvalid ? "true" : undefined}
-      className={cn(
-        "prompt-editor typeset typeset-compact w-full rounded-lg border border-input bg-transparent px-6 py-5 text-base shadow-xs transition-[color,box-shadow] outline-none",
-        "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
-        "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
-        "[&_.ProseMirror]:min-h-full [&_.ProseMirror]:outline-none",
-        "md:text-sm",
-        disabled && "pointer-events-none cursor-not-allowed opacity-50",
-        minHeightClassName,
-        className,
-      )}
-    >
-      <EditorContent editor={editor} />
+    <div className="space-y-2">
+      {mentionTagsLabel ? (
+        <PromptEditorMentionTags
+          items={items}
+          label={mentionTagsLabel}
+          disabled={disabled}
+          onItemClick={handleMentionTagClick}
+        />
+      ) : null}
+      <div className="group/prompt-editor relative">
+        {editorActions ? (
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-end p-2">
+            {editorActions}
+          </div>
+        ) : null}
+        <div
+          aria-invalid={ariaInvalid ? "true" : undefined}
+          className={cn(
+            "prompt-editor typeset typeset-compact w-full rounded-lg border border-input bg-transparent px-6 py-5 text-base shadow-xs transition-[color,box-shadow] outline-none",
+            "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
+            "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
+            "[&_.ProseMirror]:min-h-full [&_.ProseMirror]:outline-none",
+            "md:text-sm",
+            disabled && "pointer-events-none cursor-not-allowed opacity-50",
+            minHeightClassName,
+            className,
+          )}
+        >
+          <EditorContent editor={editor} />
+          {selectionImprove ? (
+            <PromptEditorSelectionBubble
+              editor={editor}
+              disabled={disabled}
+              items={items}
+              improve={selectionImprove}
+            />
+          ) : null}
+        </div>
+      </div>
+      {mentionHint ? (
+        <FieldDescription>{mentionHint}</FieldDescription>
+      ) : null}
     </div>
   );
 }

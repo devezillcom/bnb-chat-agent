@@ -19,13 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { toast } from "@/components/ui/toast";
 import {
   createAgentFormSchema,
@@ -34,6 +28,7 @@ import {
 import type { AgentListItem, AgentMentionItem } from "@/lib/agents/types";
 import type { AgentSkillItem } from "@/lib/skills/types";
 import type { AgentToolItem } from "@/lib/tools/types";
+import { cn } from "@/lib/utils";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
 type AgentInstructionsPageProps = {
@@ -129,7 +124,9 @@ export function AgentInstructionsPage({
   const systemPromptError = form.formState.errors.systemPrompt;
   const [isImproving, setIsImproving] = useState(false);
 
-  async function handleImproveWithAi() {
+  async function requestImproveInstructions(options?: {
+    selectedText?: string;
+  }): Promise<string | null> {
     setIsImproving(true);
     try {
       const res = await workspaceFetch(
@@ -140,6 +137,9 @@ export function AgentInstructionsPage({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             systemPrompt: form.getValues("systemPrompt"),
+            ...(options?.selectedText
+              ? { selectedText: options.selectedText }
+              : {}),
           }),
         },
       );
@@ -150,26 +150,34 @@ export function AgentInstructionsPage({
       };
 
       if (res.ok && data.systemPrompt) {
-        form.setValue("systemPrompt", data.systemPrompt, {
-          shouldDirty: true,
-          shouldValidate: form.formState.isSubmitted,
-        });
+        if (!options?.selectedText) {
+          form.setValue("systemPrompt", data.systemPrompt, {
+            shouldDirty: true,
+            shouldValidate: form.formState.isSubmitted,
+          });
+        }
         toast.add({
           title: data.message ?? "Instructions improved.",
           type: "success",
         });
-        return;
+        return data.systemPrompt;
       }
 
       toast.add({
         title: data.error ?? data.message ?? "Something went wrong.",
         type: "error",
       });
+      return null;
     } catch {
       toast.add({ title: "Something went wrong.", type: "error" });
+      return null;
     } finally {
       setIsImproving(false);
     }
+  }
+
+  async function handleImproveWithAi() {
+    await requestImproveInstructions();
   }
 
   async function onSubmit(values: CreateAgentFormValues) {
@@ -210,61 +218,69 @@ export function AgentInstructionsPage({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isLoadingMentionItems ? (
-                <div className="space-y-4">
-                  <Skeleton className="h-16 w-full rounded-lg" />
-                  <Skeleton className="h-16 w-full rounded-lg" />
-                  <Skeleton className="h-24 w-full rounded-lg" />
-                </div>
-              ) : (
-                <Field data-invalid={!!systemPromptError || undefined}>
-                  <div className="flex items-center justify-between gap-2">
-                    <FieldLabel htmlFor="agent-system-prompt">
-                      {t("agentDetail.instructions.rawLabel")}
-                    </FieldLabel>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
+              <Field data-invalid={!!systemPromptError || undefined}>
+                <FieldLabel htmlFor="agent-system-prompt">
+                  {t("agentDetail.instructions.rawLabel")}
+                </FieldLabel>
+                <Controller
+                  control={form.control}
+                  name="systemPrompt"
+                  render={({ field }) => (
+                    <PromptEditor
+                      id="agent-system-prompt"
+                      ariaLabel={t("agentDetail.instructions.rawLabel")}
+                      ariaInvalid={!!systemPromptError}
                       disabled={isSubmitting || isImproving}
-                      onClick={handleImproveWithAi}
-                    >
-                      {isImproving ? (
-                        <Loader2Icon
-                          className="animate-spin"
-                          data-icon="inline-start"
-                        />
-                      ) : (
-                        <SparklesIcon data-icon="inline-start" />
-                      )}
-                      {isImproving
-                        ? t("agentDetail.instructions.improving")
-                        : t("agentDetail.instructions.improveWithAi")}
-                    </Button>
-                  </div>
-                  <Controller
-                    control={form.control}
-                    name="systemPrompt"
-                    render={({ field }) => (
-                      <PromptEditor
-                        id="agent-system-prompt"
-                        ariaLabel={t("agentDetail.instructions.rawLabel")}
-                        ariaInvalid={!!systemPromptError}
-                        disabled={isSubmitting || isImproving}
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        items={mentionItems}
-                        minHeightClassName="min-h-56"
-                      />
-                    )}
-                  />
-                  <FieldDescription>
-                    {t("agentDetail.instructions.mentionHint")}
-                  </FieldDescription>
-                  <FieldError errors={[systemPromptError]} />
-                </Field>
-              )}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      items={mentionItems}
+                      mentionTagsLabel={
+                        isLoadingMentionItems
+                          ? undefined
+                          : t("agentDetail.instructions.mentionTagsLabel")
+                      }
+                      mentionHint={t("agentDetail.instructions.mentionHint")}
+                      minHeightClassName="min-h-56"
+                      editorActions={
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={isSubmitting || isImproving}
+                          onClick={handleImproveWithAi}
+                          className={cn(
+                            "pointer-events-auto sticky top-2 shadow-sm transition-opacity",
+                            "opacity-0 group-hover/prompt-editor:opacity-100 group-focus-within/prompt-editor:opacity-100 focus-visible:opacity-100",
+                            isImproving && "opacity-100",
+                          )}
+                        >
+                          {isImproving ? (
+                            <Loader2Icon
+                              className="animate-spin"
+                              data-icon="inline-start"
+                            />
+                          ) : (
+                            <SparklesIcon data-icon="inline-start" />
+                          )}
+                          {isImproving
+                            ? t("agentDetail.instructions.improving")
+                            : t("agentDetail.instructions.improveWithAi")}
+                        </Button>
+                      }
+                      selectionImprove={{
+                        label: t("agentDetail.instructions.improveWithAi"),
+                        improvingLabel: t("agentDetail.instructions.improving"),
+                        onImprove: (selectedMarkdown) =>
+                          requestImproveInstructions({
+                            selectedText: selectedMarkdown,
+                          }),
+                      }}
+                    />
+                  )}
+                />
+                <FieldError errors={[systemPromptError]} />
+              </Field>
             </CardContent>
             <CardFooter className="justify-end gap-2">
               <Button

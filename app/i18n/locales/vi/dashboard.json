@@ -154,6 +154,7 @@
       "rawLabel": "Hướng dẫn",
       "improveWithAi": "Cải thiện bằng AI",
       "improving": "Đang cải thiện…",
+      "mentionTagsLabel": "Gõ @ để mention:",
       "mentionHint": "Mẹo: gõ @ để nhắc tới công cụ hoặc kỹ năng. Có thể dùng Markdown — tiêu đề, danh sách và **in đậm**."
     },
     "skills": {

@@ -16,6 +16,8 @@ declare module "@tiptap/core" {
        * searches through, without touching the document or history.
        */
       setMentionItems: (items: MentionItem[]) => ReturnType;
+      /** Inserts a mention node at the current selection. */
+      insertMention: (item: MentionItem) => ReturnType;
     };
   }
 
@@ -59,6 +61,23 @@ const AgentMention = Mention.extend({
           editor.storage.mention.items = items;
           return true;
         },
+      insertMention:
+        (item: MentionItem) =>
+        ({ chain }) =>
+          chain()
+            .focus()
+            .insertContent([
+              {
+                type: "mention",
+                attrs: {
+                  id: item.id,
+                  label: item.name,
+                  mentionType: item.type,
+                },
+              },
+              { type: "text", text: " " },
+            ])
+            .run(),
     };
   },
   renderMarkdown: (node: JSONContent) =>

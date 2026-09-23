@@ -9,6 +9,7 @@ const improveAgentInstructionsRouteParamsSchema = z.object({
 
 const improveAgentInstructionsRequestBodySchema = z.object({
   systemPrompt: z.string().optional().default(""),
+  selectedText: z.string().trim().min(1).optional(),
 });
 
 export const POST = createApiHandler(
@@ -21,6 +22,7 @@ export const POST = createApiHandler(
       workspaceId: ctx.workspaceId,
       agentId: params.agentId,
       systemPrompt: params.systemPrompt,
+      selectedText: params.selectedText,
     }),
   {
     allowedRoles: ["user", "admin"],

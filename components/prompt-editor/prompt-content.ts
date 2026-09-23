@@ -34,3 +34,28 @@ export function setPromptContent(
 export function getPromptMarkdown(editor: Editor): string {
   return editor.getMarkdown().replaceAll("\u00a0", " ").trimEnd();
 }
+
+export function getSelectionMarkdown(editor: Editor): string | null {
+  const { from, to, empty } = editor.state.selection;
+  if (empty || from === to) return null;
+
+  const slice = editor.state.doc.slice(from, to);
+  if (!slice.content.size) return null;
+
+  const markdown = editor.markdown?.serialize({
+    type: "doc",
+    content: slice.content.toJSON(),
+  });
+  const normalized = markdown?.replaceAll("\u00a0", " ").trim();
+  return normalized || null;
+}
+
+export function replaceSelectionWithMarkdown(
+  editor: Editor,
+  range: { from: number; to: number },
+  markdown: string,
+  items: MentionItem[],
+) {
+  const parsed = parsePromptMarkdown(editor, markdown, items);
+  editor.chain().focus().insertContentAt(range, parsed).run();
+}

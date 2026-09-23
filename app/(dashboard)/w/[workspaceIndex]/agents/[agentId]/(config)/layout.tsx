@@ -88,7 +88,11 @@ export default async function AgentDetailLayout({
         </div>
       </div>
 
-      <AgentDetailNav agentBaseHref={agentHref} />
+      <AgentDetailNav
+        agentBaseHref={agentHref}
+        workspaceId={workspace.id}
+        agentId={agentId}
+      />
 
       {children}
     </div>

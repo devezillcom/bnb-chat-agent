@@ -154,6 +154,7 @@
       "rawLabel": "Instructions",
       "improveWithAi": "Improve with AI",
       "improving": "Improving…",
+      "mentionTagsLabel": "Type @ to mention:",
       "mentionHint": "Tip: type @ to mention a tool or skill. Markdown works too — headings, lists, and **bold**."
     },
     "skills": {
