@@ -1,10 +1,7 @@
 import {
-  BookOpenIcon,
   BotIcon,
   CableIcon,
   SettingsIcon,
-  SparklesIcon,
-  WrenchIcon,
   type LucideIcon,
 } from "lucide-react";
 
@@ -26,16 +23,6 @@ export const DASHBOARD_DAILY_NAV_ITEMS: DashboardNavItem[] = [
   { labelKey: "nav.connections", segment: "connections", icon: CableIcon },
 ];
 
-export const DASHBOARD_ADVANCED_NAV_ITEMS: DashboardNavItem[] = [
-  {
-    labelKey: "nav.knowledgeBase",
-    segment: "knowledge-base",
-    icon: BookOpenIcon,
-  },
-  { labelKey: "nav.skills", segment: "skills", icon: SparklesIcon },
-  { labelKey: "nav.tools", segment: "tools", icon: WrenchIcon },
-];
-
 export const DASHBOARD_SETTINGS_NAV_ITEM: DashboardNavItem = {
   labelKey: "nav.workspaceSettings",
   segment: "settings/workspace",
@@ -47,19 +34,6 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
     labelKey: "nav.daily",
     items: DASHBOARD_DAILY_NAV_ITEMS,
   },
-  {
-    labelKey: "nav.advanced",
-    items: DASHBOARD_ADVANCED_NAV_ITEMS,
-    collapsible: true,
-    defaultOpen: false,
-  },
-];
-
-/** @deprecated Use grouped nav constants instead. Kept for compatibility. */
-export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
-  ...DASHBOARD_DAILY_NAV_ITEMS,
-  ...DASHBOARD_ADVANCED_NAV_ITEMS,
-  DASHBOARD_SETTINGS_NAV_ITEM,
 ];
 
 export function getDashboardNavHref(

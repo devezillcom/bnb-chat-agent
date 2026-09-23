@@ -1,12 +1,8 @@
 {
   "nav": {
     "agents": "Trợ lý",
-    "skills": "Kỹ năng",
-    "tools": "Công cụ",
-    "knowledgeBase": "Kiến thức",
     "connections": "Kênh chat",
     "daily": "Hằng ngày",
-    "advanced": "Nâng cao",
     "workspaceSettings": "Cài đặt workspace"
   },
   "accountMenu": {
@@ -27,14 +23,9 @@
     "editAgent": "Chỉnh sửa trợ lý",
     "agentDetail": "Chi tiết trợ lý",
     "chat": "Trò chuyện",
-    "createSkill": "Tạo kỹ năng",
-    "editSkill": "Chỉnh sửa kỹ năng",
-    "createTool": "Tạo công cụ",
-    "editTool": "Chỉnh sửa công cụ",
     "connectionDetail": "Chi tiết kênh chat",
     "connectFacebook": "Kết nối Facebook",
-    "selectFacebookPage": "Chọn trang Facebook",
-    "knowledgeBaseDetail": "Chi tiết kiến thức"
+    "selectFacebookPage": "Chọn trang Facebook"
   },
   "homeInfographic": {
     "skills": "Kỹ năng",

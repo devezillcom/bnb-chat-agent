@@ -1,12 +1,8 @@
 {
   "nav": {
     "agents": "Assistants",
-    "skills": "Skills",
-    "tools": "Tools",
-    "knowledgeBase": "Knowledge",
     "connections": "Chat channels",
     "daily": "Daily",
-    "advanced": "Advanced",
     "workspaceSettings": "Workspace settings"
   },
   "accountMenu": {
@@ -27,14 +23,9 @@
     "editAgent": "Edit assistant",
     "agentDetail": "Assistant details",
     "chat": "Chat",
-    "createSkill": "Create skill",
-    "editSkill": "Edit skill",
-    "createTool": "Create tool",
-    "editTool": "Edit tool",
     "connectionDetail": "Channel details",
     "connectFacebook": "Connect Facebook",
-    "selectFacebookPage": "Select Facebook page",
-    "knowledgeBaseDetail": "Knowledge details"
+    "selectFacebookPage": "Select Facebook page"
   },
   "homeInfographic": {
     "skills": "Skills",

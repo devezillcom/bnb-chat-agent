@@ -1,27 +1,19 @@
 const LIST_SECTION_TITLE_KEYS: Record<string, string> = {
   agents: "nav.agents",
   connections: "nav.connections",
-  "knowledge-base": "nav.knowledgeBase",
-  skills: "nav.skills",
-  tools: "nav.tools",
 };
 
 const CREATE_TITLE_KEYS: Record<string, string> = {
   agents: "header.createAgent",
-  skills: "header.createSkill",
-  tools: "header.createTool",
 };
 
 const EDIT_TITLE_KEYS: Record<string, string> = {
   agents: "header.editAgent",
-  skills: "header.editSkill",
-  tools: "header.editTool",
 };
 
 const DETAIL_TITLE_KEYS: Record<string, string> = {
   agents: "header.agentDetail",
   connections: "header.connectionDetail",
-  "knowledge-base": "header.knowledgeBaseDetail",
 };
 
 function getWorkspaceRouteSegments(pathname: string) {

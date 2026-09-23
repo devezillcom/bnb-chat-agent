@@ -2,10 +2,6 @@ import type { ResourceListRowItem } from "@/components/dashboard/resource-list-p
 import type { AgentListItemWithCapabilities } from "@/lib/agents/types";
 import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
 import type { ChatAgent, Connection } from "@/lib/dashboard/placeholder-data";
-import type { KnowledgeBaseListItem } from "@/lib/knowledge-base/types";
-import type { SkillListItem } from "@/lib/skills/types";
-import type { ToolListItem } from "@/lib/tools/types";
-import { getToolDefinition } from "@/lib/tools/tool-registry";
 
 const CONNECTION_CHANNEL_LABELS: Record<Connection["channel"], string> = {
   facebook: "Facebook",
@@ -39,56 +35,6 @@ export function mapChatAgentsToListItems(
       initials: agent.initials,
       className: agent.avatarColor,
     },
-  }));
-}
-
-export function mapSkillsToListItems(
-  skills: SkillListItem[],
-): ResourceListRowItem[] {
-  return skills.map((skill) => ({
-    id: skill.id,
-    name: skill.name,
-    description: skill.description ?? undefined,
-    createdAt: skill.createdAt,
-    subtitle: skill.slug,
-    meta:
-      skill.agentCount === 1 ? "1 agent" : `${skill.agentCount} agents`,
-  }));
-}
-
-export function mapToolsToListItems(tools: ToolListItem[]): ResourceListRowItem[] {
-  return tools.map((tool) => {
-    const registryTool = getToolDefinition(tool.registryToolId);
-
-    return {
-      id: tool.id,
-      name: tool.name,
-      description: tool.description ?? undefined,
-      createdAt: tool.createdAt,
-      subtitle: registryTool?.name ?? tool.registryToolId,
-      meta: tool.slug,
-      badge: tool.locked
-        ? {
-            label: "Locked",
-            className: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-          }
-        : undefined,
-    };
-  });
-}
-
-export function mapKnowledgeBasesToListItems(
-  knowledgeBases: KnowledgeBaseListItem[],
-): ResourceListRowItem[] {
-  return knowledgeBases.map((knowledgeBase) => ({
-    id: knowledgeBase.id,
-    name: knowledgeBase.name,
-    description: knowledgeBase.description ?? undefined,
-    createdAt: knowledgeBase.createdAt,
-    meta:
-      knowledgeBase.documentCount === 1
-        ? "1 document"
-        : `${knowledgeBase.documentCount} documents`,
   }));
 }
 
