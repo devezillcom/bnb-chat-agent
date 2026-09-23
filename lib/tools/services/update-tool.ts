@@ -69,7 +69,7 @@ export async function updateTool(
     );
   }
 
-  let config: Record<string, string>;
+  let config: Record<string, unknown>;
 
   try {
     config = normalizeToolConfig(registryToolId, params.config);

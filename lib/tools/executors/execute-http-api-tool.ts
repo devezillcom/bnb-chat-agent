@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { WorkspaceToolRuntime } from "../types";
+import { getConfigString } from "../utils/get-config-string";
 
 type HttpApiToolInput = {
   method: string;
@@ -19,8 +20,8 @@ export async function executeHttpApiTool(
   tool: WorkspaceToolRuntime,
   input: HttpApiToolInput,
 ): Promise<string> {
-  const baseUrl = tool.config.base_url?.trim();
-  const apiKey = tool.config.api_key?.trim();
+  const baseUrl = getConfigString(tool.config, "base_url");
+  const apiKey = getConfigString(tool.config, "api_key");
 
   if (!baseUrl || !apiKey) {
     return JSON.stringify({

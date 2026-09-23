@@ -227,7 +227,7 @@ export type NewConnectionInboundDedup =
   typeof connectionInboundDedup.$inferInsert;
 
 /** User-provided config values validated by the registry tool's configSchema. */
-export type ToolConfig = Record<string, string>;
+export type ToolConfig = Record<string, unknown>;
 
 export const tools = pgTable(
   "tools",

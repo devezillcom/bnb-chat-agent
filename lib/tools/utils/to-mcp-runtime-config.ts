@@ -1,4 +1,8 @@
-import type { McpAuthType, McpConfig, McpTransport } from "../schemas/mcp-config-schema";
+import type {
+  McpAuthType,
+  McpConnectionConfig,
+  McpTransport,
+} from "../schemas/mcp-config-schema";
 import { parseMcpArgs, parseMcpStringRecord } from "./parse-mcp-config-values";
 
 export type McpHttpRuntimeConfig = {
@@ -19,7 +23,9 @@ export type McpStdioRuntimeConfig = {
 
 export type McpRuntimeConfig = McpHttpRuntimeConfig | McpStdioRuntimeConfig;
 
-function buildHttpHeaders(config: McpConfig): Record<string, string> {
+function buildHttpHeaders(
+  config: McpConnectionConfig,
+): Record<string, string> {
   const headers = parseMcpStringRecord(config.headers, "Headers");
 
   if (config.auth_type === "bearer" && config.bearer_token) {
@@ -29,7 +35,9 @@ function buildHttpHeaders(config: McpConfig): Record<string, string> {
   return headers;
 }
 
-export function toMcpRuntimeConfig(config: McpConfig): McpRuntimeConfig {
+export function toMcpRuntimeConfig(
+  config: McpConnectionConfig,
+): McpRuntimeConfig {
   if (config.transport === "stdio") {
     return {
       transport: "stdio",

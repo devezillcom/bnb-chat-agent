@@ -6,7 +6,7 @@ import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useT } from "next-i18next/client";
 
-import { McpAdvertisedTools } from "@/components/tools/mcp-advertised-tools";
+import { McpAvailableTools } from "@/components/tools/mcp-available-tools";
 import { ToolConfigFields } from "@/components/tools/tool-config-fields";
 import {
   AlertDialog,
@@ -43,6 +43,10 @@ import {
   type CreateToolFormValues,
 } from "@/lib/tools/schema";
 import { getToolDefinition } from "@/lib/tools/tool-registry";
+import {
+  assertMcpSelectedToolsAvailable,
+  parseMcpSelectedToolNamesForSave,
+} from "@/lib/tools/utils/parse-mcp-selected-tools";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 import { cn } from "@/lib/utils";
 
@@ -89,7 +93,9 @@ export function AgentToolSection({
   const slugError = form.formState.errors.slug;
   const descriptionError = form.formState.errors.description;
   const registryToolIdError = form.formState.errors.registryToolId;
-  const configError = form.formState.errors.config;
+  const configError = form.formState.errors.config as
+    | { selected_tools?: { message?: string } }
+    | undefined;
   const slugValue = form.watch("slug");
   const displayName = form.watch("name") || registryTool?.name || t("agentDetail.tools.untitled");
 
@@ -107,6 +113,24 @@ export function AgentToolSection({
   }, [defaultValues.slug, slugValue, toolId, usedSlugs]);
 
   async function onSubmit(values: CreateToolFormValues) {
+    if (values.registryToolId === "mcp") {
+      try {
+        parseMcpSelectedToolNamesForSave(values.config.selected_tools);
+        assertMcpSelectedToolsAvailable({
+          available_tools: values.config.available_tools,
+          selected_tools: values.config.selected_tools,
+        });
+      } catch (error) {
+        form.setError("config.selected_tools", {
+          message:
+            error instanceof Error
+              ? error.message
+              : "Select at least one MCP tool.",
+        });
+        return;
+      }
+    }
+
     const endpoint = toolId
       ? `/api/tools/${toolId}`
       : `/api/agents/${agentId}/tools`;
@@ -253,7 +277,7 @@ export function AgentToolSection({
                 </FieldLabel>
                 <FieldDescription>
                   {registryTool.id === "mcp"
-                    ? "Used to assign this MCP connection to agents and skills. After saving, advertised MCP tool names appear below for prompts and skills."
+                    ? "Used to assign this MCP connection to agents and skills. Choose available MCP tools below before saving."
                     : "Unique identifier referenced in agent prompts (e.g. get_weather)."}
                 </FieldDescription>
                 {!isDraft ? (
@@ -329,8 +353,13 @@ export function AgentToolSection({
                 errors={configError}
               />
 
-              {registryTool.id === "mcp" && toolId ? (
-                <McpAdvertisedTools workspaceId={workspaceId} toolId={toolId} />
+              {registryTool.id === "mcp" ? (
+                <McpAvailableTools
+                  workspaceId={workspaceId}
+                  control={form.control}
+                  disabled={isSubmitting}
+                  errorMessage={configError?.selected_tools?.message}
+                />
               ) : null}
 
               <FieldError errors={[registryToolIdError]} />

@@ -4,6 +4,7 @@ import { exaSearch } from "@/lib/exa/services/exa-search";
 import { formatExaImageLines } from "@/lib/exa/utils/format-exa-image-lines";
 
 import type { WorkspaceToolRuntime } from "../types";
+import { getConfigString } from "../utils/get-config-string";
 import { parseExcludeDomains } from "../utils/parse-exclude-domains";
 
 type WebSearchToolInput = {
@@ -14,7 +15,9 @@ export async function executeWebSearchTool(
   tool: WorkspaceToolRuntime,
   input: WebSearchToolInput,
 ): Promise<string> {
-  const excludeDomains = parseExcludeDomains(tool.config.exclude_domains ?? "");
+  const excludeDomains = parseExcludeDomains(
+    getConfigString(tool.config, "exclude_domains"),
+  );
   const { results } = await exaSearch({
     query: input.query,
     numResults: 5,

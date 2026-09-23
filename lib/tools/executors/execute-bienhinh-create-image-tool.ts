@@ -6,6 +6,7 @@ import {
 import type { BienhinhCreateImageInput } from "../schemas/bienhinh-create-image-input-schema";
 import { enqueueBienhinhImagePollJob } from "../services/enqueue-bienhinh-image-poll-job";
 import type { ToolExecutionContext, WorkspaceToolRuntime } from "../types";
+import { getConfigString } from "../utils/get-config-string";
 import {
   BIENHINH_IMAGES_API_URL,
   formatBienhinhImageToolResult,
@@ -25,11 +26,11 @@ const FIELD_CONFIG_KEYS = {
   extraPrompt: "fields.extraPrompt",
 } as const;
 
-function buildFields(config: Record<string, string>): Record<string, string> {
+function buildFields(config: Record<string, unknown>): Record<string, string> {
   const fields: Record<string, string> = {};
 
   for (const [fieldName, configKey] of Object.entries(FIELD_CONFIG_KEYS)) {
-    const value = config[configKey]?.trim();
+    const value = getConfigString(config, configKey);
     if (value) {
       fields[fieldName] = value;
     }
@@ -67,9 +68,9 @@ export async function executeBienhinhCreateImageTool(
   executionContext?: ToolExecutionContext,
 ): Promise<string> {
   const apiToken = getBienhinhApiToken();
-  const projectId = tool.config.projectId?.trim();
-  const templateId = tool.config.templateId?.trim();
-  const styleId = tool.config.styleId?.trim();
+  const projectId = getConfigString(tool.config, "projectId");
+  const templateId = getConfigString(tool.config, "templateId");
+  const styleId = getConfigString(tool.config, "styleId");
 
   if (!apiToken) {
     return JSON.stringify({
@@ -85,11 +86,12 @@ export async function executeBienhinhCreateImageTool(
   }
 
   const templateGroupId =
-    tool.config.templateGroupId?.trim() || DEFAULT_TEMPLATE_GROUP_ID;
+    getConfigString(tool.config, "templateGroupId") || DEFAULT_TEMPLATE_GROUP_ID;
   const imageWorkflow =
-    tool.config.imageWorkflow?.trim() || DEFAULT_IMAGE_WORKFLOW;
+    getConfigString(tool.config, "imageWorkflow") || DEFAULT_IMAGE_WORKFLOW;
   const outputAspectRatio =
-    tool.config.outputAspectRatio?.trim() || DEFAULT_OUTPUT_ASPECT_RATIO;
+    getConfigString(tool.config, "outputAspectRatio") ||
+    DEFAULT_OUTPUT_ASPECT_RATIO;
   const fields = buildFields(tool.config);
 
   const body: Record<string, unknown> = {

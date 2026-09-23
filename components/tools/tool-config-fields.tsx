@@ -38,12 +38,16 @@ function toFieldDomId(key: string): string {
   return key.replace(/[^a-zA-Z0-9_-]/g, "-");
 }
 
+function configValueToString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function resolveConfigValue(
-  config: Record<string, string> | undefined,
+  config: Record<string, unknown> | undefined,
   key: string,
   fields: ToolConfigFieldDefinition[],
 ): string {
-  const value = config?.[key]?.trim() ?? "";
+  const value = configValueToString(config?.[key]);
   if (value) {
     return value;
   }
@@ -53,7 +57,7 @@ function resolveConfigValue(
 
 function isFieldVisible(
   field: ToolConfigFieldDefinition,
-  config: Record<string, string> | undefined,
+  config: Record<string, unknown> | undefined,
   fields: ToolConfigFieldDefinition[],
 ): boolean {
   if (!field.showWhen) {
@@ -110,7 +114,7 @@ export function ToolConfigFields({
             control={control}
             name="config"
             render={({ field: configField }) => {
-              const value = configField.value?.[field.key] ?? "";
+              const value = configValueToString(configField.value?.[field.key]);
 
               function updateConfig(nextValue: string) {
                 configField.onChange({

@@ -2,7 +2,7 @@ import "server-only";
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 
-import { mcpConfigSchema } from "../schemas/mcp-config-schema";
+import { mcpConnectionConfigSchema } from "../schemas/mcp-config-schema";
 import { createMcpClientTransport } from "./create-mcp-client-transport";
 import { toMcpRuntimeConfig } from "./to-mcp-runtime-config";
 
@@ -12,10 +12,10 @@ const MCP_CLIENT_INFO = {
 } as const;
 
 export async function withMcpClient<T>(
-  config: Record<string, string>,
+  config: Record<string, unknown>,
   run: (client: Client) => Promise<T>,
 ): Promise<T> {
-  const parsedConfig = mcpConfigSchema.safeParse(config);
+  const parsedConfig = mcpConnectionConfigSchema.safeParse(config);
   if (!parsedConfig.success) {
     throw new Error(
       parsedConfig.error.issues[0]?.message ?? "Invalid MCP tool configuration.",

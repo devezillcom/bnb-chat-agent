@@ -31,21 +31,25 @@ export function agentToolItemToFormValues(tool: {
   slug: string;
   registryToolId: string;
   description: string | null;
-  config: Record<string, string>;
+  config: Record<string, unknown>;
 }): CreateToolFormValues {
   const registryTool = getToolDefinition(tool.registryToolId);
+  const fieldDefaults = Object.fromEntries(
+    (registryTool?.configFields ?? []).map((field) => [
+      field.key,
+      tool.config?.[field.key] ?? field.defaultValue ?? "",
+    ]),
+  );
 
   return {
     name: tool.name,
     slug: tool.slug,
     registryToolId: tool.registryToolId,
     description: tool.description ?? "",
-    config: Object.fromEntries(
-      (registryTool?.configFields ?? []).map((field) => [
-        field.key,
-        tool.config?.[field.key] ?? field.defaultValue ?? "",
-      ]),
-    ),
+    config: {
+      ...fieldDefaults,
+      ...tool.config,
+    },
   };
 }
 

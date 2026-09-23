@@ -22,7 +22,7 @@ export const createToolFormSchema = z.object({
       error: "Choose a supported registry tool.",
     }),
   description: z.string().trim().optional(),
-  config: z.record(z.string(), z.string()),
+  config: z.record(z.string(), z.unknown()),
 });
 
 export type CreateToolFormValues = z.infer<typeof createToolFormSchema>;

@@ -23,7 +23,7 @@ export type ToolListItem = {
 };
 
 export type ToolDetail = ToolListItem & {
-  config: Record<string, string>;
+  config: Record<string, unknown>;
 };
 
 export type AgentToolItem = {
@@ -32,7 +32,7 @@ export type AgentToolItem = {
   slug: string;
   registryToolId: string;
   description: string | null;
-  config: Record<string, string>;
+  config: Record<string, unknown>;
 };
 
 export type ListAgentToolsParams = {
@@ -107,7 +107,7 @@ export type WorkspaceToolRuntime = {
   name: string;
   description: string;
   registryToolId: ToolRegistryId;
-  config: Record<string, string>;
+  config: Record<string, unknown>;
 };
 
 export type ListToolsBySlugsParams = {
@@ -129,4 +129,18 @@ export type ListMcpAdvertisedToolsParams = {
 
 export type ListMcpAdvertisedToolsResult = {
   items: McpAdvertisedToolItem[];
+};
+
+export type McpAvailableToolItem = {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+};
+
+export type ListMcpAvailableToolsParams = {
+  config: Record<string, unknown>;
+};
+
+export type ListMcpAvailableToolsResult = {
+  items: McpAvailableToolItem[];
 };

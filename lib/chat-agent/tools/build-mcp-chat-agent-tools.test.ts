@@ -1,20 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { listMcpServerTools, executeMcpTool } = vi.hoisted(() => ({
-  listMcpServerTools: vi.fn(),
+const { executeMcpTool } = vi.hoisted(() => ({
   executeMcpTool: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/tools/utils/list-mcp-server-tools", () => ({
-  listMcpServerTools,
-}));
 vi.mock("@/lib/tools/executors/execute-mcp-tool", () => ({
   executeMcpTool,
 }));
 
 import { buildMcpChatAgentTools } from "./build-mcp-chat-agent-tools";
 import type { WorkspaceToolRuntime } from "@/lib/tools/types";
+
+const availableTools = [
+  {
+    name: "search_knowledge",
+    description: "Search the knowledge graph",
+    inputSchema: {
+      type: "object",
+      properties: { query: { type: "string" } },
+      required: ["query"],
+    },
+  },
+];
 
 const workspaceTool: WorkspaceToolRuntime = {
   slug: "docs_mcp",
@@ -24,6 +32,8 @@ const workspaceTool: WorkspaceToolRuntime = {
   config: {
     transport: "http",
     server_url: "https://mcp.example.com/mcp",
+    available_tools: availableTools,
+    selected_tools: ["search_knowledge"],
   },
 };
 
@@ -32,18 +42,7 @@ describe("buildMcpChatAgentTools", () => {
     vi.clearAllMocks();
   });
 
-  it("exposes advertised MCP tools by their real names", async () => {
-    listMcpServerTools.mockResolvedValue([
-      {
-        name: "search_knowledge",
-        description: "Search the knowledge graph",
-        inputSchema: {
-          type: "object",
-          properties: { query: { type: "string" } },
-          required: ["query"],
-        },
-      },
-    ]);
+  it("exposes selected MCP tools by their real names", async () => {
     executeMcpTool.mockResolvedValue(JSON.stringify({ ok: true }));
 
     const usedNames = new Set<string>(["search_knowledge_base"]);
@@ -69,11 +68,15 @@ describe("buildMcpChatAgentTools", () => {
     });
   });
 
-  it("does not leave a generic tool_name wrapper when listing fails", async () => {
-    listMcpServerTools.mockRejectedValue(new Error("MCP server unreachable"));
-
+  it("returns an unavailable placeholder when no tools are selected", async () => {
     const tools = await buildMcpChatAgentTools({
-      workspaceTool,
+      workspaceTool: {
+        ...workspaceTool,
+        config: {
+          ...workspaceTool.config,
+          selected_tools: [],
+        },
+      },
       usedNames: new Set<string>(),
     });
 
@@ -86,7 +89,7 @@ describe("buildMcpChatAgentTools", () => {
       throw new Error("Expected unavailable MCP placeholder tool.");
     }
     await expect(unavailableTool.invoke({})).resolves.toContain(
-      "MCP server unreachable",
+      "No MCP tools are selected for this connection.",
     );
   });
 });

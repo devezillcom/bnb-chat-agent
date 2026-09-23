@@ -48,7 +48,7 @@ export async function listMcpToolsFromClient(
 }
 
 export async function listMcpServerTools(
-  config: Record<string, string>,
+  config: Record<string, unknown>,
 ): Promise<McpServerTool[]> {
   return withMcpClient(config, (client) => listMcpToolsFromClient(client));
 }

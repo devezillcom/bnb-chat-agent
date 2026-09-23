@@ -52,7 +52,7 @@ export type ToolDefinition = {
   /** Fixed output JSON Schema for the runtime AI agent. */
   outputShape?: DataShape;
   /** Validates workspace config when adding this tool. */
-  configSchema: z.ZodType<Record<string, string>>;
+  configSchema: z.ZodType<Record<string, unknown>>;
   /** Form metadata for config fields (labels, secrets). */
   configFields: ToolConfigFieldDefinition[];
 };
@@ -124,7 +124,7 @@ export const TOOL_REGISTRY: ToolDefinition[] = [
     id: "mcp",
     name: "MCP",
     description:
-      "Connect to a Model Context Protocol server over HTTP, SSE, or a local command. Tools advertised by the server are discovered when the agent runs.",
+      "Connect to a Model Context Protocol server over HTTP, SSE, or a local command. Choose which MCP tools the agent can call.",
     configSchema: mcpConfigSchema,
     configFields: [
       {
