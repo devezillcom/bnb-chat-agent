@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { AgentListItemWithCapabilities } from "@/lib/agents/types";
-import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
+import { getAgentAvatarUrl } from "@/lib/agents/utils/get-agent-avatar-url";
 import { cn } from "@/lib/utils";
 
 type AgentListCardProps = {
@@ -66,7 +66,7 @@ export function AgentListCard({
   detailHref,
 }: AgentListCardProps) {
   const { t } = useT("dashboard");
-  const leading = getAgentListLeading(agent.name);
+  const avatarUrl = getAgentAvatarUrl(agent.name);
   const hasDescription = Boolean(agent.description);
   const hasCapabilities =
     agent.tools.length > 0 ||
@@ -83,14 +83,12 @@ export function AgentListCard({
 
       <CardHeader className="min-w-0 pb-0">
         <div className="flex min-w-0 items-center gap-3">
-          <div
-            className={cn(
-              "flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-              leading.className,
-            )}
-          >
-            {leading.initials}
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={avatarUrl}
+            alt=""
+            className="size-10 shrink-0 rounded-full object-cover"
+          />
 
           <CardTitle className="min-w-0 flex-1 line-clamp-2">
             {agent.name}

@@ -6,10 +6,9 @@ import { getT } from "next-i18next/server";
 import { AgentDetailNav } from "@/components/agents/agent-detail-nav";
 import { Button } from "@/components/ui/button";
 import { getAgent } from "@/lib/agents/services/get-agent";
-import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
+import { getAgentAvatarUrl } from "@/lib/agents/utils/get-agent-avatar-url";
 import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
 import { APIError } from "@/lib/exposers/api-error";
-import { cn } from "@/lib/utils";
 import { getWorkspaceRouteContext } from "@/lib/workspaces/services/get-workspace-route-context";
 
 type AgentDetailLayoutProps = {
@@ -44,7 +43,7 @@ export default async function AgentDetailLayout({
   const agentsHref = getDashboardNavHref(workspaceIndex, "agents");
   const agentHref = `${agentsHref}/${agentId}`;
   const chatHref = `${agentHref}/chat`;
-  const leading = getAgentListLeading(agentName);
+  const avatarUrl = getAgentAvatarUrl(agentName);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-8">
@@ -59,14 +58,12 @@ export default async function AgentDetailLayout({
           {t("agentDetail.back")}
         </Button>
         <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              "flex size-12 shrink-0 items-center justify-center rounded-full text-base font-semibold",
-              leading.className,
-            )}
-          >
-            {leading.initials}
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={avatarUrl}
+            alt=""
+            className="size-12 shrink-0 rounded-full object-cover"
+          />
           <div className="min-w-0">
             <h1 className="truncate text-2xl font-semibold tracking-tight">
               {agentName}
