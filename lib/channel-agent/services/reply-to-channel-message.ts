@@ -29,7 +29,7 @@ export async function replyToChannelMessage(
       chatEnv: params.chatEnv,
       systemPrompt: runtime.systemPrompt,
       model: parseChatModel(params.agent.model),
-      toolSlugs: runtime.toolSlugs,
+      tools: runtime.tools,
       knowledgeBaseIds: runtime.knowledgeBaseIds,
       citationsEnabled: runtime.citationsEnabled,
     },

@@ -236,12 +236,13 @@ export const tools = pgTable(
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    /** Display name override; defaults from registry when unset at creation. */
+    /**
+     * Display name override; defaults from registry when unset at creation.
+     * The runtime LLM tool name is derived from this name per agent.
+     */
     name: text("name").notNull(),
     /** Code-defined registry tool id (e.g. http_api, mcp). */
     registryToolId: text("tool_id").notNull(),
-    /** Unique per workspace; referenced in agent prompts (e.g. get_weather). */
-    slug: text("slug").notNull(),
     description: text("description"),
     config: jsonb("config").$type<ToolConfig>().notNull(),
     /** When true, users cannot view detail, edit, or delete — set only via scripts. */
@@ -256,10 +257,6 @@ export const tools = pgTable(
   (table) => [
     index("tools_workspace_id_idx").on(table.workspaceId),
     index("tools_tool_id_idx").on(table.registryToolId),
-    uniqueIndex("tools_workspace_id_slug_idx").on(
-      table.workspaceId,
-      table.slug,
-    ),
   ],
 );
 
@@ -295,12 +292,9 @@ export const skills = pgTable(
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
+    /** Display name; the runtime prompt identifier is derived from it per agent. */
     name: text("name").notNull(),
-    /** URL-safe unique identifier per workspace; referenced in prompts and APIs. */
-    slug: text("slug").notNull(),
     description: text("description"),
-    /** Workspace tool slug values this skill may use (soft reference, validated in app). */
-    tools: text("tools").array().notNull().default([]),
     instructions: text("instructions").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -309,13 +303,7 @@ export const skills = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [
-    index("skills_workspace_id_idx").on(table.workspaceId),
-    uniqueIndex("skills_workspace_id_slug_idx").on(
-      table.workspaceId,
-      table.slug,
-    ),
-  ],
+  (table) => [index("skills_workspace_id_idx").on(table.workspaceId)],
 );
 
 export type Skill = typeof skills.$inferSelect;
@@ -351,7 +339,6 @@ export const knowledgeBases = pgTable(
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    slug: text("slug").notNull(),
     description: text("description"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -360,13 +347,7 @@ export const knowledgeBases = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [
-    index("knowledge_bases_workspace_id_idx").on(table.workspaceId),
-    uniqueIndex("knowledge_bases_workspace_id_slug_idx").on(
-      table.workspaceId,
-      table.slug,
-    ),
-  ],
+  (table) => [index("knowledge_bases_workspace_id_idx").on(table.workspaceId)],
 );
 
 export type KnowledgeBase = typeof knowledgeBases.$inferSelect;

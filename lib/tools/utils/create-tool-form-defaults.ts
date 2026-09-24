@@ -2,7 +2,7 @@ import type { CreateToolFormValues } from "../schema";
 import {
   getToolDefinition,
   isKnownToolRegistryId,
-} from "../tool-registry";
+} from "../tool-registry-metadata";
 
 export function createToolFormDefaults(
   registryToolId: string,
@@ -14,7 +14,6 @@ export function createToolFormDefaults(
 
   return {
     name: registryTool?.name ?? "",
-    slug: "",
     registryToolId: registryTool?.id ?? "",
     description: registryTool?.description ?? "",
     config: Object.fromEntries(
@@ -28,7 +27,6 @@ export function createToolFormDefaults(
 
 export function agentToolItemToFormValues(tool: {
   name: string;
-  slug: string;
   registryToolId: string;
   description: string | null;
   config: Record<string, unknown>;
@@ -43,7 +41,6 @@ export function agentToolItemToFormValues(tool: {
 
   return {
     name: tool.name,
-    slug: tool.slug,
     registryToolId: tool.registryToolId,
     description: tool.description ?? "",
     config: {
@@ -51,20 +48,4 @@ export function agentToolItemToFormValues(tool: {
       ...tool.config,
     },
   };
-}
-
-export function suggestToolSlug(
-  registryToolId: string,
-  usedSlugs: ReadonlySet<string>,
-): string {
-  const base = registryToolId.replace(/[^a-z0-9_]/g, "_");
-  let candidate = base;
-  let index = 2;
-
-  while (usedSlugs.has(candidate)) {
-    candidate = `${base}_${index}`;
-    index += 1;
-  }
-
-  return candidate;
 }

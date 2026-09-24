@@ -12,7 +12,6 @@ export async function getTool(params: GetToolParams): Promise<GetToolResult> {
     .select({
       id: tools.id,
       name: tools.name,
-      slug: tools.slug,
       registryToolId: tools.registryToolId,
       description: tools.description,
       config: tools.config,
@@ -41,7 +40,6 @@ export async function getTool(params: GetToolParams): Promise<GetToolResult> {
   return {
     id: tool.id,
     name: tool.name,
-    slug: tool.slug,
     registryToolId: tool.registryToolId as ToolRegistryId,
     description: tool.description,
     config: tool.config,

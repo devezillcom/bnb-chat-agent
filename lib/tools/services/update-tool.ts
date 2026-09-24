@@ -1,8 +1,11 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
-import { tools } from "@/db/schema";
+import { agentTools, tools } from "@/db/schema";
 import { db } from "@/lib/db";
 import { APIError } from "@/lib/exposers/api-error";
+
+import { assertAgentToolNameOnAssignedAgents } from "@/lib/agents/services/assert-agent-tool-name-on-assigned-agents";
+import { invalidateChatAgentCache } from "@/lib/chat-agent/services/create-chat-agent";
 
 import type { UpdateToolParams, UpdateToolResult } from "../types";
 import { normalizeToolConfig } from "../utils/normalize-tool-config";
@@ -13,8 +16,8 @@ export async function updateTool(
   const [existing] = await db
     .select({
       id: tools.id,
+      name: tools.name,
       locked: tools.locked,
-      slug: tools.slug,
       registryToolId: tools.registryToolId,
     })
     .from(tools)
@@ -36,30 +39,7 @@ export async function updateTool(
   }
 
   const trimmedName = params.name.trim();
-  const slug = params.slug.trim();
   const registryToolId = params.registryToolId.trim();
-
-  if (slug !== existing.slug) {
-    const [duplicate] = await db
-      .select({ id: tools.id })
-      .from(tools)
-      .where(
-        and(
-          eq(tools.workspaceId, params.workspaceId),
-          eq(tools.slug, slug),
-          ne(tools.id, params.toolId),
-        ),
-      )
-      .limit(1);
-
-    if (duplicate) {
-      throw new APIError(
-        "ERR_TOOL_SLUG_EXISTS",
-        "A tool with this slug already exists in the workspace.",
-        409,
-      );
-    }
-  }
 
   if (registryToolId !== existing.registryToolId) {
     throw new APIError(
@@ -81,11 +61,17 @@ export async function updateTool(
     );
   }
 
+  if (trimmedName !== existing.name) {
+    await assertAgentToolNameOnAssignedAgents({
+      toolId: params.toolId,
+      name: trimmedName,
+    });
+  }
+
   const updated = await db
     .update(tools)
     .set({
       name: trimmedName,
-      slug,
       description: params.description?.trim() || null,
       config,
       updatedAt: new Date(),
@@ -97,6 +83,15 @@ export async function updateTool(
 
   if (updated.length === 0) {
     throw new APIError("ERR_TOOL_NOT_FOUND", "Tool not found.", 404);
+  }
+
+  const assignedAgents = await db
+    .select({ agentId: agentTools.agentId })
+    .from(agentTools)
+    .where(eq(agentTools.toolId, params.toolId));
+
+  for (const { agentId } of assignedAgents) {
+    invalidateChatAgentCache(agentId);
   }
 
   return { message: "Tool updated." };

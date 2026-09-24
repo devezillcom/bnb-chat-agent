@@ -2,10 +2,8 @@ import type { SkillFormValues } from "./schema";
 
 export type AgentSkillItem = {
   id: string;
-  slug: string;
   name: string;
   description: string | null;
-  tools: string[];
   instructions: string;
 };
 
@@ -19,9 +17,7 @@ export type ListAgentSkillsResult = AgentSkillItem[];
 export type SkillListItem = {
   id: string;
   name: string;
-  slug: string;
   description: string | null;
-  tools: string[];
   agentCount: number;
   createdAt: string;
   updatedAt: string;

@@ -4,7 +4,7 @@ import type { CreateToolFormValues } from "./schema";
 import type {
   ToolConfigFieldDefinition,
   ToolRegistryId,
-} from "./tool-registry";
+} from "./tool-registry-metadata";
 
 export type ToolExecutionContext = {
   sessionId?: string;
@@ -14,7 +14,6 @@ export type ToolExecutionContext = {
 export type ToolListItem = {
   id: string;
   name: string;
-  slug: string;
   registryToolId: ToolRegistryId;
   description: string | null;
   locked: boolean;
@@ -29,7 +28,6 @@ export type ToolDetail = ToolListItem & {
 export type AgentToolItem = {
   id: string;
   name: string;
-  slug: string;
   registryToolId: string;
   description: string | null;
   config: Record<string, unknown>;
@@ -102,20 +100,29 @@ export type DeleteToolResult = {
   message: string;
 };
 
-export type WorkspaceToolRuntime = {
-  slug: string;
+export type WorkspaceToolRecord = {
+  id: string;
   name: string;
   description: string;
   registryToolId: ToolRegistryId;
   config: Record<string, unknown>;
 };
 
-export type ListToolsBySlugsParams = {
-  workspaceId: string;
-  slugs: string[];
+/**
+ * A workspace tool plus the slug derived from its name for the current agent.
+ * Single-tool registries use this slug as the LangChain tool name; multi-tool
+ * registries prefix their child tool names with it.
+ */
+export type WorkspaceToolRuntime = WorkspaceToolRecord & {
+  slug: string;
 };
 
-export type ListToolsBySlugsResult = WorkspaceToolRuntime[];
+export type ListToolsByIdsParams = {
+  workspaceId: string;
+  toolIds: string[];
+};
+
+export type ListToolsByIdsResult = WorkspaceToolRecord[];
 
 export type McpAdvertisedToolItem = {
   name: string;

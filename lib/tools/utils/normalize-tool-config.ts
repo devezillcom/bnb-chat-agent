@@ -1,4 +1,4 @@
-import { getToolDefinition } from "../tool-registry";
+import { getToolDefinition } from "../tool-registry-metadata";
 
 export function normalizeToolConfig(
   registryToolId: string,

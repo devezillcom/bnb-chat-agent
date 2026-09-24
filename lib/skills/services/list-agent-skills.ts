@@ -16,13 +16,11 @@ export async function listAgentSkills(
 ): Promise<ListAgentSkillsResult> {
   await assertAgentInWorkspace(params);
 
-  const rows = await db
+  return db
     .select({
       id: skills.id,
-      slug: skills.slug,
       name: skills.name,
       description: skills.description,
-      tools: skills.tools,
       instructions: skills.instructions,
     })
     .from(agentSkills)
@@ -34,13 +32,4 @@ export async function listAgentSkills(
       ),
     )
     .orderBy(asc(skills.name), asc(skills.id));
-
-  return rows.map((row) => ({
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    description: row.description,
-    tools: row.tools ?? [],
-    instructions: row.instructions,
-  }));
 }

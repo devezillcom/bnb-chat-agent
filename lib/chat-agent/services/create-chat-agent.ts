@@ -25,14 +25,14 @@ function getSummarizationModel() {
 }
 
 async function buildChatAgent(config: ChatAgentConfig) {
-  const [checkpointer, model, summarizationModel, workspaceTools, knowledgeTool] =
+  const [checkpointer, model, summarizationModel, workspaceToolItems, knowledgeTool] =
     await Promise.all([
       getChatAgentCheckpointer(),
       Promise.resolve(createChatModel(config.model, { temperature: 0.5 })),
       Promise.resolve(createChatModel(getSummarizationModel(), { temperature: 0.2 })),
       buildChatAgentTools({
         workspaceId: config.workspaceId,
-        toolSlugs: config.toolSlugs,
+        tools: config.tools,
       }),
       Promise.resolve(
         buildChatAgentKnowledgeTool({
@@ -42,6 +42,7 @@ async function buildChatAgent(config: ChatAgentConfig) {
       ),
     ]);
 
+  const workspaceTools = workspaceToolItems.map(({ tool }) => tool);
   const tools = knowledgeTool
     ? [...workspaceTools, knowledgeTool]
     : workspaceTools;

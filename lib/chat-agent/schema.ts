@@ -39,13 +39,23 @@ export const chatWithAgentRequestSchema = z
     { message: "Message or at least one image is required." },
   );
 
+/**
+ * A workspace tool assigned to the agent together with the slug derived
+ * from its name. Single-tool registries use this as the LangChain tool name;
+ * multi-tool registries prefix child tool names with it.
+ */
+export const chatAgentToolRefSchema = z.object({
+  id: z.uuid(),
+  slug: z.string().trim().min(1),
+});
+
 export const chatAgentConfigSchema = z.object({
   agentId: z.uuid(),
   workspaceId: z.uuid(),
   chatEnv: activeChatEnvSchema,
   systemPrompt: z.string(),
   model: chatModelIdSchema,
-  toolSlugs: z.array(z.string()).default([]),
+  tools: z.array(chatAgentToolRefSchema).default([]),
   knowledgeBaseIds: z.array(z.uuid()).default([]),
   citationsEnabled: z.boolean().default(true),
 });
@@ -68,6 +78,7 @@ export type ChatAgentImageUploadUrlRequest = z.infer<
 >;
 export type ChatAgentMessage = z.infer<typeof chatAgentMessageSchema>;
 export type ChatWithAgentRequest = z.infer<typeof chatWithAgentRequestSchema>;
+export type ChatAgentToolRef = z.infer<typeof chatAgentToolRefSchema>;
 export type ChatAgentConfig = z.infer<typeof chatAgentConfigSchema>;
 export type ChatAgentInAppContext = {
   userId: string;

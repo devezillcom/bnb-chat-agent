@@ -4,7 +4,6 @@ import type { AgentSkillItem } from "../types";
 export function createSkillFormDefaults(): SkillFormValues {
   return {
     name: "",
-    slug: "",
     description: "",
     instructions: "",
   };
@@ -13,7 +12,6 @@ export function createSkillFormDefaults(): SkillFormValues {
 export function agentSkillItemToFormValues(skill: AgentSkillItem): SkillFormValues {
   return {
     name: skill.name,
-    slug: skill.slug,
     description: skill.description ?? "",
     instructions: skill.instructions,
   };

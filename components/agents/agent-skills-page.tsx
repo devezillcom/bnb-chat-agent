@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, SparklesIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useT } from "next-i18next/client";
 
 import { AgentConfigEmptyState } from "@/components/agents/agent-config-empty-state";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import type { SkillFormValues } from "@/lib/skills/schema";
-import type { AgentSkillItem, ListSkillsResult } from "@/lib/skills/types";
+import type { AgentSkillItem } from "@/lib/skills/types";
 import {
   agentSkillItemToFormValues,
   createSkillFormDefaults,
@@ -46,22 +46,6 @@ async function fetchAgentSkills(
   return data;
 }
 
-async function fetchWorkspaceSkillSlugs(
-  workspaceId: string,
-): Promise<string[]> {
-  const res = await workspaceFetch(workspaceId, "/api/skills?limit=100");
-  const data = (await res.json()) as ListSkillsResult & {
-    error?: string;
-    message?: string;
-  };
-
-  if (!res.ok) {
-    throw new Error(data.message ?? data.error ?? "Could not load skills.");
-  }
-
-  return data.items.map((item) => item.slug);
-}
-
 export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) {
   const { t } = useT("dashboard");
   const queryClient = useQueryClient();
@@ -79,28 +63,6 @@ export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) 
     queryKey: agentSkillsQueryKey,
     queryFn: () => fetchAgentSkills(workspaceId, agentId),
   });
-
-  const { data: workspaceSlugs = [] } = useQuery({
-    queryKey: ["skill-slugs", workspaceId],
-    queryFn: () => fetchWorkspaceSkillSlugs(workspaceId),
-  });
-
-  const usedSlugSet = useMemo(() => {
-    const slugs = new Set(workspaceSlugs);
-
-    for (const skill of agentSkills) {
-      slugs.add(skill.slug);
-    }
-
-    for (const draft of draftSkills) {
-      const slug = draft.defaultValues.slug.trim();
-      if (slug) {
-        slugs.add(slug);
-      }
-    }
-
-    return slugs;
-  }, [agentSkills, draftSkills, workspaceSlugs]);
 
   function setExpanded(id: string, open: boolean) {
     setExpandedIds((current) => {
@@ -153,8 +115,10 @@ export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) 
       });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: agentSkillsQueryKey }),
-        queryClient.invalidateQueries({ queryKey: ["skill-slugs", workspaceId] }),
         queryClient.invalidateQueries({ queryKey: ["skills", workspaceId] }),
+        queryClient.invalidateQueries({
+          queryKey: ["agent-mention-items", workspaceId, agentId],
+        }),
       ]);
     } finally {
       setRemovingId(null);
@@ -193,15 +157,13 @@ export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) 
 
     queryClient.setQueryData<AgentSkillItem[]>(agentSkillsQueryKey, (current) => {
       const items = current ?? [];
+      const existingIndex = items.findIndex((item) => item.id === skillId);
       const nextItem: AgentSkillItem = {
         id: skillId,
         name: values.name,
-        slug: values.slug,
         description: values.description.trim(),
         instructions: values.instructions,
-        tools: [],
       };
-      const existingIndex = items.findIndex((item) => item.id === skillId);
 
       if (existingIndex === -1) {
         return [...items, nextItem];
@@ -211,8 +173,10 @@ export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) 
     });
 
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["skill-slugs", workspaceId] }),
       queryClient.invalidateQueries({ queryKey: ["skills", workspaceId] }),
+      queryClient.invalidateQueries({
+        queryKey: ["agent-mention-items", workspaceId, agentId],
+      }),
     ]);
   }
 
@@ -260,7 +224,6 @@ export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) 
                 defaultValues={agentSkillItemToFormValues(skill)}
                 expanded={expandedIds.has(skill.id)}
                 onExpandedChange={(open) => setExpanded(skill.id, open)}
-                usedSlugs={usedSlugSet}
                 removing={removingId === skill.id}
                 onRemove={() => handleRemoveSavedSkill(skill.id)}
                 onSaved={(savedSkillId, values) =>
@@ -277,7 +240,6 @@ export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) 
                 defaultValues={draft.defaultValues}
                 expanded={expandedIds.has(draft.draftId)}
                 onExpandedChange={(open) => setExpanded(draft.draftId, open)}
-                usedSlugs={usedSlugSet}
                 onRemove={() => handleRemoveDraftSkill(draft.draftId)}
                 onSaved={(savedSkillId, values) =>
                   handleSaved(draft.draftId, savedSkillId, values)

@@ -34,7 +34,6 @@ export const POST = createApiHandler(
       workspaceId: ctx.workspaceId,
       agentId: params.agentId,
       name: params.name,
-      slug: params.slug,
       description: params.description,
       instructions: params.instructions,
     }),

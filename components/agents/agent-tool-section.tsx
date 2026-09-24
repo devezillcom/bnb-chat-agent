@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDownIcon, Loader2Icon } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useT } from "next-i18next/client";
 
@@ -42,11 +42,11 @@ import {
   createToolFormSchema,
   type CreateToolFormValues,
 } from "@/lib/tools/schema";
-import { getToolDefinition } from "@/lib/tools/tool-registry";
+import { getToolDefinition } from "@/lib/tools/tool-registry-metadata";
 import {
   assertMcpSelectedToolsAvailable,
   parseMcpSelectedToolNamesForSave,
-} from "@/lib/tools/utils/parse-mcp-selected-tools";
+} from "@/lib/tools/mcp/utils/parse-mcp-selected-tools";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +57,6 @@ type AgentToolSectionProps = {
   defaultValues: CreateToolFormValues;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
-  usedSlugs: ReadonlySet<string>;
   removing?: boolean;
   onRemove: () => void | Promise<void>;
   onSaved: (toolId: string, values: CreateToolFormValues) => void;
@@ -70,7 +69,6 @@ export function AgentToolSection({
   defaultValues,
   expanded,
   onExpandedChange,
-  usedSlugs,
   removing = false,
   onRemove,
   onSaved,
@@ -90,27 +88,12 @@ export function AgentToolSection({
 
   const isSubmitting = form.formState.isSubmitting;
   const nameError = form.formState.errors.name;
-  const slugError = form.formState.errors.slug;
   const descriptionError = form.formState.errors.description;
   const registryToolIdError = form.formState.errors.registryToolId;
   const configError = form.formState.errors.config as
     | { selected_tools?: { message?: string } }
     | undefined;
-  const slugValue = form.watch("slug");
   const displayName = form.watch("name") || registryTool?.name || t("agentDetail.tools.untitled");
-
-  const slugTaken = useMemo(() => {
-    const trimmedSlug = slugValue.trim();
-    if (!trimmedSlug) {
-      return false;
-    }
-
-    if (toolId && trimmedSlug === defaultValues.slug) {
-      return false;
-    }
-
-    return usedSlugs.has(trimmedSlug);
-  }, [defaultValues.slug, slugValue, toolId, usedSlugs]);
 
   async function onSubmit(values: CreateToolFormValues) {
     if (values.registryToolId === "mcp") {
@@ -271,49 +254,14 @@ export function AgentToolSection({
           <input type="hidden" {...form.register("registryToolId")} />
           <CardContent className="pb-0">
             <FieldGroup>
-              <Field data-invalid={!!slugError || slugTaken || undefined}>
-                <FieldLabel htmlFor={`agent-tool-slug-${toolId ?? "draft"}`}>
-                  Slug
-                </FieldLabel>
-                <FieldDescription>
-                  {registryTool.id === "mcp"
-                    ? "Used to assign this MCP connection to agents and skills. Choose available MCP tools below before saving."
-                    : "Unique identifier referenced in agent prompts (e.g. get_weather)."}
-                </FieldDescription>
-                {!isDraft ? (
-                  <div className="rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100">
-                    {registryTool.id === "mcp"
-                      ? "Changing the slug only affects assignment to agents and skills."
-                      : "Changing the slug may break agent prompts that reference the old slug."}
-                  </div>
-                ) : null}
-                <Input
-                  id={`agent-tool-slug-${toolId ?? "draft"}`}
-                  autoComplete="off"
-                  placeholder="get_weather"
-                  aria-invalid={!!slugError || slugTaken}
-                  disabled={isSubmitting}
-                  {...form.register("slug")}
-                />
-                {slugTaken ? (
-                  <FieldError
-                    errors={[
-                      {
-                        message: t("agentDetail.tools.slugTaken"),
-                      },
-                    ]}
-                  />
-                ) : (
-                  <FieldError errors={[slugError]} />
-                )}
-              </Field>
-
               <Field data-invalid={!!nameError || undefined}>
                 <FieldLabel htmlFor={`agent-tool-name-${toolId ?? "draft"}`}>
                   Name
                 </FieldLabel>
                 <FieldDescription>
-                  Display name shown in lists. Overrides the registry default.
+                  {registryTool.id === "mcp"
+                    ? "Display name shown in lists and used to mention this MCP connection in instructions. Choose available MCP tools below before saving."
+                    : "Display name shown in lists and used to mention this tool in instructions (e.g. @Get Weather)."}
                 </FieldDescription>
                 <Input
                   id={`agent-tool-name-${toolId ?? "draft"}`}
@@ -374,7 +322,7 @@ export function AgentToolSection({
             >
               {t("agentDetail.reset")}
             </Button>
-            <Button type="submit" disabled={isSubmitting || slugTaken}>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2Icon className="animate-spin" data-icon="inline-start" />

@@ -47,7 +47,10 @@ export type GetAgentResult = AgentListItem;
 export type AgentMentionItem = {
   id: string;
   type: "tool" | "skill";
+  /** Label inserted after `@` in the prompt editor. */
   name: string;
+  /** Rewritten value in the runtime system prompt, wrapped in backticks. */
+  slug: string;
 };
 
 export type AssignAgentCapabilityParams = {

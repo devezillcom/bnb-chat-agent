@@ -4,8 +4,8 @@ import { applyMentionsToDoc } from "./apply-mentions-to-doc";
 import type { MentionItem } from "./types";
 
 const items: MentionItem[] = [
-  { id: "tool-1", type: "tool", name: "Search" },
-  { id: "skill-1", type: "skill", name: "Search Rooms" },
+  { id: "tool-1", type: "tool", name: "Search", slug: "search" },
+  { id: "skill-1", type: "skill", name: "Search Rooms", slug: "search_rooms" },
 ];
 
 describe("applyMentionsToDoc", () => {

@@ -72,16 +72,9 @@
     "connectFacebookPages": "Kết nối trang {{label}}"
   },
   "skillForm": {
-    "slug": {
-      "label": "Slug",
-      "description": "Mã định danh duy nhất được nhắc trong hướng dẫn trợ lý (ví dụ: guest_support).",
-      "placeholder": "guest_support",
-      "changeWarning": "Đổi slug có thể làm hỏng hướng dẫn trợ lý đang tham chiếu slug cũ.",
-      "taken": "Slug này đã được dùng trong workspace."
-    },
     "name": {
       "label": "Tên",
-      "description": "Tên hiển thị trong danh sách và khi chọn kỹ năng.",
+      "description": "Tên hiển thị trong danh sách và dùng để mention kỹ năng này trong hướng dẫn (ví dụ: @Hỗ trợ khách).",
       "placeholder": "Hỗ trợ khách"
     },
     "useCases": {
@@ -165,7 +158,6 @@
       "removeDraftDescription": "Hủy kỹ năng chưa lưu này?",
       "saved": "Đã lưu kỹ năng.",
       "saveError": "Không thể lưu kỹ năng.",
-      "slugTaken": "Slug này đã được dùng trong workspace.",
       "untitled": "Kỹ năng chưa đặt tên"
     },
     "tools": {
@@ -191,7 +183,6 @@
       "removeDraftDescription": "Hủy cấu hình công cụ chưa lưu này?",
       "saved": "Đã lưu công cụ.",
       "saveError": "Không thể lưu công cụ.",
-      "slugTaken": "Slug này đã được dùng trong workspace.",
       "untitled": "Công cụ chưa đặt tên"
     },
     "knowledge": {

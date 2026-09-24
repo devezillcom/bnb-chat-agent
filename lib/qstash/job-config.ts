@@ -1,4 +1,4 @@
-import { handleBienhinhImagePollQstashJob } from "@/lib/tools/services/handle-bienhinh-image-poll-qstash-job";
+import { handleBienhinhImagePollQstashJob } from "@/lib/tools/bienhinh-create-image/services/handle-bienhinh-image-poll-qstash-job";
 
 import { handleFacebookMessengerInboundFlushQstashJob } from "@/lib/connections/services/handle-facebook-messenger-inbound-flush-qstash-job";
 import { handleRefreshConnectionConnectQstashJob } from "@/lib/connections/services/handle-refresh-connection-connect-qstash-job";

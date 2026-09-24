@@ -18,7 +18,7 @@ The UI shows realtime progress via Firebase RTDB job tracking. Full intermediate
 
 ### `knowledge_bases`
 
-Workspace-scoped collection (name, slug, description).
+Workspace-scoped collection (name, description).
 
 ### `knowledge_base_documents`
 

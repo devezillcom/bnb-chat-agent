@@ -15,7 +15,6 @@ export async function getKnowledgeBase(
     .select({
       id: knowledgeBases.id,
       name: knowledgeBases.name,
-      slug: knowledgeBases.slug,
       description: knowledgeBases.description,
       createdAt: knowledgeBases.createdAt,
       updatedAt: knowledgeBases.updatedAt,
@@ -46,7 +45,6 @@ export async function getKnowledgeBase(
   return {
     id: row.id,
     name: row.name,
-    slug: row.slug,
     description: row.description,
     documentCount: Number(row.documentCount),
     createdAt: row.createdAt.toISOString(),

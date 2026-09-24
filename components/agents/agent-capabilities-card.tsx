@@ -23,11 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
-import type {
-  AgentSkillItem,
-  ListSkillsResult,
-  SkillListItem,
-} from "@/lib/skills/types";
+import type { AgentSkillItem, ListSkillsResult } from "@/lib/skills/types";
 import type {
   AgentKnowledgeBaseItem,
   KnowledgeBaseListItem,
@@ -88,7 +84,7 @@ function mapAssignedItems(
     description: item.description,
     detail:
       kind === "skill"
-        ? (item as AgentSkillItem).slug
+        ? null
         : kind === "tool"
           ? (item as AgentToolItem).registryToolId
           : `${(item as AgentKnowledgeBaseItem).documentCount} documents`,
@@ -105,7 +101,7 @@ function mapAvailableItems(
     description: item.description,
     detail:
       kind === "skill"
-        ? (item as SkillListItem).slug
+        ? null
         : kind === "tool"
           ? (item as ToolListItem).registryToolId
           : `${(item as KnowledgeBaseListItem).documentCount} documents`,

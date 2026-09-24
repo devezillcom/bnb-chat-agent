@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, WrenchIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useT } from "next-i18next/client";
 
 import { AddAgentToolDialog } from "@/components/agents/add-agent-tool-dialog";
@@ -16,12 +16,10 @@ import type { CreateToolFormValues } from "@/lib/tools/schema";
 import type {
   AgentToolItem,
   ListToolRegistryResult,
-  ListToolsResult,
 } from "@/lib/tools/types";
 import {
   agentToolItemToFormValues,
   createToolFormDefaults,
-  suggestToolSlug,
 } from "@/lib/tools/utils/create-tool-form-defaults";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
@@ -68,22 +66,6 @@ async function fetchToolRegistry(
   return data;
 }
 
-async function fetchWorkspaceToolSlugs(
-  workspaceId: string,
-): Promise<string[]> {
-  const res = await workspaceFetch(workspaceId, "/api/tools?limit=100");
-  const data = (await res.json()) as ListToolsResult & {
-    error?: string;
-    message?: string;
-  };
-
-  if (!res.ok) {
-    throw new Error(data.message ?? data.error ?? "Could not load tools.");
-  }
-
-  return data.items.map((item) => item.slug);
-}
-
 export function AgentToolsPage({ agentId, workspaceId }: AgentToolsPageProps) {
   const queryClient = useQueryClient();
   const { t } = useT("dashboard");
@@ -113,21 +95,6 @@ export function AgentToolsPage({ agentId, workspaceId }: AgentToolsPageProps) {
     enabled: dialogOpen,
   });
 
-  const { data: workspaceSlugs = [] } = useQuery({
-    queryKey: ["tool-slugs", workspaceId],
-    queryFn: () => fetchWorkspaceToolSlugs(workspaceId),
-  });
-
-  const usedSlugSet = useMemo(() => {
-    const slugs = new Set(workspaceSlugs);
-
-    for (const tool of agentTools) {
-      slugs.add(tool.slug);
-    }
-
-    return slugs;
-  }, [agentTools, workspaceSlugs]);
-
   function setExpanded(id: string, open: boolean) {
     setExpandedIds((current) => {
       const next = new Set(current);
@@ -142,7 +109,6 @@ export function AgentToolsPage({ agentId, workspaceId }: AgentToolsPageProps) {
 
   function handleSelectRegistryTool(registryToolId: string) {
     const defaultValues = createToolFormDefaults(registryToolId);
-    defaultValues.slug = suggestToolSlug(registryToolId, usedSlugSet);
     const draftId = crypto.randomUUID();
 
     setDraftTools((current) => [
@@ -182,7 +148,9 @@ export function AgentToolsPage({ agentId, workspaceId }: AgentToolsPageProps) {
       });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: agentToolsQueryKey }),
-        queryClient.invalidateQueries({ queryKey: ["tool-slugs", workspaceId] }),
+        queryClient.invalidateQueries({
+          queryKey: ["agent-mention-items", workspaceId, agentId],
+        }),
       ]);
     } finally {
       setRemovingId(null);
@@ -200,7 +168,7 @@ export function AgentToolsPage({ agentId, workspaceId }: AgentToolsPageProps) {
     });
   }
 
-  async function handleSaved(
+  function handleSaved(
     sectionId: string,
     toolId: string,
     values: CreateToolFormValues,
@@ -219,12 +187,15 @@ export function AgentToolsPage({ agentId, workspaceId }: AgentToolsPageProps) {
       });
     }
 
+    void queryClient.invalidateQueries({
+      queryKey: ["agent-mention-items", workspaceId, agentId],
+    });
+
     queryClient.setQueryData<AgentToolItem[]>(agentToolsQueryKey, (current) => {
       const items = current ?? [];
       const nextItem: AgentToolItem = {
         id: toolId,
         name: values.name,
-        slug: values.slug,
         registryToolId: values.registryToolId,
         description: values.description?.trim() || null,
         config: values.config,
@@ -236,10 +207,6 @@ export function AgentToolsPage({ agentId, workspaceId }: AgentToolsPageProps) {
       }
 
       return items.map((item) => (item.id === toolId ? nextItem : item));
-    });
-
-    await queryClient.invalidateQueries({
-      queryKey: ["tool-slugs", workspaceId],
     });
   }
 
@@ -287,7 +254,6 @@ export function AgentToolsPage({ agentId, workspaceId }: AgentToolsPageProps) {
                 defaultValues={agentToolItemToFormValues(tool)}
                 expanded={expandedIds.has(tool.id)}
                 onExpandedChange={(open) => setExpanded(tool.id, open)}
-                usedSlugs={usedSlugSet}
                 removing={removingId === tool.id}
                 onRemove={() => handleRemoveSavedTool(tool.id)}
                 onSaved={(savedToolId, values) =>
@@ -304,7 +270,6 @@ export function AgentToolsPage({ agentId, workspaceId }: AgentToolsPageProps) {
                 defaultValues={draft.defaultValues}
                 expanded={expandedIds.has(draft.draftId)}
                 onExpandedChange={(open) => setExpanded(draft.draftId, open)}
-                usedSlugs={usedSlugSet}
                 onRemove={() => handleRemoveDraftTool(draft.draftId)}
                 onSaved={(savedToolId, values) =>
                   handleSaved(draft.draftId, savedToolId, values)

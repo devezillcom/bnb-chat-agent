@@ -15,7 +15,7 @@ import {
   claimBienhinhImageDelivery,
   markBienhinhImageDeliveryFailed,
   markBienhinhImageDeliverySucceeded,
-} from "@/lib/tools/services/claim-bienhinh-image-delivery";
+} from "@/lib/tools/bienhinh-create-image/services/claim-bienhinh-image-delivery";
 
 import {
   AGENT_SESSION_NOTIFICATION_EVENT,

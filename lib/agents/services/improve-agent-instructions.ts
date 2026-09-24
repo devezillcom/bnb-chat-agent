@@ -7,7 +7,6 @@ import {
   parseChatModel,
 } from "@/lib/langchain/models/create-chat-model";
 import { listAgentSkills } from "@/lib/skills/services/list-agent-skills";
-import type { AgentSkillItem } from "@/lib/skills/types";
 import { listAgentTools } from "@/lib/tools/services/list-agent-tools";
 import { getToolDefinition, isKnownToolRegistryId } from "@/lib/tools/tool-registry";
 import type { AgentToolItem } from "@/lib/tools/types";
@@ -33,23 +32,17 @@ type SupportedAgentTool = {
   description: string;
 };
 
-type ResolvedSupportedTools = {
-  supported: SupportedAgentTool[];
-  supportedSlugs: Set<string>;
-};
-
 /**
  * Only tools whose `registryToolId` is a known, code-defined registry entry are
  * "supported" — this mirrors how the chat runtime silently skips unknown
- * registry tools (see `listToolsBySlugs`). Unsupported tools are excluded from
+ * registry tools (see `listToolsByIds`). Unsupported tools are excluded from
  * the AI context entirely so the model never describes a capability the
  * platform can't actually run.
  */
 function resolveSupportedTools(
   agentTools: AgentToolItem[],
-): ResolvedSupportedTools {
+): SupportedAgentTool[] {
   const supported: SupportedAgentTool[] = [];
-  const supportedSlugs = new Set<string>();
 
   for (const tool of agentTools) {
     if (!isKnownToolRegistryId(tool.registryToolId)) {
@@ -66,26 +59,9 @@ function resolveSupportedTools(
       registryName: definition.name,
       description: tool.description?.trim() || definition.description,
     });
-    supportedSlugs.add(tool.slug);
   }
 
-  return { supported, supportedSlugs };
-}
-
-/**
- * Skills don't carry their own "supported" flag, but they declare which tool
- * slugs they depend on. Trim each skill's tool list down to tools that are
- * actually supported so the model doesn't reference a skill capability that
- * silently no-ops at runtime.
- */
-function resolveSupportedSkills(
-  skills: AgentSkillItem[],
-  supportedToolSlugs: Set<string>,
-): AgentSkillItem[] {
-  return skills.map((skill) => ({
-    ...skill,
-    tools: skill.tools.filter((slug) => supportedToolSlugs.has(slug)),
-  }));
+  return supported;
 }
 
 const FULL_PROMPT_TASK_INSTRUCTIONS =
@@ -114,9 +90,7 @@ export async function improveAgentInstructions(
     listAgentSkills(params),
   ]);
 
-  const { supported: supportedTools, supportedSlugs } =
-    resolveSupportedTools(agentTools);
-  const supportedSkills = resolveSupportedSkills(agentSkills, supportedSlugs);
+  const supportedTools = resolveSupportedTools(agentTools);
 
   const trimmedPrompt = params.systemPrompt.trim();
   const trimmedSelection = params.selectedText?.trim() ?? "";
@@ -134,10 +108,9 @@ export async function improveAgentInstructions(
     },
     existingInstructions: trimmedPrompt || null,
     supportedTools,
-    attachedSkills: supportedSkills.map((skill) => ({
+    attachedSkills: agentSkills.map((skill) => ({
       name: skill.name,
       description: skill.description || null,
-      tools: skill.tools,
       instructions: skill.instructions.trim(),
     })),
     selectedExcerpt: isSelectionImprove ? trimmedSelection : null,

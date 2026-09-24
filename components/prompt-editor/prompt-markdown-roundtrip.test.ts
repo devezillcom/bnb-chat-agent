@@ -7,7 +7,7 @@ import { applyMentionsToDoc } from "./apply-mentions-to-doc";
 import type { MentionItem } from "./types";
 
 const items: MentionItem[] = [
-  { id: "tool-1", type: "tool", name: "Search" },
+  { id: "tool-1", type: "tool", name: "Search", slug: "search" },
 ];
 
 const mention = Mention.extend({

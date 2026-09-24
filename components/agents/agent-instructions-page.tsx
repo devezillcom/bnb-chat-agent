@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2Icon, SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useT } from "next-i18next/client";
 
@@ -26,8 +26,6 @@ import {
   type CreateAgentFormValues,
 } from "@/lib/agents/schema";
 import type { AgentListItem, AgentMentionItem } from "@/lib/agents/types";
-import type { AgentSkillItem } from "@/lib/skills/types";
-import type { AgentToolItem } from "@/lib/tools/types";
 import { cn } from "@/lib/utils";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
@@ -36,35 +34,23 @@ type AgentInstructionsPageProps = {
   workspaceId: string;
 };
 
-async function fetchAgentTools(
+async function fetchAgentMentionItems(
   workspaceId: string,
   agentId: string,
-): Promise<AgentToolItem[]> {
-  const res = await workspaceFetch(workspaceId, `/api/agents/${agentId}/tools`);
-  const data = (await res.json()) as AgentToolItem[] & {
+): Promise<AgentMentionItem[]> {
+  const res = await workspaceFetch(
+    workspaceId,
+    `/api/agents/${agentId}/mention-items`,
+  );
+  const data = (await res.json()) as AgentMentionItem[] & {
     error?: string;
     message?: string;
   };
 
   if (!res.ok) {
-    throw new Error(data.message ?? data.error ?? "Could not load tools.");
-  }
-
-  return data;
-}
-
-async function fetchAgentSkills(
-  workspaceId: string,
-  agentId: string,
-): Promise<AgentSkillItem[]> {
-  const res = await workspaceFetch(workspaceId, `/api/agents/${agentId}/skills`);
-  const data = (await res.json()) as AgentSkillItem[] & {
-    error?: string;
-    message?: string;
-  };
-
-  if (!res.ok) {
-    throw new Error(data.message ?? data.error ?? "Could not load skills.");
+    throw new Error(
+      data.message ?? data.error ?? "Could not load mention items.",
+    );
   }
 
   return data;
@@ -77,35 +63,11 @@ export function AgentInstructionsPage({
   const router = useRouter();
   const { t } = useT("dashboard");
 
-  // Reuses the same query keys as the Tools/Skills config pages so the
-  // fetch is shared (and cached) across tabs.
-  const { data: agentTools = [], isLoading: isLoadingAgentTools } = useQuery({
-    queryKey: ["agent-tools", workspaceId, agent.id],
-    queryFn: () => fetchAgentTools(workspaceId, agent.id),
-  });
-  const { data: agentSkills = [], isLoading: isLoadingAgentSkills } = useQuery(
-    {
-      queryKey: ["agent-skills", workspaceId, agent.id],
-      queryFn: () => fetchAgentSkills(workspaceId, agent.id),
-    },
-  );
-  const isLoadingMentionItems = isLoadingAgentTools || isLoadingAgentSkills;
-
-  const mentionItems = useMemo<AgentMentionItem[]>(
-    () => [
-      ...agentTools.map((tool) => ({
-        id: tool.id,
-        type: "tool" as const,
-        name: tool.name,
-      })),
-      ...agentSkills.map((skill) => ({
-        id: skill.id,
-        type: "skill" as const,
-        name: skill.name,
-      })),
-    ],
-    [agentTools, agentSkills],
-  );
+  const { data: mentionItems = [], isLoading: isLoadingMentionItems } =
+    useQuery({
+      queryKey: ["agent-mention-items", workspaceId, agent.id],
+      queryFn: () => fetchAgentMentionItems(workspaceId, agent.id),
+    });
 
   const form = useForm<CreateAgentFormValues>({
     resolver: zodResolver(createAgentFormSchema),

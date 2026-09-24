@@ -21,7 +21,6 @@ export async function listSkills(
       or(
         ilike(skills.name, `%${keyword}%`),
         ilike(skills.description, `%${keyword}%`),
-        ilike(skills.slug, `%${keyword}%`),
         ilike(skills.instructions, `%${keyword}%`),
       )!,
     );
@@ -47,9 +46,7 @@ export async function listSkills(
     .select({
       id: skills.id,
       name: skills.name,
-      slug: skills.slug,
       description: skills.description,
-      tools: skills.tools,
       createdAt: skills.createdAt,
       updatedAt: skills.updatedAt,
       agentCount: sql<number>`coalesce(count(${agentSkills.agentId}), 0)::int`,
@@ -69,9 +66,7 @@ export async function listSkills(
     items: rows.map((row) => ({
       id: row.id,
       name: row.name,
-      slug: row.slug,
       description: row.description,
-      tools: row.tools ?? [],
       agentCount: row.agentCount,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),

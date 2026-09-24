@@ -13,9 +13,7 @@ export async function getSkill(params: GetSkillParams): Promise<GetSkillResult> 
     .select({
       id: skills.id,
       name: skills.name,
-      slug: skills.slug,
       description: skills.description,
-      tools: skills.tools,
       instructions: skills.instructions,
       createdAt: skills.createdAt,
       updatedAt: skills.updatedAt,
@@ -36,9 +34,7 @@ export async function getSkill(params: GetSkillParams): Promise<GetSkillResult> 
   return {
     id: skill.id,
     name: skill.name,
-    slug: skill.slug,
     description: skill.description,
-    tools: skill.tools ?? [],
     instructions: skill.instructions,
     agentCount: skill.agentCount,
     createdAt: skill.createdAt.toISOString(),

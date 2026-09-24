@@ -4,7 +4,7 @@ export type WorkspaceAgentCacheConfig = {
   agentId: string;
   systemPrompt: string;
   model: string;
-  toolSlugs: string[];
+  tools: Array<{ id: string; slug: string }>;
   knowledgeBaseIds: string[];
   citationsEnabled: boolean;
 };
@@ -15,7 +15,11 @@ export function buildWorkspaceAgentCacheKey(
   const content = JSON.stringify({
     systemPrompt: config.systemPrompt,
     model: config.model,
-    toolSlugs: [...config.toolSlugs].sort(),
+    // Slug is part of the key so renaming a tool rebuilds the agent with the
+    // new LangChain tool name.
+    tools: [...config.tools]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((tool) => `${tool.id}:${tool.slug}`),
     knowledgeBaseIds: [...config.knowledgeBaseIds].sort(),
     citationsEnabled: config.citationsEnabled,
   });

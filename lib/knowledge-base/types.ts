@@ -12,7 +12,6 @@ export type KnowledgeBaseFormBody = z.infer<typeof knowledgeBaseFormSchema>;
 export type KnowledgeBaseListItem = {
   id: string;
   name: string;
-  slug: string;
   description: string | null;
   documentCount: number;
   createdAt: string;
@@ -22,7 +21,6 @@ export type KnowledgeBaseListItem = {
 export type AgentKnowledgeBaseItem = {
   id: string;
   name: string;
-  slug: string;
   description: string | null;
   documentCount: number;
 };
@@ -87,7 +85,6 @@ export type CreateKnowledgeBaseParams = KnowledgeBaseFormBody & {
 
 export type CreateKnowledgeBaseResult = {
   id: string;
-  slug: string;
   message?: string;
 };
 
@@ -134,7 +131,6 @@ export type GetKnowledgeBaseParams = {
 export type GetKnowledgeBaseResult = {
   id: string;
   name: string;
-  slug: string;
   description: string | null;
   documentCount: number;
   createdAt: string;

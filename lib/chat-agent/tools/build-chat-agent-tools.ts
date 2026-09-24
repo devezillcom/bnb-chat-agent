@@ -4,27 +4,37 @@ import type { RunnableConfig } from "@langchain/core/runnables";
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import { tool } from "langchain";
 
-import type { ChatAgentRunContext } from "@/lib/chat-agent/schema";
-import { WEB_SEARCH_TOOL_NAMES } from "@/lib/chat-agent/constants/web-tools";
-import { KNOWLEDGE_BASE_SEARCH_TOOL_NAME } from "@/lib/knowledge-base/constants";
-import { executeWorkspaceTool } from "@/lib/tools/executors/execute-workspace-tool";
-import { listToolsBySlugs } from "@/lib/tools/services/list-tools-by-slugs";
-import { getToolInputZodSchema } from "@/lib/tools/tool-registry";
+import { listToolsByIds } from "@/lib/tools/services/list-tools-by-ids";
+import {
+  getRegisteredTool,
+  getToolInputZodSchema,
+} from "@/lib/tools/tool-registry";
 import type { WorkspaceToolRuntime } from "@/lib/tools/types";
 
-import { buildMcpChatAgentTools } from "./build-mcp-chat-agent-tools";
-import { buildWebChatAgentTools } from "./build-web-chat-agent-tools";
+import type { ChatAgentRunContext, ChatAgentToolRef } from "../schema";
 
 export type BuildChatAgentToolsParams = {
   workspaceId: string;
-  toolSlugs: string[];
+  /** Assigned tools with runtime slugs from `resolveWorkspaceAgentRuntime`. */
+  tools: ChatAgentToolRef[];
+};
+
+export type BuiltChatAgentTool = {
+  tool: StructuredToolInterface;
 };
 
 type ChatAgentToolRunnableConfig = RunnableConfig & {
   context?: ChatAgentRunContext;
 };
 
-function createWorkspaceLangChainTool(workspaceTool: WorkspaceToolRuntime) {
+function createDefaultLangChainTool(workspaceTool: WorkspaceToolRuntime) {
+  const registeredTool = getRegisteredTool(workspaceTool.registryToolId);
+  if (!registeredTool?.execute) {
+    throw new Error(
+      `Registry tool "${workspaceTool.registryToolId}" has no execute handler.`,
+    );
+  }
+
   const schema = getToolInputZodSchema(workspaceTool.registryToolId);
 
   return tool(
@@ -35,14 +45,12 @@ function createWorkspaceLangChainTool(workspaceTool: WorkspaceToolRuntime) {
             ? config.configurable.thread_id
             : undefined;
 
-        return await executeWorkspaceTool(
-          workspaceTool,
-          input as Record<string, unknown>,
-          {
-            sessionId,
-            runContext: config.context,
-          },
-        );
+        return await registeredTool.execute!({
+          tool: workspaceTool,
+          input: input as Record<string, unknown>,
+          sessionId,
+          runContext: config.context,
+        });
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Tool execution failed.";
@@ -60,53 +68,49 @@ function createWorkspaceLangChainTool(workspaceTool: WorkspaceToolRuntime) {
 
 export async function buildChatAgentTools(
   params: BuildChatAgentToolsParams,
-): Promise<StructuredToolInterface[]> {
-  if (params.toolSlugs.length === 0) {
+): Promise<BuiltChatAgentTool[]> {
+  if (params.tools.length === 0) {
     return [];
   }
 
-  const workspaceTools = await listToolsBySlugs({
+  const slugByToolId = new Map(
+    params.tools.map((toolRef) => [toolRef.id, toolRef.slug]),
+  );
+  const toolRecords = await listToolsByIds({
     workspaceId: params.workspaceId,
-    slugs: params.toolSlugs,
+    toolIds: [...slugByToolId.keys()],
   });
 
-  const usedNames = new Set<string>([
-    KNOWLEDGE_BASE_SEARCH_TOOL_NAME,
-    ...WEB_SEARCH_TOOL_NAMES,
-  ]);
-  for (const workspaceTool of workspaceTools) {
-    if (
-      workspaceTool.registryToolId !== "mcp" &&
-      workspaceTool.registryToolId !== "web_research"
-    ) {
-      usedNames.add(workspaceTool.slug);
+  // Preserve the caller's order so slug allocation and tool order stay stable.
+  const recordById = new Map(toolRecords.map((record) => [record.id, record]));
+  const workspaceTools: WorkspaceToolRuntime[] = [];
+  for (const toolRef of params.tools) {
+    const record = recordById.get(toolRef.id);
+    if (record) {
+      workspaceTools.push({ ...record, slug: toolRef.slug });
     }
   }
 
-  const tools: StructuredToolInterface[] = [];
+  const tools: BuiltChatAgentTool[] = [];
 
   for (const workspaceTool of workspaceTools) {
-    if (workspaceTool.registryToolId === "mcp") {
-      tools.push(
-        ...(await buildMcpChatAgentTools({
-          workspaceTool,
-          usedNames,
-        })),
-      );
+    const registeredTool = getRegisteredTool(workspaceTool.registryToolId);
+    if (!registeredTool) {
       continue;
     }
 
-    if (workspaceTool.registryToolId === "web_research") {
-      tools.push(
-        ...buildWebChatAgentTools({
-          workspaceTool,
-          usedNames,
-        }),
-      );
+    if (registeredTool.buildChatAgentTools) {
+      const builtTools = await registeredTool.buildChatAgentTools({
+        workspaceTool,
+      });
+
+      tools.push(...builtTools.map((builtTool) => ({ tool: builtTool })));
       continue;
     }
 
-    tools.push(createWorkspaceLangChainTool(workspaceTool));
+    tools.push({
+      tool: createDefaultLangChainTool(workspaceTool),
+    });
   }
 
   return tools;

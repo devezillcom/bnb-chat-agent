@@ -72,16 +72,9 @@
     "connectFacebookPages": "Connect {{label}} pages"
   },
   "skillForm": {
-    "slug": {
-      "label": "Slug",
-      "description": "Unique identifier referenced in agent prompts (e.g. guest_support).",
-      "placeholder": "guest_support",
-      "changeWarning": "Changing the slug may break agent prompts that reference the old slug.",
-      "taken": "This slug is already used in the workspace."
-    },
     "name": {
       "label": "Name",
-      "description": "Display name shown in lists and agent skill pickers.",
+      "description": "Display name shown in lists and used to mention this skill in instructions (e.g. @Guest support).",
       "placeholder": "Guest support"
     },
     "useCases": {
@@ -165,7 +158,6 @@
       "removeDraftDescription": "Discard this unsaved skill?",
       "saved": "Skill saved.",
       "saveError": "Could not save skill.",
-      "slugTaken": "This slug is already used in the workspace.",
       "untitled": "Untitled skill"
     },
     "tools": {
@@ -191,7 +183,6 @@
       "removeDraftDescription": "Discard this unsaved tool configuration?",
       "saved": "Tool saved.",
       "saveError": "Could not save tool.",
-      "slugTaken": "This slug is already used in the workspace.",
       "untitled": "Untitled tool"
     },
     "knowledge": {

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDownIcon, Loader2Icon } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useT } from "next-i18next/client";
 
@@ -43,7 +43,6 @@ type AgentSkillSectionProps = {
   defaultValues: SkillFormValues;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
-  usedSlugs: ReadonlySet<string>;
   removing?: boolean;
   onRemove: () => void | Promise<void>;
   onSaved: (skillId: string, values: SkillFormValues) => void;
@@ -56,7 +55,6 @@ export function AgentSkillSection({
   defaultValues,
   expanded,
   onExpandedChange,
-  usedSlugs,
   removing = false,
   onRemove,
   onSaved,
@@ -74,22 +72,8 @@ export function AgentSkillSection({
   }, [defaultValues, form]);
 
   const isSubmitting = form.formState.isSubmitting;
-  const slugValue = form.watch("slug");
   const displayName =
     form.watch("name") || t("agentDetail.skills.untitled");
-
-  const sectionUsedSlugs = useMemo(() => {
-    const next = new Set(usedSlugs);
-
-    if (skillId && defaultValues.slug.trim()) {
-      next.delete(defaultValues.slug.trim());
-    }
-
-    return next;
-  }, [defaultValues.slug, skillId, usedSlugs]);
-
-  const slugTaken =
-    slugValue.trim().length > 0 && sectionUsedSlugs.has(slugValue.trim());
 
   async function onSubmit(values: SkillFormValues) {
     const endpoint = skillId
@@ -159,11 +143,6 @@ export function AgentSkillSection({
                 <CardDescription className="mt-1 line-clamp-2">
                   {form.watch("description")}
                 </CardDescription>
-              ) : null}
-              {defaultValues.slug.trim() || slugValue.trim() ? (
-                <code className="mt-1 block text-xs text-muted-foreground">
-                  {slugValue.trim() || defaultValues.slug}
-                </code>
               ) : null}
             </span>
           </button>
@@ -237,11 +216,8 @@ export function AgentSkillSection({
             <SkillFormFields
               idPrefix={`agent-skill-${skillId ?? "draft"}`}
               register={form.register}
-              watch={form.watch}
               errors={form.formState.errors}
               disabled={isSubmitting}
-              usedSlugs={sectionUsedSlugs}
-              showSlugWarning={!isDraft}
             />
           </CardContent>
           <CardFooter className="justify-end gap-2">
@@ -253,7 +229,7 @@ export function AgentSkillSection({
             >
               {t("agentDetail.reset")}
             </Button>
-            <Button type="submit" disabled={isSubmitting || slugTaken}>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2Icon className="animate-spin" data-icon="inline-start" />

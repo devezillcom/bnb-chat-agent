@@ -33,7 +33,6 @@ export const PATCH = createApiHandler(
   (params, ctx) =>
     updateSkill({
       name: params.name,
-      slug: params.slug,
       description: params.description,
       instructions: params.instructions,
       workspaceId: ctx.workspaceId,

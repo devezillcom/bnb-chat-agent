@@ -33,7 +33,6 @@ export const PATCH = createApiHandler(
   (params, ctx) =>
     updateTool({
       name: params.name,
-      slug: params.slug,
       registryToolId: params.registryToolId,
       description: params.description,
       config: params.config,

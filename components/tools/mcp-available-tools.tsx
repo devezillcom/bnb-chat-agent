@@ -19,7 +19,7 @@ import type { McpAvailableToolItem } from "@/lib/tools/types";
 import {
   parseMcpSelectedToolNames,
   resolveMcpDisplayTools,
-} from "@/lib/tools/utils/parse-mcp-selected-tools";
+} from "@/lib/tools/mcp/utils/parse-mcp-selected-tools";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
 type McpAvailableToolsProps = {

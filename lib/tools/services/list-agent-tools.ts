@@ -15,7 +15,6 @@ export async function listAgentTools(
     .select({
       id: tools.id,
       name: tools.name,
-      slug: tools.slug,
       registryToolId: tools.registryToolId,
       description: tools.description,
       config: tools.config,

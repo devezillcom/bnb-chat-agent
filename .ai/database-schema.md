@@ -177,15 +177,14 @@ Configured chat agents for a workspace.
 
 ### `tools`
 
-Workspace-scoped tool instances that agents can call at runtime. Each row references a code-defined registry tool and stores workspace-specific name, description, slug, and config.
+Workspace-scoped tool instances that agents can call at runtime. Each row references a code-defined registry tool and stores workspace-specific name, description, and config. The LLM-facing slug is derived from `name` per agent (`slugify(name)`); duplicate names on the same agent are rejected. Multi-tool registries prefix child LangChain tool names with the parent slug.
 
 | Column | Type | Nullable | Default | Description |
 | ------ | ---- | -------- | ------- | ----------- |
 | id | uuid | NO | `gen_random_uuid()` | Primary key |
 | workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
-| name | text | NO | — | Display name override |
+| name | text | NO | — | Display name override; source of the runtime tool slug |
 | tool_id | text | NO | — | Code-defined registry tool id (e.g. `http_api`, `mcp`) |
-| slug | text | NO | — | Unique per workspace; referenced in agent prompts (e.g. `get_weather`) |
 | description | text | YES | — | Short summary override shown in lists |
 | config | jsonb | NO | — | Workspace config validated by the registry tool's `configSchema` |
 | locked | boolean | NO | `false` | When true, blocks user view/edit/delete (script-only) |
@@ -196,7 +195,8 @@ Workspace-scoped tool instances that agents can call at runtime. Each row refere
 
 - `tools_workspace_id_idx` — on `workspace_id`
 - `tools_tool_id_idx` — on `tool_id`
-- `tools_workspace_id_slug_idx` — UNIQUE on `(workspace_id, slug)` (same registry `tool_id` may appear multiple times with different slugs)
+
+The same registry `tool_id` may appear multiple times per workspace with different names.
 
 **Relations**
 
@@ -243,16 +243,14 @@ Junction table linking chat agents to tools. UI for assignment is implemented se
 
 ### `skills`
 
-Workspace-scoped specialized capabilities assigned to agents. Each skill bundles instructions and optional tool slugs for runtime prompt and tool resolution.
+Workspace-scoped specialized capabilities assigned to agents. Each skill bundles instructions injected into the agent system prompt. The prompt section identifier is derived from `name` per agent (`slugify(name)`); duplicate skill names on the same agent are rejected.
 
 | Column | Type | Nullable | Default | Description |
 | ------ | ---- | -------- | ------- | ----------- |
 | id | uuid | NO | `gen_random_uuid()` | Primary key |
 | workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
-| name | text | NO | — | Display name |
-| slug | text | NO | — | URL-safe unique identifier per workspace |
+| name | text | NO | — | Display name; source of the runtime skill slug |
 | description | text | YES | — | Short summary shown in lists |
-| tools | text[] | NO | `{}` | Workspace tool `slug` values (soft reference, validated in app) |
 | instructions | text | NO | — | Skill-specific guidance injected into the agent system prompt |
 | created_at | timestamptz | NO | `now()` | Row creation time |
 | updated_at | timestamptz | NO | `now()` | Last update time |
@@ -260,7 +258,6 @@ Workspace-scoped specialized capabilities assigned to agents. Each skill bundles
 **Indexes**
 
 - `skills_workspace_id_idx` — on `workspace_id`
-- `skills_workspace_id_slug_idx` — UNIQUE on `(workspace_id, slug)`
 
 **Relations**
 
@@ -355,7 +352,6 @@ Workspace-scoped document collections for agent retrieval.
 | id | uuid | NO | `gen_random_uuid()` | Primary key |
 | workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
 | name | text | NO | — | Display name |
-| slug | text | NO | — | URL-safe unique identifier per workspace |
 | description | text | YES | — | Short summary |
 | created_at | timestamptz | NO | `now()` | Row creation time |
 | updated_at | timestamptz | NO | `now()` | Last update time |
@@ -363,7 +359,6 @@ Workspace-scoped document collections for agent retrieval.
 **Indexes**
 
 - `knowledge_bases_workspace_id_idx` — on `workspace_id`
-- `knowledge_bases_workspace_id_slug_idx` — UNIQUE on `(workspace_id, slug)`
 
 **Relations**
 

@@ -1,6 +1,7 @@
 import "server-only";
 
-import { listAgentToolSlugs } from "@/lib/agents/services/list-agent-tool-slugs";
+import { listAgentMentionItems } from "@/lib/agents/services/list-agent-mention-items";
+import { listAgentToolRefs } from "@/lib/agents/services/list-agent-tool-refs";
 import { listAgentKnowledgeBaseIds } from "@/lib/knowledge-base/services/list-agent-knowledge-base-ids";
 import { listAgentSkills } from "@/lib/skills/services/list-agent-skills";
 
@@ -9,8 +10,10 @@ import {
   resolveChatEnvRuntime,
   type ActiveChatEnv,
 } from "../config/chat-env";
+import { buildChatAgentSkillsPrompt } from "../skills/build-chat-agent-skills-prompt";
 import { buildChatAgentKnowledgePrompt } from "../knowledge/build-chat-agent-knowledge-prompt";
-import { buildChatAgentSkillsPrompt } from "../skills/build-chat-agent-skills";
+import type { ChatAgentToolRef } from "../schema";
+import { applyMentionSlugs } from "./apply-mention-slugs";
 
 export type ResolveWorkspaceAgentRuntimeParams = {
   agentId: string;
@@ -23,14 +26,10 @@ export type ResolveWorkspaceAgentRuntimeParams = {
 export type ResolveWorkspaceAgentRuntimeResult = {
   chatEnv: ActiveChatEnv;
   systemPrompt: string;
-  toolSlugs: string[];
+  tools: ChatAgentToolRef[];
   knowledgeBaseIds: string[];
   citationsEnabled: boolean;
 };
-
-function uniqueToolSlugs(slugs: string[]): string[] {
-  return [...new Set(slugs.map((slug) => slug.trim()).filter(Boolean))];
-}
 
 export async function resolveWorkspaceAgentRuntime(
   params: ResolveWorkspaceAgentRuntimeParams,
@@ -39,22 +38,18 @@ export async function resolveWorkspaceAgentRuntime(
   const citationsEnabled =
     params.citationsEnabled ?? chatEnvRuntime.citationsEnabled;
 
-  const [agentSkills, directToolSlugs, knowledgeBaseIds] = await Promise.all([
-    listAgentSkills({
-      agentId: params.agentId,
-      workspaceId: params.workspaceId,
-    }),
-    listAgentToolSlugs({
-      agentId: params.agentId,
-      workspaceId: params.workspaceId,
-    }),
-    listAgentKnowledgeBaseIds({
-      agentId: params.agentId,
-      workspaceId: params.workspaceId,
-    }),
-  ]);
+  const [mentionItems, agentSkills, agentToolRefs, knowledgeBaseIds] =
+    await Promise.all([
+      listAgentMentionItems(params),
+      listAgentSkills(params),
+      listAgentToolRefs(params),
+      listAgentKnowledgeBaseIds(params),
+    ]);
 
-  const toolSlugs = uniqueToolSlugs(directToolSlugs);
+  const agentSystemPrompt = applyMentionSlugs(
+    params.systemPrompt.trim(),
+    mentionItems,
+  );
   const skillsPrompt = buildChatAgentSkillsPrompt(agentSkills);
   const knowledgePrompt = buildChatAgentKnowledgePrompt({
     knowledgeBaseCount: knowledgeBaseIds.length,
@@ -62,7 +57,7 @@ export async function resolveWorkspaceAgentRuntime(
   });
   const chartPrompt = params.chatEnv === "web" ? buildChartPrompt() : "";
   const systemPrompt = [
-    params.systemPrompt.trim(),
+    agentSystemPrompt,
     chatEnvRuntime.systemPromptSuffix,
     skillsPrompt,
     knowledgePrompt,
@@ -74,7 +69,7 @@ export async function resolveWorkspaceAgentRuntime(
   return {
     chatEnv: params.chatEnv,
     systemPrompt,
-    toolSlugs,
+    tools: agentToolRefs.map((tool) => ({ id: tool.id, slug: tool.slug })),
     knowledgeBaseIds,
     citationsEnabled,
   };

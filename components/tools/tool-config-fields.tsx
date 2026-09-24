@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { CreateToolFormValues } from "@/lib/tools/schema";
-import type { ToolConfigFieldDefinition } from "@/lib/tools/tool-registry";
+import type { ToolConfigFieldDefinition } from "@/lib/tools/registry-types";
 
 type ToolConfigFieldsProps = {
   fields: ToolConfigFieldDefinition[];

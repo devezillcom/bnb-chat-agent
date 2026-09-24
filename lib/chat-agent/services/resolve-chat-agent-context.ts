@@ -4,6 +4,7 @@ import { getAgent } from "@/lib/agents/services/get-agent";
 import type { ChatModelId } from "@/lib/langchain/models/registry";
 
 import type { ActiveChatEnv } from "../config/chat-env";
+import type { ChatAgentToolRef } from "../schema";
 import { resolveWorkspaceAgentRuntime } from "../utils/resolve-workspace-agent-runtime";
 
 export type ResolveChatAgentContextParams = {
@@ -18,7 +19,7 @@ export type ResolveChatAgentContextResult = {
   chatEnv: ActiveChatEnv;
   systemPrompt: string;
   model: ChatModelId;
-  toolSlugs: string[];
+  tools: ChatAgentToolRef[];
   knowledgeBaseIds: string[];
   citationsEnabled: boolean;
 };
@@ -44,7 +45,7 @@ export async function resolveChatAgentContext(
     chatEnv: params.chatEnv,
     systemPrompt: runtime.systemPrompt,
     model: agent.model,
-    toolSlugs: runtime.toolSlugs,
+    tools: runtime.tools,
     knowledgeBaseIds: runtime.knowledgeBaseIds,
     citationsEnabled: runtime.citationsEnabled,
   };

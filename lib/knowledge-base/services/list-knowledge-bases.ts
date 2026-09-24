@@ -20,7 +20,6 @@ export async function listKnowledgeBases(
       or(
         ilike(knowledgeBases.name, `%${keyword}%`),
         ilike(knowledgeBases.description, `%${keyword}%`),
-        ilike(knowledgeBases.slug, `%${keyword}%`),
       )!,
     );
   }
@@ -45,7 +44,6 @@ export async function listKnowledgeBases(
     .select({
       id: knowledgeBases.id,
       name: knowledgeBases.name,
-      slug: knowledgeBases.slug,
       description: knowledgeBases.description,
       createdAt: knowledgeBases.createdAt,
       updatedAt: knowledgeBases.updatedAt,
@@ -69,7 +67,6 @@ export async function listKnowledgeBases(
     items: rows.map((row) => ({
       id: row.id,
       name: row.name,
-      slug: row.slug,
       description: row.description,
       documentCount: row.documentCount,
       createdAt: row.createdAt.toISOString(),

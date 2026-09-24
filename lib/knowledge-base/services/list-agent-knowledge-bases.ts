@@ -22,7 +22,6 @@ export async function listAgentKnowledgeBases(
     .select({
       id: knowledgeBases.id,
       name: knowledgeBases.name,
-      slug: knowledgeBases.slug,
       description: knowledgeBases.description,
       documentCount: sql<number>`coalesce(count(${knowledgeBaseDocuments.id}), 0)::int`,
     })
