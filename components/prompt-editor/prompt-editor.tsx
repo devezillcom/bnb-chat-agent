@@ -99,12 +99,9 @@ export function PromptEditor({
     },
   });
 
-  const handleMentionTagClick = useCallback(
-    (item: MentionItem) => {
-      editorRef.current?.commands.insertMention(item);
-    },
-    [],
-  );
+  const handleMentionTagClick = useCallback((item: MentionItem) => {
+    editorRef.current?.commands.insertMention(item);
+  }, []);
 
   useEffect(() => {
     editorRef.current = editor;
@@ -171,9 +168,7 @@ export function PromptEditor({
           ) : null}
         </div>
       </div>
-      {mentionHint ? (
-        <FieldDescription>{mentionHint}</FieldDescription>
-      ) : null}
+      {mentionHint ? <FieldDescription>{mentionHint}</FieldDescription> : null}
     </div>
   );
 }

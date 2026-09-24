@@ -93,9 +93,11 @@ Requires `PINECONE_API_KEY` and `PINECONE_INDEX_NAME`. If Pinecone is not config
 
 When an agent has assigned KBs, `resolveWorkspaceAgentRuntime` appends a **Knowledge bases** section via `buildChatAgentKnowledgePrompt`:
 
-- Instructs the agent to call `search_knowledge_base` before answering documented questions
-- Explains when to use `rewriteQuery` and `multiQuery`
+- Lists each assigned KB by name and description
+- Requires the agent to call `search_knowledge_base` when the user asks about those topics
 - Applies citation rules based on runtime config
+
+Parameter guidance (`query`, `rewriteQuery`, `multiQuery`) lives in `.describe()` on `searchKnowledgeBaseToolInputSchema`, and the retry hint lives in the tool description, so it is not repeated in the system prompt.
 
 Chat agent (dashboard): `citationsEnabled: true` → inline citations `[filename > section]`
 
@@ -105,7 +107,7 @@ Channel agent (WhatsApp, etc.): `citationsEnabled: false` → no citation marker
 
 | Component | Role |
 | --------- | ---- |
-| `list-agent-knowledge-base-ids.ts` | Load assigned KB IDs for an agent |
+| `list-agent-knowledge-base-refs.ts` | Load assigned KB id, name, and description for an agent |
 | `resolve-workspace-agent-runtime.ts` | Merge skills prompt + KB prompt + tool/KB IDs |
 | `build-chat-agent-knowledge-tool.ts` | LangChain tool wrapper |
 | `create-chat-agent.ts` | Append KB tool to workspace tools |
@@ -131,7 +133,7 @@ ANTHROPIC_API_KEY=                                       # required for rewrite/
 | Search constants | `lib/knowledge-base/constants.ts` |
 | Tool input schema | `lib/knowledge-base/schema.ts` |
 | Search types | `lib/knowledge-base/types.ts` |
-| List assigned KB IDs | `lib/knowledge-base/services/list-agent-knowledge-base-ids.ts` |
+| List assigned KB refs | `lib/knowledge-base/services/list-agent-knowledge-base-refs.ts` |
 | Pinecone search | `lib/knowledge-base/services/search-knowledge-base-chunks.ts` |
 | Query rewrite | `lib/knowledge-base/services/rewrite-knowledge-base-search-query.ts` |
 | Multi-query | `lib/knowledge-base/services/generate-knowledge-base-search-queries.ts` |

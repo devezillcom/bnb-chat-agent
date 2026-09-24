@@ -11,6 +11,10 @@ import { AgentSkillSection } from "@/components/agents/agent-skill-section";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
+import {
+  agentMentionItemsQueryKey,
+  fetchAgentMentionItems,
+} from "@/lib/agents/utils/fetch-agent-mention-items";
 import type { SkillFormValues } from "@/lib/skills/schema";
 import type { AgentSkillItem } from "@/lib/skills/types";
 import {
@@ -62,6 +66,11 @@ export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) 
   } = useQuery({
     queryKey: agentSkillsQueryKey,
     queryFn: () => fetchAgentSkills(workspaceId, agentId),
+  });
+
+  const { data: mentionItems } = useQuery({
+    queryKey: agentMentionItemsQueryKey(workspaceId, agentId),
+    queryFn: () => fetchAgentMentionItems(workspaceId, agentId),
   });
 
   function setExpanded(id: string, open: boolean) {
@@ -117,7 +126,7 @@ export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) 
         queryClient.invalidateQueries({ queryKey: agentSkillsQueryKey }),
         queryClient.invalidateQueries({ queryKey: ["skills", workspaceId] }),
         queryClient.invalidateQueries({
-          queryKey: ["agent-mention-items", workspaceId, agentId],
+          queryKey: agentMentionItemsQueryKey(workspaceId, agentId),
         }),
       ]);
     } finally {
@@ -175,7 +184,7 @@ export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) 
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["skills", workspaceId] }),
       queryClient.invalidateQueries({
-        queryKey: ["agent-mention-items", workspaceId, agentId],
+        queryKey: agentMentionItemsQueryKey(workspaceId, agentId),
       }),
     ]);
   }
@@ -222,6 +231,7 @@ export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) 
                 workspaceId={workspaceId}
                 skillId={skill.id}
                 defaultValues={agentSkillItemToFormValues(skill)}
+                mentionItems={mentionItems}
                 expanded={expandedIds.has(skill.id)}
                 onExpandedChange={(open) => setExpanded(skill.id, open)}
                 removing={removingId === skill.id}
@@ -238,6 +248,7 @@ export function AgentSkillsPage({ agentId, workspaceId }: AgentSkillsPageProps) 
                 agentId={agentId}
                 workspaceId={workspaceId}
                 defaultValues={draft.defaultValues}
+                mentionItems={mentionItems}
                 expanded={expandedIds.has(draft.draftId)}
                 onExpandedChange={(open) => setExpanded(draft.draftId, open)}
                 onRemove={() => handleRemoveDraftSkill(draft.draftId)}

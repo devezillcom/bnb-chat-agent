@@ -53,7 +53,7 @@ export function buildChatAgentKnowledgeTool(
       description: [
         "Search assigned knowledge bases for relevant document excerpts.",
         "Use for factual questions that may be answered by uploaded documents.",
-        "Optional flags: rewriteQuery (clearer semantic query), multiQuery (multiple query variants).",
+        "If results are weak or empty, retry with rewriteQuery and/or multiQuery enabled.",
       ].join(" "),
       schema: searchKnowledgeBaseToolInputSchema,
     },

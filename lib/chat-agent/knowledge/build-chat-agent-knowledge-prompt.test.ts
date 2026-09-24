@@ -3,21 +3,24 @@ import { describe, expect, it } from "vitest";
 import { buildChatAgentKnowledgePrompt } from "@/lib/chat-agent/knowledge/build-chat-agent-knowledge-prompt";
 
 describe("buildChatAgentKnowledgePrompt", () => {
-  it("returns guidance to use search_knowledge_base with citations enabled", () => {
+  it("lists knowledge bases and requires search_knowledge_base with citations enabled", () => {
     const prompt = buildChatAgentKnowledgePrompt({
-      knowledgeBaseCount: 2,
+      knowledgeBases: [
+        { name: "HR Policies", description: "Leave, benefits, and onboarding." },
+        { name: "Pricing", description: null },
+      ],
       citationsEnabled: true,
     });
 
-    expect(prompt).toContain("search_knowledge_base");
-    expect(prompt).toContain("rewriteQuery: true");
-    expect(prompt).toContain("multiQuery: true");
+    expect(prompt).toContain("- **HR Policies**: Leave, benefits, and onboarding.");
+    expect(prompt).toContain("- **Pricing**");
+    expect(prompt).toContain("MUST call the `search_knowledge_base` tool");
     expect(prompt).toContain("[filename > section]");
   });
 
   it("omits citation instructions when citations are disabled", () => {
     const prompt = buildChatAgentKnowledgePrompt({
-      knowledgeBaseCount: 1,
+      knowledgeBases: [{ name: "FAQ", description: "Common questions." }],
       citationsEnabled: false,
     });
 
@@ -29,7 +32,7 @@ describe("buildChatAgentKnowledgePrompt", () => {
   it("returns an empty string when no knowledge bases are assigned", () => {
     expect(
       buildChatAgentKnowledgePrompt({
-        knowledgeBaseCount: 0,
+        knowledgeBases: [],
         citationsEnabled: true,
       }),
     ).toBe("");

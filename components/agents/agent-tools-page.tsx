@@ -12,6 +12,7 @@ import { AgentToolSection } from "@/components/agents/agent-tool-section";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
+import { agentMentionItemsQueryKey } from "@/lib/agents/utils/fetch-agent-mention-items";
 import type { CreateToolFormValues } from "@/lib/tools/schema";
 import type {
   AgentToolItem,
@@ -149,7 +150,7 @@ export function AgentToolsPage({ agentId, workspaceId }: AgentToolsPageProps) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: agentToolsQueryKey }),
         queryClient.invalidateQueries({
-          queryKey: ["agent-mention-items", workspaceId, agentId],
+          queryKey: agentMentionItemsQueryKey(workspaceId, agentId),
         }),
       ]);
     } finally {
@@ -188,7 +189,7 @@ export function AgentToolsPage({ agentId, workspaceId }: AgentToolsPageProps) {
     }
 
     void queryClient.invalidateQueries({
-      queryKey: ["agent-mention-items", workspaceId, agentId],
+      queryKey: agentMentionItemsQueryKey(workspaceId, agentId),
     });
 
     queryClient.setQueryData<AgentToolItem[]>(agentToolsQueryKey, (current) => {

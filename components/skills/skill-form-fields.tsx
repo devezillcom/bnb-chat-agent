@@ -1,8 +1,14 @@
 "use client";
 
-import type { FieldErrors, UseFormRegister } from "react-hook-form";
+import {
+  Controller,
+  type Control,
+  type FieldErrors,
+  type UseFormRegister,
+} from "react-hook-form";
 import { useT } from "next-i18next/client";
 
+import { PromptEditor } from "@/components/prompt-editor";
 import {
   Field,
   FieldDescription,
@@ -11,18 +17,24 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { AgentMentionItem } from "@/lib/agents/types";
 import type { SkillFormValues } from "@/lib/skills/schema";
 
 type SkillFormFieldsProps = {
   register: UseFormRegister<SkillFormValues>;
+  control: Control<SkillFormValues>;
   errors: FieldErrors<SkillFormValues>;
+  mentionItems: AgentMentionItem[] | undefined;
   disabled?: boolean;
   idPrefix: string;
 };
 
 export function SkillFormFields({
   register,
+  control,
   errors,
+  mentionItems,
   disabled = false,
   idPrefix,
 }: SkillFormFieldsProps) {
@@ -72,15 +84,32 @@ export function SkillFormFields({
         <FieldDescription>
           {t("skillForm.instructions.description")}
         </FieldDescription>
-        <textarea
-          id={`${idPrefix}-instructions`}
-          rows={8}
-          placeholder={t("skillForm.instructions.placeholder")}
-          aria-invalid={!!instructionsError}
-          disabled={disabled}
-          className="flex min-h-40 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
-          {...register("instructions")}
-        />
+        {mentionItems === undefined ? (
+          <Skeleton className="h-40 w-full rounded-lg" />
+        ) : (
+          <Controller
+            control={control}
+            name="instructions"
+            render={({ field }) => (
+              <PromptEditor
+                id={`${idPrefix}-instructions`}
+                ariaLabel={t("skillForm.instructions.label")}
+                ariaInvalid={!!instructionsError}
+                disabled={disabled}
+                placeholder={t("skillForm.instructions.placeholder")}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                items={mentionItems}
+                mentionTagsLabel={t(
+                  "agentDetail.instructions.mentionTagsLabel",
+                )}
+                mentionHint={t("agentDetail.instructions.mentionHint")}
+                minHeightClassName="min-h-40"
+              />
+            )}
+          />
+        )}
         <FieldError errors={[instructionsError]} />
       </Field>
     </FieldGroup>

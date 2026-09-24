@@ -195,9 +195,15 @@ export type GetKnowledgeBaseDocumentViewUrlResult = {
   expiresAt: number;
 };
 
-export type ListAgentKnowledgeBaseIdsParams = {
+export type ListAgentKnowledgeBaseRefsParams = {
   workspaceId: string;
   agentId: string;
+};
+
+export type AgentKnowledgeBaseRef = {
+  id: string;
+  name: string;
+  description: string | null;
 };
 
 export type KnowledgeBaseSearchHit = {

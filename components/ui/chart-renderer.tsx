@@ -6,9 +6,12 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Legend,
   Line,
   LineChart,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -25,8 +28,12 @@ export type ChartSeries = {
 
 export type ChartData = Record<string, string | number>;
 
+const CHART_TYPES = ["bar", "line", "area", "pie"] as const;
+
+export type ChartType = (typeof CHART_TYPES)[number];
+
 export type ChartSpec = {
-  type: "bar" | "line" | "area";
+  type: ChartType;
   title?: string;
   xKey: string;
   series: ChartSeries[];
@@ -44,9 +51,19 @@ const DEFAULT_COLORS = [
   "#14b8a6",
 ];
 
-function getColor(series: ChartSeries, index: number): string {
-  return series.color ?? DEFAULT_COLORS[index % DEFAULT_COLORS.length] ?? "#6366f1";
+function getDefaultColor(index: number): string {
+  return DEFAULT_COLORS[index % DEFAULT_COLORS.length] ?? "#6366f1";
 }
+
+function getColor(series: ChartSeries, index: number): string {
+  return series.color ?? getDefaultColor(index);
+}
+
+const TOOLTIP_CONTENT_STYLE = {
+  borderRadius: "8px",
+  border: "1px solid hsl(var(--border))",
+  fontSize: "12px",
+};
 
 type ChartRendererProps = {
   spec: ChartSpec;
@@ -62,7 +79,31 @@ export function ChartRenderer({ spec, className }: ChartRendererProps) {
         <p className="mb-3 text-sm font-medium text-foreground">{title}</p>
       ) : null}
       <ResponsiveContainer width="100%" height={260}>
-        {type === "bar" ? (
+        {type === "pie" ? (
+          <PieChart>
+            <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} />
+            <Legend wrapperStyle={{ fontSize: "12px" }} />
+            {series[0] ? (
+              <Pie
+                data={data}
+                dataKey={series[0].key}
+                nameKey={xKey}
+                cx="50%"
+                cy="50%"
+                outerRadius="75%"
+                label={({ percent }: { percent?: number }) =>
+                  `${Math.round((percent ?? 0) * 100)}%`
+                }
+                labelLine={false}
+                fontSize={12}
+              >
+                {data.map((item, i) => (
+                  <Cell key={`${String(item[xKey])}-${i}`} fill={getDefaultColor(i)} />
+                ))}
+              </Pie>
+            ) : null}
+          </PieChart>
+        ) : type === "bar" ? (
           <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis
@@ -77,13 +118,7 @@ export function ChartRenderer({ spec, className }: ChartRendererProps) {
               axisLine={false}
               width={40}
             />
-            <Tooltip
-              contentStyle={{
-                borderRadius: "8px",
-                border: "1px solid hsl(var(--border))",
-                fontSize: "12px",
-              }}
-            />
+            <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} />
             {series.length > 1 ? <Legend wrapperStyle={{ fontSize: "12px" }} /> : null}
             {series.map((s, i) => (
               <Bar
@@ -125,13 +160,7 @@ export function ChartRenderer({ spec, className }: ChartRendererProps) {
               axisLine={false}
               width={40}
             />
-            <Tooltip
-              contentStyle={{
-                borderRadius: "8px",
-                border: "1px solid hsl(var(--border))",
-                fontSize: "12px",
-              }}
-            />
+            <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} />
             {series.length > 1 ? <Legend wrapperStyle={{ fontSize: "12px" }} /> : null}
             {series.map((s, i) => (
               <Area
@@ -161,13 +190,7 @@ export function ChartRenderer({ spec, className }: ChartRendererProps) {
               axisLine={false}
               width={40}
             />
-            <Tooltip
-              contentStyle={{
-                borderRadius: "8px",
-                border: "1px solid hsl(var(--border))",
-                fontSize: "12px",
-              }}
-            />
+            <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} />
             {series.length > 1 ? <Legend wrapperStyle={{ fontSize: "12px" }} /> : null}
             {series.map((s, i) => (
               <Line
@@ -206,7 +229,7 @@ export function parseChartSpec(raw: string): ChartSpec | null {
     const obj = parsed as Record<string, unknown>;
 
     if (
-      (obj.type !== "bar" && obj.type !== "line" && obj.type !== "area") ||
+      !CHART_TYPES.includes(obj.type as ChartType) ||
       typeof obj.xKey !== "string" ||
       !Array.isArray(obj.series) ||
       !Array.isArray(obj.data)

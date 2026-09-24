@@ -2,7 +2,7 @@ import "server-only";
 
 import { listAgentMentionItems } from "@/lib/agents/services/list-agent-mention-items";
 import { listAgentToolRefs } from "@/lib/agents/services/list-agent-tool-refs";
-import { listAgentKnowledgeBaseIds } from "@/lib/knowledge-base/services/list-agent-knowledge-base-ids";
+import { listAgentKnowledgeBaseRefs } from "@/lib/knowledge-base/services/list-agent-knowledge-base-refs";
 import { listAgentSkills } from "@/lib/skills/services/list-agent-skills";
 
 import { buildChartPrompt } from "../chart/build-chart-prompt";
@@ -38,21 +38,30 @@ export async function resolveWorkspaceAgentRuntime(
   const citationsEnabled =
     params.citationsEnabled ?? chatEnvRuntime.citationsEnabled;
 
-  const [mentionItems, agentSkills, agentToolRefs, knowledgeBaseIds] =
+  const [mentionItems, agentSkills, agentToolRefs, knowledgeBases] =
     await Promise.all([
       listAgentMentionItems(params),
       listAgentSkills(params),
       listAgentToolRefs(params),
-      listAgentKnowledgeBaseIds(params),
+      listAgentKnowledgeBaseRefs(params),
     ]);
+  const knowledgeBaseIds = knowledgeBases.map((knowledgeBase) => knowledgeBase.id);
 
   const agentSystemPrompt = applyMentionSlugs(
     params.systemPrompt.trim(),
     mentionItems,
   );
-  const skillsPrompt = buildChatAgentSkillsPrompt(agentSkills);
+  const skillsPrompt = buildChatAgentSkillsPrompt(
+    agentSkills.map((skill) => ({
+      ...skill,
+      instructions: applyMentionSlugs(
+        skill.instructions,
+        mentionItems.filter((item) => item.id !== skill.id),
+      ),
+    })),
+  );
   const knowledgePrompt = buildChatAgentKnowledgePrompt({
-    knowledgeBaseCount: knowledgeBaseIds.length,
+    knowledgeBases,
     citationsEnabled,
   });
   const chartPrompt = params.chatEnv === "web" ? buildChartPrompt() : "";

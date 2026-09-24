@@ -20,12 +20,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import {
   createAgentFormSchema,
   type CreateAgentFormValues,
 } from "@/lib/agents/schema";
-import type { AgentListItem, AgentMentionItem } from "@/lib/agents/types";
+import type { AgentListItem } from "@/lib/agents/types";
+import {
+  agentMentionItemsQueryKey,
+  fetchAgentMentionItems,
+} from "@/lib/agents/utils/fetch-agent-mention-items";
 import { cn } from "@/lib/utils";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
@@ -34,28 +39,6 @@ type AgentInstructionsPageProps = {
   workspaceId: string;
 };
 
-async function fetchAgentMentionItems(
-  workspaceId: string,
-  agentId: string,
-): Promise<AgentMentionItem[]> {
-  const res = await workspaceFetch(
-    workspaceId,
-    `/api/agents/${agentId}/mention-items`,
-  );
-  const data = (await res.json()) as AgentMentionItem[] & {
-    error?: string;
-    message?: string;
-  };
-
-  if (!res.ok) {
-    throw new Error(
-      data.message ?? data.error ?? "Could not load mention items.",
-    );
-  }
-
-  return data;
-}
-
 export function AgentInstructionsPage({
   agent,
   workspaceId,
@@ -63,11 +46,10 @@ export function AgentInstructionsPage({
   const router = useRouter();
   const { t } = useT("dashboard");
 
-  const { data: mentionItems = [], isLoading: isLoadingMentionItems } =
-    useQuery({
-      queryKey: ["agent-mention-items", workspaceId, agent.id],
-      queryFn: () => fetchAgentMentionItems(workspaceId, agent.id),
-    });
+  const { data: mentionItems } = useQuery({
+    queryKey: agentMentionItemsQueryKey(workspaceId, agent.id),
+    queryFn: () => fetchAgentMentionItems(workspaceId, agent.id),
+  });
 
   const form = useForm<CreateAgentFormValues>({
     resolver: zodResolver(createAgentFormSchema),
@@ -151,7 +133,10 @@ export function AgentInstructionsPage({
     const data = (await res.json()) as { message?: string; error?: string };
 
     if (res.ok) {
-      toast.add({ title: data.message ?? "Assistant updated.", type: "success" });
+      toast.add({
+        title: data.message ?? "Assistant updated.",
+        type: "success",
+      });
       form.reset(values);
       router.refresh();
       return;
@@ -184,63 +169,67 @@ export function AgentInstructionsPage({
                 <FieldLabel htmlFor="agent-system-prompt">
                   {t("agentDetail.instructions.rawLabel")}
                 </FieldLabel>
-                <Controller
-                  control={form.control}
-                  name="systemPrompt"
-                  render={({ field }) => (
-                    <PromptEditor
-                      id="agent-system-prompt"
-                      ariaLabel={t("agentDetail.instructions.rawLabel")}
-                      ariaInvalid={!!systemPromptError}
-                      disabled={isSubmitting || isImproving}
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      items={mentionItems}
-                      mentionTagsLabel={
-                        isLoadingMentionItems
-                          ? undefined
-                          : t("agentDetail.instructions.mentionTagsLabel")
-                      }
-                      mentionHint={t("agentDetail.instructions.mentionHint")}
-                      minHeightClassName="min-h-56"
-                      editorActions={
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          disabled={isSubmitting || isImproving}
-                          onClick={handleImproveWithAi}
-                          className={cn(
-                            "pointer-events-auto sticky top-2 shadow-sm transition-opacity",
-                            "opacity-0 group-hover/prompt-editor:opacity-100 group-focus-within/prompt-editor:opacity-100 focus-visible:opacity-100",
-                            isImproving && "opacity-100",
-                          )}
-                        >
-                          {isImproving ? (
-                            <Loader2Icon
-                              className="animate-spin"
-                              data-icon="inline-start"
-                            />
-                          ) : (
-                            <SparklesIcon data-icon="inline-start" />
-                          )}
-                          {isImproving
-                            ? t("agentDetail.instructions.improving")
-                            : t("agentDetail.instructions.improveWithAi")}
-                        </Button>
-                      }
-                      selectionImprove={{
-                        label: t("agentDetail.instructions.improveWithAi"),
-                        improvingLabel: t("agentDetail.instructions.improving"),
-                        onImprove: (selectedMarkdown) =>
-                          requestImproveInstructions({
-                            selectedText: selectedMarkdown,
-                          }),
-                      }}
-                    />
-                  )}
-                />
+                {mentionItems === undefined ? (
+                  <Skeleton className="h-56 w-full rounded-lg" />
+                ) : (
+                  <Controller
+                    control={form.control}
+                    name="systemPrompt"
+                    render={({ field }) => (
+                      <PromptEditor
+                        id="agent-system-prompt"
+                        ariaLabel={t("agentDetail.instructions.rawLabel")}
+                        ariaInvalid={!!systemPromptError}
+                        disabled={isSubmitting || isImproving}
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        items={mentionItems}
+                        mentionTagsLabel={t(
+                          "agentDetail.instructions.mentionTagsLabel",
+                        )}
+                        mentionHint={t("agentDetail.instructions.mentionHint")}
+                        minHeightClassName="min-h-56"
+                        editorActions={
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={isSubmitting || isImproving}
+                            onClick={handleImproveWithAi}
+                            className={cn(
+                              "pointer-events-auto sticky top-2 shadow-sm transition-opacity",
+                              "opacity-0 group-hover/prompt-editor:opacity-100 group-focus-within/prompt-editor:opacity-100 focus-visible:opacity-100",
+                              isImproving && "opacity-100",
+                            )}
+                          >
+                            {isImproving ? (
+                              <Loader2Icon
+                                className="animate-spin"
+                                data-icon="inline-start"
+                              />
+                            ) : (
+                              <SparklesIcon data-icon="inline-start" />
+                            )}
+                            {isImproving
+                              ? t("agentDetail.instructions.improving")
+                              : t("agentDetail.instructions.improveWithAi")}
+                          </Button>
+                        }
+                        selectionImprove={{
+                          label: t("agentDetail.instructions.improveWithAi"),
+                          improvingLabel: t(
+                            "agentDetail.instructions.improving",
+                          ),
+                          onImprove: (selectedMarkdown) =>
+                            requestImproveInstructions({
+                              selectedText: selectedMarkdown,
+                            }),
+                        }}
+                      />
+                    )}
+                  />
+                )}
                 <FieldError errors={[systemPromptError]} />
               </Field>
             </CardContent>

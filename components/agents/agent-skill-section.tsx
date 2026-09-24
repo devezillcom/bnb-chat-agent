@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDownIcon, Loader2Icon } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useT } from "next-i18next/client";
 
@@ -29,6 +29,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "@/components/ui/toast";
+import type { AgentMentionItem } from "@/lib/agents/types";
 import {
   skillFormSchema,
   type SkillFormValues,
@@ -41,6 +42,7 @@ type AgentSkillSectionProps = {
   workspaceId: string;
   skillId?: string;
   defaultValues: SkillFormValues;
+  mentionItems: AgentMentionItem[] | undefined;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
   removing?: boolean;
@@ -53,6 +55,7 @@ export function AgentSkillSection({
   workspaceId,
   skillId,
   defaultValues,
+  mentionItems,
   expanded,
   onExpandedChange,
   removing = false,
@@ -61,6 +64,10 @@ export function AgentSkillSection({
 }: AgentSkillSectionProps) {
   const { t } = useT("dashboard");
   const isDraft = !skillId;
+  const skillMentionItems = useMemo(
+    () => mentionItems?.filter((item) => item.id !== skillId),
+    [mentionItems, skillId],
+  );
 
   const form = useForm<SkillFormValues>({
     resolver: zodResolver(skillFormSchema),
@@ -216,7 +223,9 @@ export function AgentSkillSection({
             <SkillFormFields
               idPrefix={`agent-skill-${skillId ?? "draft"}`}
               register={form.register}
+              control={form.control}
               errors={form.formState.errors}
+              mentionItems={skillMentionItems}
               disabled={isSubmitting}
             />
           </CardContent>

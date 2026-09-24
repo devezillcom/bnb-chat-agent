@@ -42,9 +42,23 @@ export type KnowledgeBaseDocumentProcessQstashPayload = z.infer<
 >;
 
 export const searchKnowledgeBaseToolInputSchema = z.object({
-  query: z.string().trim().min(1, { error: "Query is required." }),
-  rewriteQuery: z.boolean().optional(),
-  multiQuery: z.boolean().optional(),
+  query: z
+    .string()
+    .trim()
+    .min(1, { error: "Query is required." })
+    .describe("Focused search query describing the information needed."),
+  rewriteQuery: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set true when the question is vague, conversational, or needs clearer search phrasing.",
+    ),
+  multiQuery: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set true for broad, multi-part, or ambiguous questions that may match documents in different ways.",
+    ),
 });
 
 export type SearchKnowledgeBaseToolInput = z.infer<
