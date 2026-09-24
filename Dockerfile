@@ -1,5 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM node:22-alpine AS base
+# Lockfile is generated with npm 11; npm 10 (bundled with node 22) rejects it in `npm ci`.
+RUN npm install -g npm@11
 
 # Install deps
 FROM base AS deps
