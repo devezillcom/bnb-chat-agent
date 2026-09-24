@@ -69,7 +69,10 @@
     "emptyTitle": "Chưa có kênh chat nào",
     "emptyDescription": "Kết nối trang Facebook hoặc kênh khác để chuyển hội thoại tới trợ lý.",
     "connect": "Kết nối",
-    "connectFacebookPages": "Kết nối trang {{label}}"
+    "connectFacebookPages": "Kết nối trang {{label}}",
+    "view": "Xem",
+    "noAgent": "Chưa gán trợ lý",
+    "connectionError": "Lỗi kết nối"
   },
   "skillForm": {
     "name": {

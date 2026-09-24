@@ -3,8 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ChevronDownIcon, PlugIcon } from "lucide-react";
+import { useMemo } from "react";
 import { useT } from "next-i18next/client";
 
+import { ConnectionListCard } from "@/components/connections/connection-list-card";
 import { ResourceListPage } from "@/components/dashboard/resource-list-page";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,8 +52,18 @@ export function ConnectionsListPage({
     queryFn: () => fetchConnections(workspaceId),
   });
 
-  const items = mapConnectionListItemsToResourceRows(data?.items ?? []);
-  const facebookConnectHref = `${getDashboardNavHref(workspaceIndex, "connections")}/connect/facebook?workspaceId=${encodeURIComponent(workspaceId)}&workspaceIndex=${workspaceIndex}`;
+  const { items, connectionsById } = useMemo(() => {
+    const connections = data?.items ?? [];
+
+    return {
+      items: mapConnectionListItemsToResourceRows(connections),
+      connectionsById: new Map(
+        connections.map((connection) => [connection.id, connection]),
+      ),
+    };
+  }, [data?.items]);
+  const connectionsBaseHref = getDashboardNavHref(workspaceIndex, "connections");
+  const facebookConnectHref = `${connectionsBaseHref}/connect/facebook?workspaceId=${encodeURIComponent(workspaceId)}&workspaceIndex=${workspaceIndex}`;
 
   return (
     <ResourceListPage
@@ -60,9 +72,21 @@ export function ConnectionsListPage({
       items={items}
       emptyTitle={t("connectionsList.emptyTitle")}
       emptyDescription={t("connectionsList.emptyDescription")}
-      getItemHref={(item) =>
-        `${getDashboardNavHref(workspaceIndex, "connections")}/${item.id}`
-      }
+      itemVariant="card"
+      renderCardItem={(item) => {
+        const connection = connectionsById.get(item.id);
+
+        if (!connection) {
+          return null;
+        }
+
+        return (
+          <ConnectionListCard
+            connection={connection}
+            detailHref={`${connectionsBaseHref}/${connection.id}`}
+          />
+        );
+      }}
       isLoading={isLoading}
       errorMessage={error?.message}
       headerAction={

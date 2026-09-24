@@ -17,6 +17,12 @@ export function mapConnectionListItemsToResourceRows(
     return {
       id: connection.id,
       name: connection.name,
+      description: [
+        getConnectionTypeLabel(connection.channelType),
+        connection.agent?.name,
+      ]
+        .filter(Boolean)
+        .join(" "),
       createdAt: connection.createdAt,
       subtitle,
       badge: {

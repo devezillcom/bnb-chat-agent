@@ -69,7 +69,10 @@
     "emptyTitle": "No chat channels yet",
     "emptyDescription": "Connect Facebook pages or other channels to route conversations to assistants.",
     "connect": "Connect",
-    "connectFacebookPages": "Connect {{label}} pages"
+    "connectFacebookPages": "Connect {{label}} pages",
+    "view": "View",
+    "noAgent": "No assistant assigned",
+    "connectionError": "Connection error"
   },
   "skillForm": {
     "name": {
