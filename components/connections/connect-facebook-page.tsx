@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
-import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
 
 type ConnectFacebookPageProps = {
   workspaceId: string;
@@ -18,7 +17,6 @@ export function ConnectFacebookPage({
 }: ConnectFacebookPageProps) {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
-  const connectionsPath = getDashboardNavHref(workspaceIndex, "connections");
 
   const startHref = React.useMemo(() => {
     const params = new URLSearchParams({
@@ -49,9 +47,6 @@ export function ConnectFacebookPage({
       <div className="flex flex-wrap gap-2">
         <Button nativeButton={false} render={<Link href={startHref} />}>
           Continue with Facebook
-        </Button>
-        <Button nativeButton={false} variant="ghost" render={<Link href={connectionsPath} />}>
-          Back to connections
         </Button>
       </div>
     </div>

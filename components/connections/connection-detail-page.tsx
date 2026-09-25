@@ -164,9 +164,18 @@ export function ConnectionDetailPage({
         queryKey: ["connection", workspaceId, connectionId],
       });
       void queryClient.invalidateQueries({ queryKey: ["connections", workspaceId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["connection-facebook-webhook", workspaceId, connectionId],
+      });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Unable to assign agent.");
+      void queryClient.invalidateQueries({
+        queryKey: ["connection", workspaceId, connectionId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["connection-facebook-webhook", workspaceId, connectionId],
+      });
     },
   });
 
@@ -485,12 +494,6 @@ export function ConnectionDetailPage({
           </CardContent>
         </Card>
       ) : null}
-
-      <div className="mt-6">
-        <Button nativeButton={false} variant="ghost" render={<Link href={connectionsPath} />}>
-          Back to connections
-        </Button>
-      </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

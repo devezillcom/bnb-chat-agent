@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 
 import type { ConnectionMutationResult, UpdateConnectionParams } from "../types";
 import { deleteConnectionConversations } from "./delete-connection-conversations";
+import { ensureFacebookConnectionWebhookSubscribed } from "./ensure-facebook-connection-webhook-subscribed";
 
 export async function updateConnection(
   params: UpdateConnectionParams,
@@ -35,7 +36,10 @@ export async function updateConnection(
   }
 
   const [existing] = await db
-    .select({ agentId: connections.agentId })
+    .select({
+      agentId: connections.agentId,
+      channelType: connections.channelType,
+    })
     .from(connections)
     .where(
       and(
@@ -87,8 +91,36 @@ export async function updateConnection(
     await deleteConnectionConversations({ connectionId: connection.id });
   }
 
+  let message = "Connection updated.";
+
+  if (params.agentId && existing.channelType === "facebook") {
+    try {
+      const { subscribedNow } = await ensureFacebookConnectionWebhookSubscribed({
+        connectionId: connection.id,
+        workspaceId: params.workspaceId,
+      });
+
+      if (subscribedNow) {
+        message = "Agent assigned. Messenger webhook subscribed.";
+      }
+    } catch (error) {
+      if (error instanceof APIError) {
+        throw error;
+      }
+
+      const detail =
+        error instanceof Error ? error.message : "Unknown Facebook error.";
+
+      throw new APIError(
+        "ERR_FACEBOOK_WEBHOOK_SUBSCRIBE",
+        `Agent assigned, but the Messenger webhook could not be subscribed. ${detail}`,
+        502,
+      );
+    }
+  }
+
   return {
     id: connection.id,
-    message: "Connection updated.",
+    message,
   };
 }
