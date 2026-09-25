@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2Icon } from "lucide-react";
+import { useT } from "next-i18next/client";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
@@ -51,6 +52,7 @@ export function EditKnowledgeBaseDialog({
   onUpdated,
 }: EditKnowledgeBaseDialogProps) {
   const queryClient = useQueryClient();
+  const { t } = useT("dashboard");
 
   const form = useForm<UpdateKnowledgeBaseValues>({
     resolver: zodResolver(updateKnowledgeBaseSchema),
@@ -93,7 +95,7 @@ export function EditKnowledgeBaseDialog({
 
     if (res.ok) {
       toast.add({
-        title: data.message ?? "Knowledge base updated.",
+        title: t("agentDetail.knowledge.updated"),
         type: "success",
       });
       onOpenChange(false);
@@ -119,16 +121,18 @@ export function EditKnowledgeBaseDialog({
       <DialogContent showCloseButton={!isSubmitting} className="sm:max-w-md">
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Edit knowledge base</DialogTitle>
+            <DialogTitle>{t("agentDetail.knowledge.editDialogTitle")}</DialogTitle>
             <DialogDescription>
-              Update the name and description for this knowledge base collection.
+              {t("agentDetail.knowledge.editDialogDescription")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <FieldGroup>
               <Field data-invalid={!!nameError || undefined}>
-                <FieldLabel htmlFor="edit-kb-name">Name</FieldLabel>
+                <FieldLabel htmlFor="edit-kb-name">
+                  {t("agentDetail.knowledge.name")}
+                </FieldLabel>
                 <Input
                   id="edit-kb-name"
                   autoComplete="off"
@@ -140,7 +144,9 @@ export function EditKnowledgeBaseDialog({
               </Field>
 
               <Field data-invalid={!!descriptionError || undefined}>
-                <FieldLabel htmlFor="edit-kb-description">Description</FieldLabel>
+                <FieldLabel htmlFor="edit-kb-description">
+                  {t("agentDetail.knowledge.description")}
+                </FieldLabel>
                 <textarea
                   id="edit-kb-description"
                   rows={3}
@@ -161,16 +167,16 @@ export function EditKnowledgeBaseDialog({
               disabled={isSubmitting}
               onClick={() => handleOpenChange(false)}
             >
-              Cancel
+              {t("agentDetail.cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2Icon className="animate-spin" data-icon="inline-start" />
-                  Saving…
+                  {t("agentDetail.saving")}
                 </>
               ) : (
-                "Save changes"
+                t("agentDetail.save")
               )}
             </Button>
           </DialogFooter>

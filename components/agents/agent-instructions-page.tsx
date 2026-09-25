@@ -2,14 +2,16 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2Icon, SparklesIcon } from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useT } from "next-i18next/client";
 
 import { AgentPageHelper } from "@/components/agents/agent-page-helper";
-import { PromptEditor } from "@/components/prompt-editor";
+import {
+  PromptEditorWithImprove,
+  requestPromptImprove,
+} from "@/components/prompt-editor";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,7 +33,6 @@ import {
   agentMentionItemsQueryKey,
   fetchAgentMentionItems,
 } from "@/lib/agents/utils/fetch-agent-mention-items";
-import { cn } from "@/lib/utils";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
 type AgentInstructionsPageProps = {
@@ -66,62 +67,19 @@ export function AgentInstructionsPage({
 
   const isSubmitting = form.formState.isSubmitting;
   const systemPromptError = form.formState.errors.systemPrompt;
-  const [isImproving, setIsImproving] = useState(false);
 
-  async function requestImproveInstructions(options?: {
-    selectedText?: string;
-  }): Promise<string | null> {
-    setIsImproving(true);
-    try {
-      const res = await workspaceFetch(
-        workspaceId,
-        `/api/agents/${agent.id}/improve-instructions`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemPrompt: form.getValues("systemPrompt"),
-            ...(options?.selectedText
-              ? { selectedText: options.selectedText }
-              : {}),
-          }),
-        },
-      );
-      const data = (await res.json()) as {
-        systemPrompt?: string;
-        message?: string;
-        error?: string;
-      };
-
-      if (res.ok && data.systemPrompt) {
-        if (!options?.selectedText) {
-          form.setValue("systemPrompt", data.systemPrompt, {
-            shouldDirty: true,
-            shouldValidate: form.formState.isSubmitted,
-          });
-        }
-        toast.add({
-          title: data.message ?? "Instructions improved.",
-          type: "success",
-        });
-        return data.systemPrompt;
-      }
-
-      toast.add({
-        title: data.error ?? data.message ?? "Something went wrong.",
-        type: "error",
-      });
-      return null;
-    } catch {
-      toast.add({ title: "Something went wrong.", type: "error" });
-      return null;
-    } finally {
-      setIsImproving(false);
-    }
-  }
-
-  async function handleImproveWithAi() {
-    await requestImproveInstructions();
+  function improveInstructions(options?: { selectedText?: string }) {
+    return requestPromptImprove({
+      workspaceId,
+      path: `/api/agents/${agent.id}/improve-prompt`,
+      body: {
+        type: "systemPrompt",
+        prompt: form.getValues("systemPrompt"),
+        ...(options?.selectedText ? { selection: options.selectedText } : {}),
+      },
+      readText: (data) =>
+        typeof data.prompt === "string" ? data.prompt : undefined,
+    });
   }
 
   async function onSubmit(values: CreateAgentFormValues) {
@@ -176,11 +134,11 @@ export function AgentInstructionsPage({
                     control={form.control}
                     name="systemPrompt"
                     render={({ field }) => (
-                      <PromptEditor
+                      <PromptEditorWithImprove
                         id="agent-system-prompt"
                         ariaLabel={t("agentDetail.instructions.rawLabel")}
                         ariaInvalid={!!systemPromptError}
-                        disabled={isSubmitting || isImproving}
+                        disabled={isSubmitting}
                         value={field.value}
                         onChange={field.onChange}
                         onBlur={field.onBlur}
@@ -190,42 +148,11 @@ export function AgentInstructionsPage({
                         )}
                         mentionHint={t("agentDetail.instructions.mentionHint")}
                         minHeightClassName="min-h-56"
-                        editorActions={
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            disabled={isSubmitting || isImproving}
-                            onClick={handleImproveWithAi}
-                            className={cn(
-                              "pointer-events-auto sticky top-2 shadow-sm transition-opacity",
-                              "opacity-0 group-hover/prompt-editor:opacity-100 group-focus-within/prompt-editor:opacity-100 focus-visible:opacity-100",
-                              isImproving && "opacity-100",
-                            )}
-                          >
-                            {isImproving ? (
-                              <Loader2Icon
-                                className="animate-spin"
-                                data-icon="inline-start"
-                              />
-                            ) : (
-                              <SparklesIcon data-icon="inline-start" />
-                            )}
-                            {isImproving
-                              ? t("agentDetail.instructions.improving")
-                              : t("agentDetail.instructions.improveWithAi")}
-                          </Button>
-                        }
-                        selectionImprove={{
-                          label: t("agentDetail.instructions.improveWithAi"),
-                          improvingLabel: t(
-                            "agentDetail.instructions.improving",
-                          ),
-                          onImprove: (selectedMarkdown) =>
-                            requestImproveInstructions({
-                              selectedText: selectedMarkdown,
-                            }),
-                        }}
+                        improveLabel={t(
+                          "agentDetail.instructions.improveWithAi",
+                        )}
+                        improvingLabel={t("agentDetail.instructions.improving")}
+                        onImprove={improveInstructions}
                       />
                     )}
                   />

@@ -8,7 +8,10 @@ import {
 } from "react-hook-form";
 import { useT } from "next-i18next/client";
 
-import { PromptEditor } from "@/components/prompt-editor";
+import {
+  PromptEditorWithImprove,
+  type PromptImproveRequest,
+} from "@/components/prompt-editor";
 import {
   Field,
   FieldDescription,
@@ -28,6 +31,9 @@ type SkillFormFieldsProps = {
   mentionItems: AgentMentionItem[] | undefined;
   disabled?: boolean;
   idPrefix: string;
+  onImproveInstructions: (
+    request?: PromptImproveRequest,
+  ) => Promise<string | null>;
 };
 
 export function SkillFormFields({
@@ -37,6 +43,7 @@ export function SkillFormFields({
   mentionItems,
   disabled = false,
   idPrefix,
+  onImproveInstructions,
 }: SkillFormFieldsProps) {
   const { t } = useT("dashboard");
   const nameError = errors.name;
@@ -91,7 +98,7 @@ export function SkillFormFields({
             control={control}
             name="instructions"
             render={({ field }) => (
-              <PromptEditor
+              <PromptEditorWithImprove
                 id={`${idPrefix}-instructions`}
                 ariaLabel={t("skillForm.instructions.label")}
                 ariaInvalid={!!instructionsError}
@@ -106,6 +113,9 @@ export function SkillFormFields({
                 )}
                 mentionHint={t("agentDetail.instructions.mentionHint")}
                 minHeightClassName="min-h-40"
+                improveLabel={t("agentDetail.instructions.improveWithAi")}
+                improvingLabel={t("agentDetail.instructions.improving")}
+                onImprove={onImproveInstructions}
               />
             )}
           />

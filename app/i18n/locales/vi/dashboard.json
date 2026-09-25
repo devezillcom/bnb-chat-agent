@@ -99,14 +99,13 @@
     }
   },
   "agentDetail": {
-    "back": "Về danh sách trợ lý",
     "chat": "Trò chuyện",
     "nav": {
       "general": "Tổng quan",
       "instructions": "Hướng dẫn",
       "skills": "Kỹ năng",
       "tools": "Công cụ",
-      "knowledge": "Tài liệu"
+      "knowledge": "Kiến thức"
     },
     "saving": "Đang lưu…",
     "save": "Lưu thay đổi",
@@ -196,11 +195,11 @@
       "untitled": "Công cụ chưa đặt tên"
     },
     "knowledge": {
-      "helperTitle": "Cung cấp tài liệu tham khảo cho trợ lý",
-      "helperDescription": "Tài liệu là nguồn tham khảo mà trợ lý đọc để trả lời chính xác, như hướng dẫn sản phẩm, chính sách hoặc câu hỏi thường gặp.",
-      "addKnowledgeBase": "Thêm knowledge base",
-      "emptyTitle": "Chưa có knowledge base nào",
-      "emptyDescription": "Tạo knowledge base để tải lên tài liệu mà trợ lý này có thể tham khảo.",
+      "helperTitle": "Cung cấp kiến thức cho trợ lý",
+      "helperDescription": "Kiến thức là nguồn tham khảo mà trợ lý đọc để trả lời chính xác, như hướng dẫn sản phẩm, chính sách hoặc câu hỏi thường gặp.",
+      "addKnowledgeBase": "Thêm kiến thức",
+      "emptyTitle": "Chưa có kiến thức nào",
+      "emptyDescription": "Tạo kiến thức để tải lên tài liệu mà trợ lý này có thể tham khảo.",
       "edit": "Sửa",
       "upload": "Tải lên",
       "uploading": "Đang tải lên…",
@@ -209,26 +208,29 @@
       "uploadError": "Tải lên thất bại.",
       "delete": "Xóa",
       "deleting": "Đang xóa…",
-      "deleted": "Đã xóa knowledge base.",
-      "deleteError": "Không thể xóa knowledge base.",
-      "deleteKnowledgeBase": "Xóa knowledge base",
-      "deleteConfirmTitle": "Xóa knowledge base?",
+      "deleted": "Đã xóa kiến thức.",
+      "deleteError": "Không thể xóa kiến thức.",
+      "deleteKnowledgeBase": "Xóa kiến thức",
+      "deleteConfirmTitle": "Xóa kiến thức?",
       "deleteConfirmIntro": "Thao tác này sẽ xóa vĩnh viễn {{name}}.",
-      "deleteConfirmDocuments": "Tất cả {{count}} tài liệu trong knowledge base này sẽ bị xóa, bao gồm file đã tải lên và chỉ mục tìm kiếm.",
-      "deleteConfirmAgents": "Các trợ lý liên kết với knowledge base này sẽ mất quyền truy cập. Không thể hoàn tác.",
+      "deleteConfirmDocuments": "Tất cả {{count}} tài liệu trong kiến thức này sẽ bị xóa, bao gồm file đã tải lên và chỉ mục tìm kiếm.",
+      "deleteConfirmAgents": "Các trợ lý liên kết với kiến thức này sẽ mất quyền truy cập. Không thể hoàn tác.",
       "noDocuments": "Chưa có tài liệu",
       "noDocumentsDescription": "Tải lên file PDF, Word, Excel, PowerPoint, CSV, EPUB, RTF hoặc Markdown, tối đa 50 MB.",
-      "addDialogTitle": "Thêm knowledge base",
-      "addDialogDescription": "Đặt tên cho bộ tài liệu liên quan. Bạn có thể tải file lên sau khi tạo.",
+      "addDialogTitle": "Thêm kiến thức",
+      "addDialogDescription": "Đặt tên cho kiến thức này. Bạn có thể tải tài liệu lên sau khi tạo.",
+      "editDialogTitle": "Sửa kiến thức",
+      "editDialogDescription": "Cập nhật tên và mô tả của kiến thức này.",
+      "updated": "Đã cập nhật kiến thức.",
       "creating": "Đang tạo…",
       "name": "Tên",
       "namePlaceholder": "FAQ khách hàng",
       "description": "Mô tả",
       "descriptionPlaceholder": "Câu trả lời cho các câu hỏi thường gặp của khách.",
       "createAndAdd": "Tạo",
-      "addError": "Không thể thêm knowledge base.",
-      "createError": "Không thể tạo knowledge base.",
-      "createdAndAdded": "Đã tạo knowledge base và thêm vào trợ lý."
+      "addError": "Không thể thêm kiến thức.",
+      "createError": "Không thể tạo kiến thức.",
+      "createdAndAdded": "Đã tạo kiến thức và thêm vào trợ lý."
     },
     "capabilities": {
       "add": "Thêm",
@@ -257,10 +259,10 @@
         "noun": "công cụ"
       },
       "knowledgeBase": {
-        "title": "Tài liệu của trợ lý",
-        "description": "Các bộ tài liệu được gán cho trợ lý này.",
-        "empty": "Chưa gán tài liệu nào.",
-        "noun": "tài liệu"
+        "title": "Kiến thức của trợ lý",
+        "description": "Các kiến thức được gán cho trợ lý này.",
+        "empty": "Chưa gán kiến thức nào.",
+        "noun": "kiến thức"
       }
     }
   }

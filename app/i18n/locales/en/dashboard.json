@@ -37,7 +37,7 @@
   "homeInfographic": {
     "skills": "Skills",
     "tools": "Tools",
-    "knowledgeBase": "Knowledge",
+    "knowledgeBase": "Knowledge base",
     "agent": "Assistant",
     "web": "Web",
     "facebook": "Facebook"
@@ -62,7 +62,7 @@
   },
   "agentsList": {
     "title": "Assistants",
-    "description": "Chat assistants configured for this workspace. Each assistant can have its own skills, tools, and knowledge.",
+    "description": "Chat assistants configured for this workspace. Each assistant can have its own skills, tools, and knowledge bases.",
     "emptyTitle": "No assistants yet",
     "emptyDescription": "Create an assistant to start chatting, embedding on a site, or connecting to support channels.",
     "createLabel": "Create assistant",
@@ -99,14 +99,13 @@
     }
   },
   "agentDetail": {
-    "back": "Back to assistants",
     "chat": "Chat",
     "nav": {
       "general": "General",
       "instructions": "Instructions",
       "skills": "Skills",
       "tools": "Tools",
-      "knowledge": "Documents"
+      "knowledge": "Knowledge base"
     },
     "saving": "Saving…",
     "save": "Save changes",
@@ -196,8 +195,8 @@
       "untitled": "Untitled tool"
     },
     "knowledge": {
-      "helperTitle": "Give your assistant reference material",
-      "helperDescription": "Documents are the reference material the assistant reads to answer questions accurately, such as product guides, policies, or FAQs.",
+      "helperTitle": "Give your assistant a knowledge base",
+      "helperDescription": "A knowledge base is the reference material the assistant reads to answer questions accurately, such as product guides, policies, or FAQs.",
       "addKnowledgeBase": "Add knowledge base",
       "emptyTitle": "No knowledge bases yet",
       "emptyDescription": "Create a knowledge base to upload documents this assistant can reference.",
@@ -219,7 +218,10 @@
       "noDocuments": "No documents yet",
       "noDocumentsDescription": "Upload PDF, Word, Excel, PowerPoint, CSV, EPUB, RTF, or Markdown files up to 50 MB.",
       "addDialogTitle": "Add knowledge base",
-      "addDialogDescription": "Name a collection for related documents. You can upload files after creating it.",
+      "addDialogDescription": "Name this knowledge base. You can upload documents after creating it.",
+      "editDialogTitle": "Edit knowledge base",
+      "editDialogDescription": "Update the name and description for this knowledge base.",
+      "updated": "Knowledge base updated.",
       "creating": "Creating…",
       "name": "Name",
       "namePlaceholder": "Guest FAQ",
@@ -257,10 +259,10 @@
         "noun": "tools"
       },
       "knowledgeBase": {
-        "title": "Assistant documents",
-        "description": "Document collections assigned to this assistant.",
-        "empty": "No documents assigned yet.",
-        "noun": "documents"
+        "title": "Knowledge bases",
+        "description": "Knowledge bases assigned to this assistant.",
+        "empty": "No knowledge bases assigned yet.",
+        "noun": "knowledge bases"
       }
     }
   }

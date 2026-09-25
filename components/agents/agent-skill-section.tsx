@@ -6,6 +6,7 @@ import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useT } from "next-i18next/client";
 
+import { requestPromptImprove } from "@/components/prompt-editor";
 import { SkillFormFields } from "@/components/skills/skill-form-fields";
 import {
   AlertDialog,
@@ -81,6 +82,20 @@ export function AgentSkillSection({
   const isSubmitting = form.formState.isSubmitting;
   const displayName =
     form.watch("name") || t("agentDetail.skills.untitled");
+
+  function improveInstructions(options?: { selectedText?: string }) {
+    return requestPromptImprove({
+      workspaceId,
+      path: `/api/agents/${agentId}/improve-prompt`,
+      body: {
+        type: "skill",
+        prompt: form.getValues("instructions"),
+        ...(options?.selectedText ? { selection: options.selectedText } : {}),
+      },
+      readText: (data) =>
+        typeof data.prompt === "string" ? data.prompt : undefined,
+    });
+  }
 
   async function onSubmit(values: SkillFormValues) {
     const endpoint = skillId
@@ -227,6 +242,7 @@ export function AgentSkillSection({
               errors={form.formState.errors}
               mentionItems={skillMentionItems}
               disabled={isSubmitting}
+              onImproveInstructions={improveInstructions}
             />
           </CardContent>
           <CardFooter className="justify-end gap-2">

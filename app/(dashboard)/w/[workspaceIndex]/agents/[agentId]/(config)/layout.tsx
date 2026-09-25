@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, MessageCircleIcon } from "lucide-react";
+import { MessageCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getT } from "next-i18next/server";
@@ -47,42 +47,29 @@ export default async function AgentDetailLayout({
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-8">
-      <div className="mb-6 space-y-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          nativeButton={false}
-          render={<Link href={agentsHref} />}
-        >
-          <ArrowLeftIcon data-icon="inline-start" />
-          {t("agentDetail.back")}
-        </Button>
-        <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={avatarUrl}
-            alt=""
-            className="size-12 shrink-0 rounded-full object-cover"
-          />
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-semibold tracking-tight">
-              {agentName}
-            </h1>
-            {agentDescription ? (
-              <p className="text-sm text-muted-foreground">
-                {agentDescription}
-              </p>
-            ) : null}
-          </div>
-          <Button
-            className="ml-auto"
-            nativeButton={false}
-            render={<Link href={chatHref} />}
-          >
-            <MessageCircleIcon data-icon="inline-start" />
-            {t("agentDetail.chat")}
-          </Button>
+      <div className="mb-6 flex items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={avatarUrl}
+          alt=""
+          className="size-12 shrink-0 rounded-full object-cover"
+        />
+        <div className="min-w-0">
+          <h1 className="truncate text-2xl font-semibold tracking-tight">
+            {agentName}
+          </h1>
+          {agentDescription ? (
+            <p className="text-sm text-muted-foreground">{agentDescription}</p>
+          ) : null}
         </div>
+        <Button
+          className="ml-auto"
+          nativeButton={false}
+          render={<Link href={chatHref} />}
+        >
+          <MessageCircleIcon data-icon="inline-start" />
+          {t("agentDetail.chat")}
+        </Button>
       </div>
 
       <AgentDetailNav

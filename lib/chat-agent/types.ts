@@ -91,3 +91,19 @@ export type ClearAgentChatContextParams = {
 export type ClearAgentChatContextResult = {
   message: string;
 };
+
+export type ImprovePromptType = "systemPrompt" | "skill";
+
+export type ImprovePromptParams = {
+  workspaceId: string;
+  agentId: string;
+  /** Full prompt. Improved as a whole when `selection` is absent, and used as context when it is set. */
+  prompt: string;
+  type: ImprovePromptType;
+  /** When set, only this excerpt is improved and returned as `prompt`. */
+  selection?: string;
+};
+
+export type ImprovePromptResult = {
+  prompt: string;
+};
