@@ -27,7 +27,7 @@ export function DashboardShell({
       />
       <SidebarInset className="bg-background">
         <div className="flex h-svh flex-col overflow-hidden">
-          <DashboardHeader workspaceIndex={workspaceIndex} />
+          <DashboardHeader />
           <div className="flex-1 overflow-y-auto">{children}</div>
         </div>
       </SidebarInset>

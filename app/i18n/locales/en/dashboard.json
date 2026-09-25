@@ -1,9 +1,10 @@
 {
   "nav": {
+    "home": "Home",
     "agents": "Assistants",
     "connections": "Chat channels",
     "daily": "Daily",
-    "workspaceSettings": "Workspace settings"
+    "workspaceSettings": "Settings"
   },
   "accountMenu": {
     "openMenu": "Open account menu",
@@ -17,7 +18,13 @@
     "confirm": "Log out"
   },
   "appName": "BNB Chat Agent",
+  "workspacePermission": {
+    "owner": "Owner",
+    "edit": "Edit",
+    "read": "View"
+  },
   "header": {
+    "home": "Home",
     "homeAriaLabel": "Go to home",
     "createAgent": "Create assistant",
     "editAgent": "Edit assistant",

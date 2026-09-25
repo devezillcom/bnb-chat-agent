@@ -1,9 +1,10 @@
 {
   "nav": {
-    "agents": "Trợ lý",
-    "connections": "Kênh chat",
+    "home": "Trang chủ",
+    "agents": "Danh sách trợ lý",
+    "connections": "Kênh hỗ trợ",
     "daily": "Hằng ngày",
-    "workspaceSettings": "Cài đặt workspace"
+    "workspaceSettings": "Cài đặt"
   },
   "accountMenu": {
     "openMenu": "Mở menu tài khoản",
@@ -17,7 +18,13 @@
     "confirm": "Đăng xuất"
   },
   "appName": "BNB Chat Agent",
+  "workspacePermission": {
+    "owner": "Chủ sở hữu",
+    "edit": "Chỉnh sửa",
+    "read": "Xem"
+  },
   "header": {
+    "home": "Trang chủ",
     "homeAriaLabel": "Về trang chủ",
     "createAgent": "Tạo trợ lý",
     "editAgent": "Chỉnh sửa trợ lý",

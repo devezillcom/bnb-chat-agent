@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   CheckIcon,
-  ChevronDownIcon,
   LanguagesIcon,
   LogOutIcon,
   MonitorIcon,
@@ -27,7 +26,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +38,14 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n/constants";
+import type { WorkspacePermission } from "@/lib/workspaces/types";
 
 const THEME_OPTIONS = [
   { value: "light", labelKey: "theme.light", icon: SunIcon },
@@ -50,6 +55,7 @@ const THEME_OPTIONS = [
 
 type AccountMenuProps = {
   workspaceIndex: number;
+  permission: WorkspacePermission;
 };
 
 function getUserInitials(displayName: string) {
@@ -62,13 +68,14 @@ function getUserInitials(displayName: string) {
   return displayName.slice(0, 2).toUpperCase() || "?";
 }
 
-export function AccountMenu({ workspaceIndex }: AccountMenuProps) {
+export function AccountMenu({ workspaceIndex, permission }: AccountMenuProps) {
   const { t: tDashboard } = useT("dashboard");
   const { t: tCommon } = useT("common");
   const { user, signOut } = useAuth();
   const changeLanguage = useChangeLanguage();
   const { i18n } = useT("common");
   const { theme: activeTheme, setTheme } = useTheme();
+  const { isMobile } = useSidebar();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -77,6 +84,7 @@ export function AccountMenu({ workspaceIndex }: AccountMenuProps) {
     user?.displayName?.trim() ||
     user?.email?.split("@")[0]?.trim() ||
     tDashboard("accountMenu.userFallback");
+  const roleLabel = tDashboard(`workspacePermission.${permission}`);
   const profileHref = `/w/${workspaceIndex}/settings/profile`;
 
   async function handleSignOut() {
@@ -92,101 +100,113 @@ export function AccountMenu({ workspaceIndex }: AccountMenuProps) {
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              variant="ghost"
-              className="h-9 gap-2 px-2 font-normal"
-              aria-label={tDashboard("accountMenu.openMenu")}
-            />
-          }
-        >
-          <Avatar size="sm">
-            {user?.photoURL ? (
-              <AvatarImage src={user.photoURL} alt={displayName} />
-            ) : null}
-            <AvatarFallback>{getUserInitials(displayName)}</AvatarFallback>
-          </Avatar>
-          <span className="hidden max-w-[140px] truncate text-sm sm:inline">
-            {displayName}
-          </span>
-          <ChevronDownIcon className="hidden size-4 text-muted-foreground sm:block" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-52">
-          {user?.email ? (
-            <>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <SidebarMenuButton
+                  size="lg"
+                  tooltip={displayName}
+                  className="font-normal text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  aria-label={tDashboard("accountMenu.openMenu")}
+                />
+              }
+            >
+              <Avatar className="size-8 shrink-0">
+                {user?.photoURL ? (
+                  <AvatarImage src={user.photoURL} alt={displayName} />
+                ) : null}
+                <AvatarFallback>{getUserInitials(displayName)}</AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left group-data-[collapsible=icon]:hidden">
+                <span className="truncate text-sm">{displayName}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {roleLabel}
+                </span>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="min-w-56 rounded-lg"
+              align="end"
+              side={isMobile ? "top" : "right"}
+              sideOffset={4}
+            >
+              {user?.email ? (
+                <>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="font-normal">
+                      <p className="truncate text-sm font-medium">{displayName}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </DropdownMenuLabel>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null}
               <DropdownMenuGroup>
-                <DropdownMenuLabel className="font-normal">
-                  <p className="truncate text-sm font-medium">{displayName}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {user.email}
-                  </p>
-                </DropdownMenuLabel>
+                <DropdownMenuItem render={<Link href={profileHref} />}>
+                  <UserIcon />
+                  {tDashboard("accountMenu.profile")}
+                </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-            </>
-          ) : null}
-          <DropdownMenuGroup>
-            <DropdownMenuItem render={<Link href={profileHref} />}>
-              <UserIcon className="size-4" />
-              {tDashboard("accountMenu.profile")}
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <LanguagesIcon className="size-4" />
-                {tCommon("language.label")}
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                {SUPPORTED_LANGUAGES.map((value) => (
-                  <DropdownMenuItem
-                    key={value}
-                    onClick={() => {
-                      void changeLanguage(value);
-                    }}
-                  >
-                    {tCommon(`language.${value}`)}
-                    {currentLanguage === value ? (
-                      <CheckIcon className="ml-auto size-4 text-muted-foreground" />
-                    ) : null}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <SunIcon className="size-4" />
-                {tCommon("theme.label")}
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                {THEME_OPTIONS.map(({ value, labelKey, icon: Icon }) => (
-                  <DropdownMenuItem
-                    key={value}
-                    onClick={() => setTheme(value)}
-                  >
-                    <Icon className="size-4" />
-                    {tCommon(labelKey)}
-                    {activeTheme === value ? (
-                      <CheckIcon className="ml-auto size-4 text-muted-foreground" />
-                    ) : null}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => setLogoutOpen(true)}
-          >
-            <LogOutIcon className="size-4" />
-            {tDashboard("logout.label")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+              <DropdownMenuGroup>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <LanguagesIcon />
+                    {tCommon("language.label")}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {SUPPORTED_LANGUAGES.map((value) => (
+                      <DropdownMenuItem
+                        key={value}
+                        onClick={() => {
+                          void changeLanguage(value);
+                        }}
+                      >
+                        {tCommon(`language.${value}`)}
+                        {currentLanguage === value ? (
+                          <CheckIcon className="ml-auto text-muted-foreground" />
+                        ) : null}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <SunIcon />
+                    {tCommon("theme.label")}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {THEME_OPTIONS.map(({ value, labelKey, icon: Icon }) => (
+                      <DropdownMenuItem
+                        key={value}
+                        onClick={() => setTheme(value)}
+                      >
+                        <Icon />
+                        {tCommon(labelKey)}
+                        {activeTheme === value ? (
+                          <CheckIcon className="ml-auto text-muted-foreground" />
+                        ) : null}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => setLogoutOpen(true)}
+              >
+                <LogOutIcon />
+                {tDashboard("logout.label")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
 
       <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
         <AlertDialogContent>

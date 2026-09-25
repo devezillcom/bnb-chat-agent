@@ -5,6 +5,7 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { APP_ICON_SRC } from "@/lib/dashboard/app-icon";
 import i18nConfig from "@/i18n.config";
 import {
   getResources,
@@ -26,6 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t("meta.title"),
     description: t("meta.description"),
+    icons: {
+      icon: [{ url: APP_ICON_SRC, type: "image/svg+xml" }],
+    },
   };
 }
 

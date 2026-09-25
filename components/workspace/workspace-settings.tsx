@@ -1,11 +1,12 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2Icon } from "lucide-react";
+import { Loader2Icon, PencilIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { SettingsPageLayout } from "@/components/dashboard/settings-page-layout";
+import { EditWorkspaceGeneralDialog } from "@/components/workspace/edit-workspace-general-dialog";
 import { WorkspaceMembersSection } from "@/components/workspace/workspace-members-section";
 import {
   AlertDialog,
@@ -30,6 +31,7 @@ import {
 import { toast } from "@/components/ui/toast";
 import { workspacesQueryKey } from "@/hooks/use-workspace-route-context";
 import type { WorkspaceListItem } from "@/lib/workspaces/types";
+import { hasMinWorkspacePermission } from "@/lib/workspaces/utils/permission-rank";
 
 type WorkspaceSettingsProps = {
   workspace: WorkspaceListItem;
@@ -53,7 +55,9 @@ export function WorkspaceSettings({
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editGeneralOpen, setEditGeneralOpen] = useState(false);
 
+  const canEdit = hasMinWorkspacePermission(workspace.permission, "edit");
   const isOwner = workspace.permission === "owner";
   const canDelete = isOwner && workspaces.length > 1;
 
@@ -91,13 +95,26 @@ export function WorkspaceSettings({
 
   return (
     <SettingsPageLayout
-      title="Workspace settings"
+      title="Settings"
       description="Details for the current workspace."
     >
       <Card>
-        <CardHeader>
-          <CardTitle>{workspace.name}</CardTitle>
-          <CardDescription>General workspace information.</CardDescription>
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle>General</CardTitle>
+            <CardDescription>General workspace information.</CardDescription>
+          </div>
+          {canEdit ? (
+            <Button
+              className="shrink-0"
+              size="sm"
+              variant="outline"
+              onClick={() => setEditGeneralOpen(true)}
+            >
+              <PencilIcon data-icon="inline-start" />
+              Edit
+            </Button>
+          ) : null}
         </CardHeader>
         <CardContent>
           <dl className="divide-y divide-border">
@@ -130,6 +147,12 @@ export function WorkspaceSettings({
           </dl>
         </CardContent>
       </Card>
+
+      <EditWorkspaceGeneralDialog
+        open={editGeneralOpen}
+        onOpenChange={setEditGeneralOpen}
+        workspace={workspace}
+      />
 
       <WorkspaceMembersSection workspace={workspace} />
 
