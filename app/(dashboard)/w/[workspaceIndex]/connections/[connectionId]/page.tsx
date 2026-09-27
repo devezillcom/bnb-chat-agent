@@ -1,4 +1,5 @@
 import { ConnectionDetailPage } from "@/components/connections/connection-detail-page";
+import { WebsiteConnectionDetail } from "@/components/connections/website-connection-detail";
 import { getConnection } from "@/lib/connections/services/get-connection";
 import { getWorkspaceRouteContext } from "@/lib/workspaces/services/get-workspace-route-context";
 
@@ -17,6 +18,17 @@ export default async function ConnectionDetailRoute({
     id: connectionId,
     workspaceId: workspace.id,
   });
+
+  if (connection.channelType === "website") {
+    return (
+      <WebsiteConnectionDetail
+        workspaceId={workspace.id}
+        workspaceIndex={workspaceIndex}
+        connectionId={connectionId}
+        initialConnection={connection}
+      />
+    );
+  }
 
   return (
     <ConnectionDetailPage

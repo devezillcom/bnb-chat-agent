@@ -3,6 +3,10 @@ export const CONNECTION_TYPES = {
     label: "Facebook",
     connectPath: "/connections/connect/facebook",
   },
+  website: {
+    label: "Website",
+    connectPath: "/connections/connect/website",
+  },
 } as const;
 
 export type ConnectionType = keyof typeof CONNECTION_TYPES;
@@ -71,3 +75,6 @@ export const DEFAULT_CONNECTION_REFRESH_CRON_CONFIG = {
 } as const;
 
 export const CONNECTION_NAME_MAX_LENGTH = 120;
+
+/** Public script the website embed snippets load. The widget runtime is not served yet. */
+export const WEBSITE_EMBED_SCRIPT_PATH = "/embed/chat.js";

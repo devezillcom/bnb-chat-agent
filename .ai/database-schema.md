@@ -291,7 +291,7 @@ Junction table linking chat agents to skills.
 
 ### `connections`
 
-External channel connections for a workspace (Facebook pages, etc.). Each connection is assigned to at most one chat agent.
+External channel connections for a workspace (Facebook pages, website chat, etc.). Each connection is assigned to at most one chat agent.
 
 | Column | Type | Nullable | Default | Description |
 | ------ | ---- | -------- | ------- | ----------- |
@@ -299,10 +299,18 @@ External channel connections for a workspace (Facebook pages, etc.). Each connec
 | workspace_id | uuid | NO | — | Owning workspace (`workspaces.id`) |
 | user_id | uuid | NO | — | User who created the connection (`users.id`) |
 | agent_id | uuid | YES | — | Assigned chat agent (`agents.id`) |
-| channel_type | text | NO | — | Channel identifier (e.g. `facebook`) |
-| name | text | NO | — | Display name (e.g. Facebook page name) |
-| encrypted_auth_data | text | NO | — | AES-256-GCM encrypted OAuth tokens |
+| channel_type | text | NO | — | Channel identifier (`facebook`, `website`) |
+| name | text | NO | — | Display name (Facebook page name or website name) |
+| encrypted_auth_data | text | NO | — | AES-256-GCM encrypted channel auth. Facebook stores OAuth tokens. Website stores `{ channel: "website" }` because the column is required and the embed key is public. |
 | metadata | jsonb | YES | — | Non-sensitive channel metadata |
+
+**Website metadata** (`channel_type = website`)
+
+| Key | Description |
+| --- | ----------- |
+| `website_url` | Site URL entered for the channel |
+| `allowed_origin` | Origin allowed to load the embed (`https://host[:port]`) |
+| `public_key` | Public embed key placed in the snippet. Not a secret. |
 | last_error | text | YES | — | Last refresh/connect failure message |
 | created_at | timestamptz | NO | `now()` | Row creation time |
 | updated_at | timestamptz | NO | `now()` | Last update time |

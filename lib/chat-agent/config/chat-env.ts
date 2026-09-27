@@ -84,6 +84,8 @@ export function connectionChannelTypeToChatEnv(channelType: string): ChatEnv {
   switch (channelType) {
     case "facebook":
       return "facebook_page";
+    case "website":
+      return "web";
     case "zalo":
       return "zalo";
     default:

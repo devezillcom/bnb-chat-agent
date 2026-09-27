@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CONNECTION_TYPES } from "@/lib/connections/constants";
+import { CONNECTION_TYPES, type ConnectionType } from "@/lib/connections/constants";
 import type { ListConnectionsResult } from "@/lib/connections/types";
 import { mapConnectionListItemsToResourceRows } from "@/lib/connections/utils/map-connection-list-items";
 import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
@@ -63,7 +63,10 @@ export function ConnectionsListPage({
     };
   }, [data?.items]);
   const connectionsBaseHref = getDashboardNavHref(workspaceIndex, "connections");
-  const facebookConnectHref = `${connectionsBaseHref}/connect/facebook?workspaceId=${encodeURIComponent(workspaceId)}&workspaceIndex=${workspaceIndex}`;
+  const connectMenuLabels: Record<ConnectionType, string> = {
+    facebook: t("connectionsList.connectFacebook"),
+    website: t("connectionsList.connectWebsite"),
+  };
 
   return (
     <ResourceListPage
@@ -101,16 +104,29 @@ export function ConnectionsListPage({
             }
           />
           <DropdownMenuContent align="end" className="min-w-44">
-            {Object.entries(CONNECTION_TYPES).map(([type, config]) => (
-              <DropdownMenuItem
-                key={type}
-                render={<Link href={facebookConnectHref} />}
-              >
-                {t("connectionsList.connectFacebookPages", {
-                  label: config.label,
-                })}
-              </DropdownMenuItem>
-            ))}
+            {(Object.keys(CONNECTION_TYPES) as ConnectionType[]).map((type) => {
+              const connectPath = CONNECTION_TYPES[type].connectPath.replace(
+                /^\/connections/,
+                "",
+              );
+              const params = new URLSearchParams({
+                workspaceId,
+                workspaceIndex: String(workspaceIndex),
+              });
+
+              return (
+                <DropdownMenuItem
+                  key={type}
+                  render={
+                    <Link
+                      href={`${connectionsBaseHref}${connectPath}?${params.toString()}`}
+                    />
+                  }
+                >
+                  {connectMenuLabels[type]}
+                </DropdownMenuItem>
+              );
+            })}
           </DropdownMenuContent>
         </DropdownMenu>
       }

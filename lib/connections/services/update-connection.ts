@@ -4,13 +4,19 @@ import { APIError } from "@/lib/exposers/api-error";
 import { and, eq } from "drizzle-orm";
 
 import type { ConnectionMutationResult, UpdateConnectionParams } from "../types";
+import { replaceWebsiteUrlInMetadata } from "../utils/read-website-connection-metadata";
+import { normalizeWebsiteUrl } from "../utils/normalize-website-url";
 import { deleteConnectionConversations } from "./delete-connection-conversations";
 import { ensureFacebookConnectionWebhookSubscribed } from "./ensure-facebook-connection-webhook-subscribed";
 
 export async function updateConnection(
   params: UpdateConnectionParams,
 ): Promise<ConnectionMutationResult> {
-  if (params.name === undefined && params.agentId === undefined) {
+  if (
+    params.name === undefined &&
+    params.agentId === undefined &&
+    params.websiteUrl === undefined
+  ) {
     throw new APIError(
       "ERR_CONNECTION_NOTHING_TO_UPDATE",
       "No fields to update.",
@@ -39,6 +45,7 @@ export async function updateConnection(
     .select({
       agentId: connections.agentId,
       channelType: connections.channelType,
+      metadata: connections.metadata,
     })
     .from(connections)
     .where(
@@ -53,12 +60,29 @@ export async function updateConnection(
     throw new APIError("ERR_CONNECTION_NOT_FOUND", "Connection not found.", 404);
   }
 
+  if (existing.channelType === "website" && params.agentId === null) {
+    throw new APIError(
+      "ERR_WEBSITE_AGENT_REQUIRED",
+      "A website chat needs an agent.",
+      400,
+    );
+  }
+
+  if (params.websiteUrl !== undefined && existing.channelType !== "website") {
+    throw new APIError(
+      "ERR_WEBSITE_URL_UNSUPPORTED",
+      "Website URL can only be set on a website chat.",
+      400,
+    );
+  }
+
   const agentIdChanging =
     params.agentId !== undefined && params.agentId !== existing.agentId;
 
   const updates: {
     name?: string;
     agentId?: string | null;
+    metadata?: Record<string, unknown>;
     updatedAt: Date;
   } = {
     updatedAt: new Date(),
@@ -70,6 +94,27 @@ export async function updateConnection(
 
   if (params.agentId !== undefined) {
     updates.agentId = params.agentId;
+  }
+
+  if (params.websiteUrl !== undefined) {
+    let normalized: ReturnType<typeof normalizeWebsiteUrl>;
+
+    try {
+      normalized = normalizeWebsiteUrl(params.websiteUrl);
+      updates.metadata = {
+        ...(existing.metadata ?? {}),
+        ...replaceWebsiteUrlInMetadata({
+          metadata: existing.metadata,
+          normalized,
+        }),
+      };
+    } catch (error) {
+      throw new APIError(
+        "ERR_WEBSITE_URL_INVALID",
+        error instanceof Error ? error.message : "Enter a valid website URL.",
+        400,
+      );
+    }
   }
 
   const [connection] = await db

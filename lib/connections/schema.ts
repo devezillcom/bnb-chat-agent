@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { CONNECTION_NAME_MAX_LENGTH } from "./constants";
+import { normalizeWebsiteUrl } from "./utils/normalize-website-url";
 
 export const connectionFormSchema = z.object({
   name: z
@@ -12,9 +13,32 @@ export const connectionFormSchema = z.object({
     }),
 });
 
+export const websiteUrlSchema = z
+  .string()
+  .trim()
+  .min(1, { error: "Website URL is required." })
+  .superRefine((value, ctx) => {
+    try {
+      normalizeWebsiteUrl(value);
+    } catch (error) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          error instanceof Error ? error.message : "Enter a valid website URL.",
+      });
+    }
+  });
+
+export const websiteConnectionFormSchema = z.object({
+  name: connectionFormSchema.shape.name,
+  websiteUrl: websiteUrlSchema,
+  agentId: z.uuid({ error: "Select a chat agent." }),
+});
+
 export const updateConnectionSchema = z.object({
   name: connectionFormSchema.shape.name.optional(),
   agentId: z.uuid({ error: "Agent is required." }).nullable().optional(),
+  websiteUrl: websiteUrlSchema.optional(),
 });
 
 export const completeFacebookConnectSchema = z.object({
@@ -84,6 +108,9 @@ export type FacebookMessengerInboundFlushQstashPayload = z.infer<
 >;
 
 export type ConnectionFormValues = z.infer<typeof connectionFormSchema>;
+export type WebsiteConnectionFormValues = z.infer<
+  typeof websiteConnectionFormSchema
+>;
 export type UpdateConnectionValues = z.infer<typeof updateConnectionSchema>;
 export type CompleteFacebookConnectValues = z.infer<
   typeof completeFacebookConnectSchema

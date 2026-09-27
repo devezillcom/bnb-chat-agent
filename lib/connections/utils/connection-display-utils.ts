@@ -27,6 +27,8 @@ export function getConnectionTypeLabel(channelType: string) {
   switch (channelType) {
     case "facebook":
       return "Facebook";
+    case "website":
+      return "Website";
     default:
       return channelType;
   }

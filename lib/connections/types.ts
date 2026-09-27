@@ -2,12 +2,14 @@ import type {
   CompleteFacebookConnectValues,
   ConnectionFormValues,
   UpdateConnectionValues,
+  WebsiteConnectionFormValues,
 } from "./schema";
 
 export type {
   CompleteFacebookConnectValues,
   ConnectionFormValues,
   UpdateConnectionValues,
+  WebsiteConnectionFormValues,
 };
 
 export type ConnectionSortKey = "name" | "channelType" | "createdAt" | "updatedAt";
@@ -23,6 +25,12 @@ export type FacebookConnectionMetadata = {
   external_id: string;
   page_url?: string;
   avatar_url?: string;
+};
+
+export type WebsiteConnectionMetadata = {
+  website_url: string;
+  allowed_origin: string;
+  public_key: string;
 };
 
 export type ConnectionAgentSummary = {
@@ -68,6 +76,15 @@ export type UpdateConnectionParams = {
   workspaceId: string;
   name?: string;
   agentId?: string | null;
+  websiteUrl?: string;
+};
+
+export type CreateWebsiteConnectionParams = {
+  workspaceId: string;
+  userId: string;
+  name: string;
+  websiteUrl: string;
+  agentId: string;
 };
 
 export type DeleteConnectionParams = {

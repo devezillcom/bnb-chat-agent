@@ -36,6 +36,7 @@ export const PATCH = createApiHandler(
       workspaceId: ctx.workspaceId,
       ...(params.name !== undefined ? { name: params.name } : {}),
       ...(params.agentId !== undefined ? { agentId: params.agentId } : {}),
+      ...(params.websiteUrl !== undefined ? { websiteUrl: params.websiteUrl } : {}),
     }),
   {
     allowedRoles: ["user", "admin"],
