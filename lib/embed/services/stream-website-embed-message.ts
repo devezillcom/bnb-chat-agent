@@ -1,3 +1,4 @@
+import { publishAgentSessionAssistantMessage } from "@/lib/chat-agent/services/publish-agent-session-assistant-message";
 import { streamAgentTurnTokens } from "@/lib/chat-agent/services/stream-chat-with-agent";
 import { resolveChatAgentContext } from "@/lib/chat-agent/services/resolve-chat-agent-context";
 import { getOrCreateChannelAgentSession } from "@/lib/chat-agent/services/upsert-agent-session";
@@ -88,9 +89,16 @@ async function* streamEvents(params: {
     yield { type: "token", content: token };
   }
 
+  const message = fullMessage.trim() || FALLBACK_MESSAGE;
+
+  await publishAgentSessionAssistantMessage({
+    sessionId: params.sessionId,
+    message,
+  });
+
   yield {
     type: "done",
     sessionId: params.sessionId,
-    message: fullMessage.trim() || FALLBACK_MESSAGE,
+    message,
   };
 }

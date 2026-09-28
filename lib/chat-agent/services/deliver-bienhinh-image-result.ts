@@ -58,10 +58,10 @@ async function loadFacebookConnection(connectionId: string) {
   return row ?? null;
 }
 
-function isChannelContext(
+function isFacebookChannelContext(
   runContext: ChatAgentRunContext,
 ): runContext is Extract<ChatAgentRunContext, { connectionId: string }> {
-  return "connectionId" in runContext;
+  return "connectionId" in runContext && runContext.channelType === "facebook";
 }
 
 async function deliverWebNotification(params: {
@@ -165,7 +165,7 @@ export async function deliverBienhinhImageResult(
       runContext: params.runContext,
     });
 
-    if (isChannelContext(params.runContext)) {
+    if (isFacebookChannelContext(params.runContext)) {
       await deliverFacebookFollowUp({
         runContext: params.runContext,
         replyText: result.message,
@@ -175,10 +175,10 @@ export async function deliverBienhinhImageResult(
             : undefined,
       });
     } else {
-      // In-app sandbox (any chatEnv) still runs in the web UI.
       const notificationPayload: AgentSessionNotificationPayload =
         params.outcome.kind === "completed"
           ? {
+              role: "assistant",
               event: AGENT_SESSION_NOTIFICATION_EVENT.BIENHINH_IMAGE_COMPLETED,
               sessionId: params.sessionId,
               message: result.message,
@@ -186,6 +186,7 @@ export async function deliverBienhinhImageResult(
               templateName: params.outcome.templateName,
             }
           : {
+              role: "assistant",
               event: AGENT_SESSION_NOTIFICATION_EVENT.BIENHINH_IMAGE_FAILED,
               sessionId: params.sessionId,
               message: result.message,

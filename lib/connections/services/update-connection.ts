@@ -4,8 +4,7 @@ import { APIError } from "@/lib/exposers/api-error";
 import { and, eq } from "drizzle-orm";
 
 import type { ConnectionMutationResult, UpdateConnectionParams } from "../types";
-import { replaceWebsiteUrlInMetadata } from "../utils/read-website-connection-metadata";
-import { normalizeWebsiteUrl } from "../utils/normalize-website-url";
+import { mergeWebsiteOriginsIntoMetadata } from "../utils/build-website-connection-metadata";
 import { deleteConnectionConversations } from "./delete-connection-conversations";
 import { ensureFacebookConnectionWebhookSubscribed } from "./ensure-facebook-connection-webhook-subscribed";
 
@@ -15,7 +14,8 @@ export async function updateConnection(
   if (
     params.name === undefined &&
     params.agentId === undefined &&
-    params.websiteUrl === undefined
+    params.allowAllOrigins === undefined &&
+    params.allowedOrigins === undefined
   ) {
     throw new APIError(
       "ERR_CONNECTION_NOTHING_TO_UPDATE",
@@ -68,10 +68,24 @@ export async function updateConnection(
     );
   }
 
-  if (params.websiteUrl !== undefined && existing.channelType !== "website") {
+  const originsUpdate =
+    params.allowAllOrigins !== undefined || params.allowedOrigins !== undefined;
+
+  if (originsUpdate && existing.channelType !== "website") {
     throw new APIError(
-      "ERR_WEBSITE_URL_UNSUPPORTED",
-      "Website URL can only be set on a website chat.",
+      "ERR_WEBSITE_ORIGINS_UNSUPPORTED",
+      "Allowed websites can only be set on a website chat.",
+      400,
+    );
+  }
+
+  if (
+    originsUpdate &&
+    (params.allowAllOrigins === undefined || params.allowedOrigins === undefined)
+  ) {
+    throw new APIError(
+      "ERR_WEBSITE_ORIGINS_INVALID",
+      "Allowed websites are incomplete.",
       400,
     );
   }
@@ -96,24 +110,20 @@ export async function updateConnection(
     updates.agentId = params.agentId;
   }
 
-  if (params.websiteUrl !== undefined) {
-    let normalized: ReturnType<typeof normalizeWebsiteUrl>;
-
+  if (
+    params.allowAllOrigins !== undefined &&
+    params.allowedOrigins !== undefined
+  ) {
     try {
-      normalized = normalizeWebsiteUrl(params.websiteUrl);
-      const nextMetadata: Record<string, unknown> = {
-        ...(existing.metadata ?? {}),
-        ...replaceWebsiteUrlInMetadata({
-          metadata: existing.metadata,
-          normalized,
-        }),
-      };
-      delete nextMetadata.public_key;
-      updates.metadata = nextMetadata;
+      updates.metadata = mergeWebsiteOriginsIntoMetadata({
+        metadata: existing.metadata,
+        allowAllOrigins: params.allowAllOrigins,
+        allowedOrigins: params.allowedOrigins,
+      });
     } catch (error) {
       throw new APIError(
-        "ERR_WEBSITE_URL_INVALID",
-        error instanceof Error ? error.message : "Enter a valid website URL.",
+        "ERR_WEBSITE_ORIGINS_INVALID",
+        error instanceof Error ? error.message : "Enter a valid website domain.",
         400,
       );
     }

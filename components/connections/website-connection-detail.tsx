@@ -2,10 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CopyIcon, ExternalLinkIcon, Loader2Icon, TrashIcon } from "lucide-react";
+import { CopyIcon, Loader2Icon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useT } from "next-i18next/client";
 
 import { Button } from "@/components/ui/button";
@@ -45,9 +45,13 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/toast";
+import {
+  toWebsiteOriginsFormValue,
+  WebsiteAllowedOriginsField,
+} from "@/components/connections/website-allowed-origins-field";
 import type { ListAgentsResult } from "@/lib/agents/types";
 import { buildWebsiteEmbedCode } from "@/lib/connections/utils/build-website-embed-code";
-import { normalizeWebsiteUrl } from "@/lib/connections/utils/normalize-website-url";
+import { normalizeWebsiteOrigins } from "@/lib/connections/utils/normalize-website-origins";
 import { readWebsiteConnectionMetadata } from "@/lib/connections/utils/read-website-connection-metadata";
 import {
   websiteConnectionFormSchema,
@@ -162,19 +166,10 @@ export function WebsiteConnectionDetail({
     resolver: zodResolver(websiteConnectionFormSchema),
     defaultValues: {
       name: connection.name,
-      websiteUrl: metadata?.website_url ?? "",
+      ...toWebsiteOriginsFormValue(metadata),
       agentId: connection.agent?.id ?? "",
     },
   });
-
-  const websiteUrlValue = useWatch({ control: form.control, name: "websiteUrl" });
-  const allowedOriginPreview = React.useMemo(() => {
-    try {
-      return normalizeWebsiteUrl(websiteUrlValue || "").allowedOrigin;
-    } catch {
-      return metadata?.allowed_origin ?? null;
-    }
-  }, [metadata?.allowed_origin, websiteUrlValue]);
 
   const embedCode = React.useMemo(() => {
     if (!metadata || !connection.publicKey) {
@@ -184,7 +179,8 @@ export function WebsiteConnectionDetail({
     return buildWebsiteEmbedCode({
       siteBaseUrl: getSiteBaseUrl(),
       publicKey: connection.publicKey,
-      allowedOrigin: metadata.allowed_origin,
+      allowAllOrigins: metadata.allow_all_origins,
+      allowedOrigins: metadata.allowed_origins,
       websiteName: connection.name,
     });
   }, [connection.name, connection.publicKey, metadata]);
@@ -209,16 +205,19 @@ export function WebsiteConnectionDetail({
       return { data, values };
     },
     onSuccess: ({ data, values }) => {
-      let websiteUrl = values.websiteUrl;
-      try {
-        websiteUrl = normalizeWebsiteUrl(values.websiteUrl).websiteUrl;
-      } catch {
-        websiteUrl = values.websiteUrl;
+      let allowedOrigins = values.allowedOrigins;
+      if (!values.allowAllOrigins) {
+        try {
+          allowedOrigins = normalizeWebsiteOrigins(values.allowedOrigins);
+        } catch {
+          allowedOrigins = values.allowedOrigins;
+        }
       }
 
       form.reset({
         name: values.name.trim(),
-        websiteUrl,
+        allowAllOrigins: values.allowAllOrigins,
+        allowedOrigins: values.allowAllOrigins ? [""] : allowedOrigins,
         agentId: values.agentId,
       });
       toast.add({
@@ -270,7 +269,6 @@ export function WebsiteConnectionDetail({
   });
 
   const nameError = form.formState.errors.name;
-  const websiteUrlError = form.formState.errors.websiteUrl;
   const agentIdError = form.formState.errors.agentId;
   const isSaving = saveMutation.isPending;
 
@@ -283,15 +281,11 @@ export function WebsiteConnectionDetail({
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">{connection.name}</h1>
           {metadata ? (
-            <a
-              href={metadata.website_url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
-            >
-              {metadata.website_url}
-              <ExternalLinkIcon className="size-3.5" />
-            </a>
+            <p className="text-sm break-all text-muted-foreground">
+              {metadata.allow_all_origins
+                ? t("websiteConnection.allowAllSummary")
+                : metadata.allowed_origins.join(", ")}
+            </p>
           ) : null}
         </div>
         <Button
@@ -304,6 +298,7 @@ export function WebsiteConnectionDetail({
         </Button>
       </div>
 
+      <FormProvider {...form}>
       <form onSubmit={form.handleSubmit((values) => saveMutation.mutate(values))}>
         <Card>
           <CardHeader>
@@ -328,31 +323,10 @@ export function WebsiteConnectionDetail({
                 <FieldError errors={[nameError]} />
               </Field>
 
-              <Field data-invalid={!!websiteUrlError || undefined}>
-                <FieldLabel htmlFor="website-detail-url">
-                  {t("websiteConnection.urlLabel")}
-                </FieldLabel>
-                <FieldDescription>
-                  {t("websiteConnection.urlDescription")}
-                </FieldDescription>
-                <Input
-                  id="website-detail-url"
-                  type="url"
-                  inputMode="url"
-                  autoComplete="url"
-                  aria-invalid={!!websiteUrlError}
-                  disabled={isSaving}
-                  {...form.register("websiteUrl")}
-                />
-                {allowedOriginPreview ? (
-                  <p className="text-xs text-muted-foreground">
-                    {t("websiteConnection.allowedOrigin", {
-                      origin: allowedOriginPreview,
-                    })}
-                  </p>
-                ) : null}
-                <FieldError errors={[websiteUrlError]} />
-              </Field>
+              <WebsiteAllowedOriginsField
+                disabled={isSaving}
+                idPrefix="website-detail"
+              />
 
               <Field data-invalid={!!agentIdError || undefined}>
                 <FieldLabel htmlFor="website-detail-agent">
@@ -366,6 +340,9 @@ export function WebsiteConnectionDetail({
                   name="agentId"
                   render={({ field }) => (
                     <Select
+                      items={Object.fromEntries(
+                        agentOptions.map((agent) => [agent.id, agent.name]),
+                      )}
                       value={field.value}
                       onValueChange={(nextValue) => {
                         if (nextValue) {
@@ -418,6 +395,7 @@ export function WebsiteConnectionDetail({
           </CardFooter>
         </Card>
       </form>
+      </FormProvider>
 
       <Card>
         <CardHeader>

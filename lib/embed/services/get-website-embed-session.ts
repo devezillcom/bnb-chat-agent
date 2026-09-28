@@ -14,6 +14,7 @@ import type {
   WebsiteEmbedConnection,
 } from "../types";
 import { verifyEmbedToken } from "../utils/embed-token";
+import { createEmbedSessionNotificationAuth } from "./create-embed-session-notification-auth";
 import { resolveWebsiteEmbedConnectionById } from "./resolve-website-embed-connection";
 
 const WEBSITE_CHAT_ENV = "web" as const;
@@ -35,12 +36,21 @@ export async function getWebsiteEmbedSession(
   const messages = sessionId
     ? await loadWebsiteEmbedSessionMessages(connection, sessionId)
     : [];
+  const notification =
+    sessionId && params.visitorId
+      ? await createEmbedSessionNotificationAuth({
+          connectionId: connection.connectionId,
+          visitorId: params.visitorId,
+          sessionId,
+        })
+      : null;
 
   return {
     agentName: connection.agentName,
     firstMessage: connection.firstMessage,
     sessionId,
     messages,
+    notification,
   };
 }
 

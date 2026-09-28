@@ -312,8 +312,10 @@ External channel connections for a workspace (Facebook pages, website chat, etc.
 
 | Key | Description |
 | --- | ----------- |
-| `website_url` | Site URL entered for the channel |
-| `allowed_origin` | Origin allowed to load the embed (`https://host[:port]`) |
+| `allow_all_origins` | When true, any `http` or `https` origin may load the embed |
+| `allowed_origins` | Origins allowed to load the embed when `allow_all_origins` is false. Each value is `http(s)://host[:port]` |
+
+Older rows may still store `website_url` and a single `allowed_origin`. Those are read as one allowed origin until the channel is saved again.
 
 **Indexes**
 

@@ -28,8 +28,8 @@ export type FacebookConnectionMetadata = {
 };
 
 export type WebsiteConnectionMetadata = {
-  website_url: string;
-  allowed_origin: string;
+  allow_all_origins: boolean;
+  allowed_origins: string[];
 };
 
 export type ConnectionAgentSummary = {
@@ -76,14 +76,16 @@ export type UpdateConnectionParams = {
   workspaceId: string;
   name?: string;
   agentId?: string | null;
-  websiteUrl?: string;
+  allowAllOrigins?: boolean;
+  allowedOrigins?: string[];
 };
 
 export type CreateWebsiteConnectionParams = {
   workspaceId: string;
   userId: string;
   name: string;
-  websiteUrl: string;
+  allowAllOrigins: boolean;
+  allowedOrigins: string[];
   agentId: string;
 };
 

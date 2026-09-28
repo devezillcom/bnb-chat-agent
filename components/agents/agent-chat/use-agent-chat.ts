@@ -81,7 +81,7 @@ export function useAgentChat({
         | undefined,
     ) => {
       const payload = record?.payload;
-      if (!payload?.message) return;
+      if (payload?.role !== "assistant" || !payload.message) return;
 
       setMessages((current) => [
         ...current,

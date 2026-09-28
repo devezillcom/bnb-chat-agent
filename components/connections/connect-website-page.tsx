@@ -6,7 +6,7 @@ import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useT } from "next-i18next/client";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
+import { WebsiteAllowedOriginsField } from "@/components/connections/website-allowed-origins-field";
 import type { ListAgentsResult } from "@/lib/agents/types";
 import {
   websiteConnectionFormSchema,
@@ -81,7 +82,8 @@ export function ConnectWebsitePage({
     resolver: zodResolver(websiteConnectionFormSchema),
     defaultValues: {
       name: "",
-      websiteUrl: "",
+      allowAllOrigins: false,
+      allowedOrigins: [""],
       agentId: "",
     },
   });
@@ -115,7 +117,6 @@ export function ConnectWebsitePage({
 
   const isSubmitting = form.formState.isSubmitting;
   const nameError = form.formState.errors.name;
-  const websiteUrlError = form.formState.errors.websiteUrl;
   const agentIdError = form.formState.errors.agentId;
   const hasAgents = agents.length > 0;
 
@@ -141,6 +142,7 @@ export function ConnectWebsitePage({
         </div>
       </div>
 
+      <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Card>
           <CardHeader>
@@ -166,25 +168,10 @@ export function ConnectWebsitePage({
                 <FieldError errors={[nameError]} />
               </Field>
 
-              <Field data-invalid={!!websiteUrlError || undefined}>
-                <FieldLabel htmlFor="website-url">
-                  {t("websiteConnection.urlLabel")}
-                </FieldLabel>
-                <FieldDescription>
-                  {t("websiteConnection.urlDescription")}
-                </FieldDescription>
-                <Input
-                  id="website-url"
-                  type="url"
-                  inputMode="url"
-                  autoComplete="url"
-                  placeholder={t("websiteConnection.urlPlaceholder")}
-                  aria-invalid={!!websiteUrlError}
-                  disabled={isSubmitting}
-                  {...form.register("websiteUrl")}
-                />
-                <FieldError errors={[websiteUrlError]} />
-              </Field>
+              <WebsiteAllowedOriginsField
+                disabled={isSubmitting}
+                idPrefix="website"
+              />
 
               <Field data-invalid={!!agentIdError || undefined}>
                 <FieldLabel htmlFor="website-agent">
@@ -198,6 +185,9 @@ export function ConnectWebsitePage({
                   name="agentId"
                   render={({ field }) => (
                     <Select
+                      items={Object.fromEntries(
+                        agents.map((agent) => [agent.id, agent.name]),
+                      )}
                       value={field.value}
                       onValueChange={(nextValue) => {
                         if (nextValue) {
@@ -250,6 +240,7 @@ export function ConnectWebsitePage({
           </CardFooter>
         </Card>
       </form>
+      </FormProvider>
     </div>
   );
 }

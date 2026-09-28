@@ -184,6 +184,9 @@ export function ToolConfigFields({
                       <FieldDescription>{field.description}</FieldDescription>
                     ) : null}
                     <Select
+                      items={Object.fromEntries(
+                        field.options.map((option) => [option.value, option.label]),
+                      )}
                       value={value || field.defaultValue || ""}
                       onValueChange={(nextValue) => {
                         if (nextValue) {

@@ -13,31 +13,34 @@ Trong dashboard, tạo một **Website chat** và gán một agent. Mỗi kênh 
 | Giá trị | Dùng để |
 | --- | --- |
 | Public key | Trường `data-public-key` trong mã nhúng. Không phải bí mật. Dài 16–128 ký tự. |
-| Allowed origin | Origin duy nhất được phép bootstrap, dạng `https://host` hoặc `https://host:port`. Lấy từ URL website đã lưu, không gồm path. |
+| Allowed origins | Danh sách origin được phép bootstrap, hoặc mọi website. Mỗi origin dạng `https://host` hoặc `http://host:port`. Domain không kèm giao thức được lưu thành `https://`. Path không được giữ. |
 
-Bootstrap so khớp `Origin` với allowed origin theo chuỗi chính xác. `https://shop.example` và `https://www.shop.example` là hai origin khác nhau.
+Khi kênh bật cho phép mọi website, mọi header `Origin` dùng `http` hoặc `https` đều bootstrap được. Khi kênh liệt kê domain, bootstrap so khớp `Origin` với từng origin đã lưu. `https://shop.example` và `https://www.shop.example` là hai origin khác nhau.
+
+Kênh cũ chỉ lưu một `allowed_origin` vẫn được đọc như danh sách một origin, cho đến khi lưu lại cấu hình.
 
 Kênh chưa gán agent thì bootstrap trả `409`. Session và gửi tin cũng bị từ chối cho đến khi có agent.
 
 ## Luồng gọi
 
 1. Tạo `visitorId` (UUID) và lưu trên trình duyệt của khách, ví dụ `localStorage`. Cùng một id thì cùng một hội thoại.
-2. `POST /api/embed/bootstrap` với public key, `visitorId`, và header `Origin`. Nhận `token` (hiệu lực 12 giờ) và thông tin stream RTDB.
-3. Mở `EventSource` tới `rtdb.streamUrl` để nghe tin assistant cuối trên mọi trình duyệt của cùng `visitorId`.
-4. `GET /api/embed/session` để lấy tên agent, câu chào, và lịch sử nếu khách đã chat.
-5. `POST /api/embed/messages` để gửi một lượt. Đọc stream NDJSON cho đến event `done`.
-6. Khi gặp `ERR_EMBED_TOKEN_EXPIRED`, hoặc stream RTDB báo `auth_revoked`, gọi lại bootstrap rồi thử lại.
+2. `POST /api/embed/bootstrap` với public key và header `Origin`. Nhận `token` (hiệu lực 12 giờ).
+3. `GET /api/embed/session` để lấy tên agent, câu chào, lịch sử nếu khách đã chat, và stream notification của hội thoại.
+4. Mở `EventSource` tới `notification.streamUrl` để nghe tin assistant cuối. Mỗi lượt chat xong, và mỗi tin assistant do job nền ghi sau đó, đều ghi đè cùng kênh này.
+5. `POST /api/embed/messages` để gửi một lượt. Tab vừa gửi tin đọc stream NDJSON cho đến event `done`.
+6. Khi event `session` mang một `sessionId` mới, gọi lại `GET /api/embed/session` để lấy `notification`, rồi mở EventSource kênh đó.
+7. Khi gặp `ERR_EMBED_TOKEN_EXPIRED`, gọi lại bootstrap. Stream notification hết hạn hoặc báo `auth_revoked` thì gọi lại `GET /api/embed/session`.
 
 ```text
 visitorId (UUID, giữ lại)
         │
         ▼
-POST /api/embed/bootstrap ──► token, expiresAt, rtdb
+POST /api/embed/bootstrap ──► token, expiresAt
         │
-        ├─ EventSource(rtdb.streamUrl?auth=) ──► tin assistant cuối
         ▼
-GET  /api/embed/session    ──► agentName, firstMessage, messages
+GET  /api/embed/session    ──► agentName, firstMessage, messages, notification
         │
+        ├─ EventSource(notification.streamUrl?auth=) ──► tin assistant cuối
         ▼
 POST /api/embed/messages   ──► NDJSON: session → token* → done
 ```
@@ -48,7 +51,7 @@ POST /api/embed/messages   ──► NDJSON: session → token* → done
 
 Widget trên origin khác, kể cả `http://localhost:5173`, gọi được các endpoint này từ trình duyệt. `PUT` file lên URL của R2 là request khác: bucket R2 phải cho phép `PUT` từ origin của site khách.
 
-Server tự gọi bootstrap thì phải gửi header `Origin` đúng allowed origin. Thiếu header này, API trả 404.
+Server tự gọi bootstrap thì phải gửi header `Origin`. Thiếu header này, API trả 404. Origin phải nằm trong danh sách đã lưu, trừ khi kênh cho phép mọi website.
 
 ## `POST /api/embed/bootstrap`
 
@@ -60,70 +63,20 @@ Origin: https://shop.example
 Content-Type: application/json
 
 {
-  "publicKey": "your-public-key",
-  "visitorId": "6f1c2a30-7b4e-4d1a-9c3e-2a8b6d0e1f44"
+  "publicKey": "your-public-key"
 }
 ```
-
-`visitorId` bắt buộc, là UUID do client tạo và giữ lại. Bootstrap dùng id này để cấp quyền đọc đúng một node RTDB.
 
 `200`:
 
 ```json
 {
   "token": "opaque-token",
-  "expiresAt": "2026-09-28T17:00:00.000Z",
-  "rtdb": {
-    "streamUrl": "https://your-project-default-rtdb.firebaseio.com/embed-messages/connection-id/visitor-id.json",
-    "authToken": "firebase-id-token",
-    "expiresAt": "2026-09-28T06:00:00.000Z"
-  }
+  "expiresAt": "2026-09-28T17:00:00.000Z"
 }
 ```
 
-`token` là chuỗi opaque. Gửi nguyên văn, không tách hay sửa. `expiresAt` ở ngoài là hạn của token phiên, ISO 8601, 12 giờ sau lúc cấp.
-
-`rtdb` là `null` khi server chưa cấu hình Firebase. Khi có giá trị:
-
-| Trường | Ý nghĩa |
-| --- | --- |
-| `streamUrl` | URL REST streaming của node tin assistant cuối. Chưa gồm `auth`. |
-| `authToken` | Firebase ID token. Gắn vào query `auth` của `streamUrl`. |
-| `expiresAt` | Hạn của `authToken`, thường 1 giờ. Hết hạn thì stream gửi `auth_revoked`. Bootstrap lại. |
-
-Mở stream từ browser:
-
-```js
-const source = new EventSource(
-  `${rtdb.streamUrl}?auth=${encodeURIComponent(rtdb.authToken)}`,
-);
-
-source.addEventListener("put", (event) => {
-  const payload = JSON.parse(event.data);
-  const record = payload.data;
-  if (!record?.message) return;
-  // record.message là câu assistant cuối. record.sessionId, record.updatedAt
-});
-```
-
-Event `put` đầu tiên là dữ liệu hiện có tại node đó. Mỗi lần agent trả lời xong, server ghi đè cùng node, và stream nhận `put` mới với `path` là `"/"`. Không có từng mảnh chữ. Tab vừa gửi tin vẫn dùng NDJSON để hiện chữ dần. Tab khác chỉ nhận câu đã xong.
-
-Rules RTDB phải cho phép khách đọc đúng node của mình, và không cho client ghi:
-
-```json
-{
-  "rules": {
-    "embed-messages": {
-      "$connectionId": {
-        "$visitorId": {
-          ".read": "auth != null && auth.uid == $visitorId && auth.token.connectionId == $connectionId",
-          ".write": false
-        }
-      }
-    }
-  }
-}
-```
+`token` là chuỗi opaque. Gửi nguyên văn, không tách hay sửa. `expiresAt` là hạn của token phiên, ISO 8601, 12 giờ sau lúc cấp. Bootstrap không cấp stream RTDB. Tin assistant cuối nằm ở `notification` của `GET /api/embed/session`.
 
 Preflight:
 
@@ -162,7 +115,12 @@ Authorization: Bearer <token>
   "messages": [
     { "role": "user", "content": "Còn phòng cuối tuần không?" },
     { "role": "assistant", "content": "Cuối tuần này còn phòng deluxe." }
-  ]
+  ],
+  "notification": {
+    "streamUrl": "https://your-project-default-rtdb.firebaseio.com/channel-notifications/agent-session-0d5b9c2e-1f4a-4c8b-9a77-6e2d0c8b11aa.json",
+    "authToken": "firebase-id-token",
+    "expiresAt": "2026-09-28T06:00:00.000Z"
+  }
 }
 ```
 
@@ -172,8 +130,73 @@ Authorization: Bearer <token>
 | `firstMessage` | Câu chào để hiện trước tin đầu tiên. `null` nếu agent không đặt câu chào. API không tự gửi câu này vào hội thoại. |
 | `sessionId` | Id hội thoại hiện tại, hoặc `null` nếu khách chưa chat. |
 | `messages` | Lịch sử đã lưu. `role` là `user` hoặc `assistant`. Tin của khách có thể có `images`: `{ "url", "key", "mimeType", "fileName" }`. |
+| `notification` | Stream RTDB của tin assistant cuối trên hội thoại này. `null` khi chưa có hội thoại, hoặc khi Firebase chưa được cấu hình. |
 
-`sessionId` là `null` và `messages` rỗng khi chưa có hội thoại, hoặc khi kênh đã được gán sang agent khác. Tin tiếp theo sẽ mở hội thoại mới.
+`sessionId` là `null`, `messages` rỗng, và `notification` là `null` khi chưa có hội thoại, hoặc khi kênh đã được gán sang agent khác. Tin tiếp theo sẽ mở hội thoại mới. Sau event NDJSON `session` của tin đó, gọi lại endpoint này để lấy `notification`.
+
+`notification.streamUrl` trỏ tới `channel-notifications/agent-session-{sessionId}`. `authToken` là Firebase ID token có claim `sessionChannel` đúng tên kênh đó. Token phiên của bootstrap không đọc được kênh này.
+
+| Trường | Ý nghĩa |
+| --- | --- |
+| `streamUrl` | URL REST streaming của kênh hội thoại. Chưa gồm `auth`. |
+| `authToken` | Firebase ID token. Gắn vào query `auth` của `streamUrl`. |
+| `expiresAt` | Hạn của `authToken`, thường 1 giờ. Hết hạn thì stream gửi `auth_revoked`. Gọi lại `GET /api/embed/session`. |
+
+Mở stream notification:
+
+```js
+let appliedNotificationAt = 0;
+let sawNotificationSnapshot = false;
+const source = new EventSource(
+  `${notification.streamUrl}?auth=${encodeURIComponent(notification.authToken)}`,
+);
+
+source.addEventListener("put", (event) => {
+  const body = JSON.parse(event.data);
+  if (body.path !== "/") return;
+
+  const record = body.data;
+  const updatedAt = typeof record?.updatedAt === "number" ? record.updatedAt : 0;
+  if (!sawNotificationSnapshot) {
+    sawNotificationSnapshot = true;
+    appliedNotificationAt = updatedAt;
+    return;
+  }
+
+  const payload = record?.payload;
+  if (payload?.role !== "assistant" || !payload.message) return;
+  if (updatedAt <= appliedNotificationAt) return;
+  appliedNotificationAt = updatedAt;
+  // Nối payload.message vào danh sách tin. Không tải lại lịch sử.
+});
+```
+
+Event `put` đầu tiên là dữ liệu đang có. Bỏ qua, vì tin đó đã nằm trong `messages` nếu tab vừa tải hội thoại. Các `put` sau là tin assistant mới. `payload.event` là `assistant_message` khi một lượt chat vừa xong, hoặc `bienhinh_image_completed` / `bienhinh_image_failed` khi job nền ghi thêm một câu. Tab vừa gửi tin đã có câu đó từ NDJSON `done`, nên không nối lại cùng một `payload.message`. Tab khác nối `payload.message`. `updatedAt` chặn lần EventSource nối lại gửi lại cùng một bản ghi.
+
+`notification.expiresAt` thường là 1 giờ. Hết hạn hoặc stream gửi `auth_revoked` thì gọi lại `GET /api/embed/session`, đóng EventSource cũ, mở stream mới, và lại bỏ snapshot đầu.
+
+Rules RTDB cho phép đọc kênh hội thoại, và không cho client ghi:
+
+```json
+{
+  "rules": {
+    "channel-notifications": {
+      "$channel": {
+        ".read": "auth != null && (auth.token.sessionChannel == $channel || auth.token.firebase.sign_in_provider != 'custom')",
+        ".write": false
+      }
+    },
+    "jobs": {
+      "$jobKey": {
+        ".read": "auth != null",
+        ".write": false
+      }
+    }
+  }
+}
+```
+
+`channel-notifications` là kênh theo từng hội thoại, path `agent-session-{sessionId}`. Dashboard đăng nhập email hoặc Google đọc được kênh này. Token custom của embed chỉ đọc đúng kênh ghi trong claim `sessionChannel`. Server ghi bằng Admin SDK. Giữ các path khác đang có trên console khi dán rule. Thay cả file rules bằng đúng khối này sẽ xóa path không có trong khối.
 
 ## `POST /api/embed/messages`
 
@@ -284,7 +307,7 @@ Body lỗi:
 | 400 | `ERR_UPLOAD_SIZE` | Ảnh lớn hơn 15 MB. |
 | 401 | `ERR_EMBED_TOKEN_INVALID` | Thiếu token, token sai chữ ký, hoặc token không đúng dạng. |
 | 401 | `ERR_EMBED_TOKEN_EXPIRED` | Token quá 12 giờ. Bootstrap lại. |
-| 404 | `ERR_EMBED_NOT_FOUND` | Không có `Origin`, public key không tồn tại, origin không khớp, hoặc kênh không còn. Với origin không hợp lệ, response bootstrap không kèm CORS. |
+| 404 | `ERR_EMBED_NOT_FOUND` | Không có `Origin`, public key không tồn tại, origin không nằm trong danh sách (và kênh không cho phép mọi website), hoặc kênh không còn. Với origin không hợp lệ, response bootstrap không kèm CORS. |
 | 409 | `ERR_EMBED_AGENT_REQUIRED` | Kênh chưa có agent. |
 | 429 | `ERR_EMBED_RATE_LIMIT` | Quá số request trong 60 giây. |
 | 500 | `ERR_INTERNAL` | Lỗi máy chủ. |
@@ -311,7 +334,7 @@ async function bootstrap(publicKey) {
   const response = await fetch(`${baseUrl}/api/embed/bootstrap`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ publicKey, visitorId: visitorId() }),
+    body: JSON.stringify({ publicKey }),
   });
   if (!response.ok) throw await response.json();
   return response.json();

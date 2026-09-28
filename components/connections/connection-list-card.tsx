@@ -14,9 +14,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { ConnectionListItem } from "@/lib/connections/types";
+import { readWebsiteConnectionMetadata } from "@/lib/connections/utils/read-website-connection-metadata";
 import {
   getConnectionAvatarUrl,
-  getConnectionMetadataString,
   getConnectionTypeLabel,
 } from "@/lib/connections/utils/connection-display-utils";
 
@@ -32,10 +32,19 @@ export function ConnectionListCard({
   const { t } = useT("dashboard");
   const avatarUrl = getConnectionAvatarUrl(connection.metadata);
   const typeLabel = getConnectionTypeLabel(connection.channelType);
-  const websiteOrigin =
+  const websiteMetadata =
     connection.channelType === "website"
-      ? getConnectionMetadataString(connection.metadata, "allowed_origin")
+      ? readWebsiteConnectionMetadata(connection.metadata)
       : null;
+  const websiteSummary = websiteMetadata
+    ? websiteMetadata.allow_all_origins
+      ? t("websiteConnection.allowAllSummary")
+      : websiteMetadata.allowed_origins.length === 1
+        ? websiteMetadata.allowed_origins[0]
+        : t("websiteConnection.originsCount", {
+            count: websiteMetadata.allowed_origins.length,
+          })
+    : null;
 
   return (
     <Card className="relative h-full cursor-pointer transition duration-200 hover:bg-muted/20 hover:shadow-sm hover:ring-foreground/20">
@@ -63,7 +72,7 @@ export function ConnectionListCard({
           <div className="min-w-0 flex-1">
             <CardTitle className="line-clamp-2">{connection.name}</CardTitle>
             <p className="truncate text-xs text-muted-foreground">
-              {websiteOrigin ? `${typeLabel} · ${websiteOrigin}` : typeLabel}
+              {websiteSummary ? `${typeLabel} · ${websiteSummary}` : typeLabel}
             </p>
           </div>
         </div>

@@ -35,7 +35,8 @@ function mapWebsiteEmbedConnection(
     agentId: row.agentId,
     agentName: row.agentName,
     firstMessage: row.firstMessage,
-    allowedOrigin: metadata.allowed_origin,
+    allowAllOrigins: metadata.allow_all_origins,
+    allowedOrigins: metadata.allowed_origins,
   };
 }
 
@@ -50,7 +51,8 @@ const websiteEmbedConnectionSelect = {
 
 export async function lookupWebsiteEmbedByPublicKey(publicKey: string): Promise<{
   connectionId: string;
-  allowedOrigin: string;
+  allowAllOrigins: boolean;
+  allowedOrigins: string[];
   hasAgent: boolean;
 } | null> {
   const [row] = await db
@@ -77,7 +79,8 @@ export async function lookupWebsiteEmbedByPublicKey(publicKey: string): Promise<
 
   return {
     connectionId: row.connectionId,
-    allowedOrigin: metadata.allowed_origin,
+    allowAllOrigins: metadata.allow_all_origins,
+    allowedOrigins: metadata.allowed_origins,
     hasAgent: Boolean(row.agentId && row.agentName),
   };
 }

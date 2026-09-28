@@ -17,7 +17,6 @@ const bootstrapWebsiteEmbedSchema = z.object({
     .trim()
     .min(16, { error: "Chat key is invalid." })
     .max(128, { error: "Chat key is invalid." }),
-  visitorId: z.uuid({ error: "Visitor is invalid." }),
 });
 
 function exposesEmbedError(error: unknown) {
@@ -43,7 +42,6 @@ export async function POST(request: NextRequest) {
       publicKey: body.publicKey,
       origin,
       clientKey: readEmbedClientKey(request),
-      visitorId: body.visitorId,
     });
 
     return withEmbedCors(embedJson(result), origin);

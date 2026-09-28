@@ -9,7 +9,8 @@ export type WebsiteEmbedConnection = {
   agentId: string;
   agentName: string;
   firstMessage: string | null;
-  allowedOrigin: string;
+  allowAllOrigins: boolean;
+  allowedOrigins: string[];
 };
 
 export type EmbedTokenPayload = {
@@ -21,7 +22,6 @@ export type BootstrapWebsiteEmbedParams = {
   publicKey: string;
   origin: string;
   clientKey: string;
-  visitorId: string;
 };
 
 export type EmbedRtdbStreamAuth = {
@@ -33,7 +33,6 @@ export type EmbedRtdbStreamAuth = {
 export type BootstrapWebsiteEmbedResult = {
   token: string;
   expiresAt: string;
-  rtdb: EmbedRtdbStreamAuth | null;
 };
 
 export type GetWebsiteEmbedSessionParams = {
@@ -46,6 +45,7 @@ export type GetWebsiteEmbedSessionResult = {
   firstMessage: string | null;
   sessionId: string | null;
   messages: ChatAgentMessage[];
+  notification: EmbedRtdbStreamAuth | null;
 };
 
 export type CreateEmbedImageUploadUrlParams = {

@@ -11,7 +11,8 @@ export const POST = createApiHandler(
       workspaceId: ctx.workspaceId,
       userId: ctx.userId,
       name: params.name,
-      websiteUrl: params.websiteUrl,
+      allowAllOrigins: params.allowAllOrigins,
+      allowedOrigins: params.allowedOrigins,
       agentId: params.agentId,
     }),
   {

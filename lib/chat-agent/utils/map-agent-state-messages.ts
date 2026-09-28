@@ -10,7 +10,14 @@ type AgentStateMessage = {
   _getType?: () => string;
   type?: string;
   content?: unknown;
+  additional_kwargs?: {
+    lc_source?: unknown;
+  };
 };
+
+function isSummarizationMessage(message: AgentStateMessage): boolean {
+  return message.additional_kwargs?.lc_source === "summarization";
+}
 
 type ImageContentPart = {
   type?: string;
@@ -51,6 +58,23 @@ function extractImageAttachments(
   return images.length > 0 ? images : undefined;
 }
 
+function mergeImageAttachments(
+  groups: Array<ChatAgentImageAttachment[] | undefined>,
+): ChatAgentImageAttachment[] | undefined {
+  const seen = new Set<string>();
+  const images: ChatAgentImageAttachment[] = [];
+
+  for (const group of groups) {
+    for (const image of group ?? []) {
+      if (seen.has(image.url)) continue;
+      seen.add(image.url);
+      images.push(image);
+    }
+  }
+
+  return images.length > 0 ? images : undefined;
+}
+
 export function mapAgentStateMessagesToChatMessages(
   messages: unknown[],
 ): ChatAgentMessage[] {
@@ -58,10 +82,18 @@ export function mapAgentStateMessagesToChatMessages(
 
   for (const raw of messages) {
     const message = raw as AgentStateMessage;
+    if (isSummarizationMessage(message)) continue;
+
     const type = getMessageType(message);
     const rawContent = extractMessageContent(message.content);
-    const content = stripSystemEventTags(stripAttachedImageTags(rawContent)).trim();
-    const images = extractImageAttachments(message.content);
+    const strippedImages = stripAttachedImageTags(rawContent);
+    const content = stripSystemEventTags(strippedImages.content).trim();
+    const images = isUserMessageType(type)
+      ? mergeImageAttachments([
+          strippedImages.images,
+          extractImageAttachments(message.content),
+        ])
+      : undefined;
     if (!content && !images) continue;
 
     if (isUserMessageType(type)) {

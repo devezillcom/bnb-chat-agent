@@ -88,7 +88,7 @@ Apply in Firebase Console → Realtime Database → Rules:
 
 Notes:
 - This repo writes jobs from server/admin SDK; RTDB rules typically don’t block Admin writes, but keeping `".write": false` prevents accidental client-side writes.
-- If you also use other RTDB paths (e.g. `channel-notifications/*`), keep their rules explicit too; don’t open `"rules": { ".read": true }` globally.
+- Keep `channel-notifications/$channel` explicit too. Dashboard (non-custom sign-in) may read it. Embed custom tokens may read only when `auth.token.sessionChannel == $channel`. `.write` stays false. Don’t open `"rules": { ".read": true }` globally.
 
 ## Security note (important with guessable jobKey)
 

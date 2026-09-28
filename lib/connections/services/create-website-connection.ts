@@ -11,19 +11,21 @@ import type {
 import { buildWebsiteConnectionMetadata } from "../utils/build-website-connection-metadata";
 import { createWebsitePublicKey } from "../utils/create-website-public-key";
 import { encryptConnectionAuthData } from "../utils/encrypt-connection-auth-data";
-import { normalizeWebsiteUrl } from "../utils/normalize-website-url";
 
 export async function createWebsiteConnection(
   params: CreateWebsiteConnectionParams,
 ): Promise<ConnectionMutationResult> {
-  let normalized: ReturnType<typeof normalizeWebsiteUrl>;
+  let metadata: ReturnType<typeof buildWebsiteConnectionMetadata>;
 
   try {
-    normalized = normalizeWebsiteUrl(params.websiteUrl);
+    metadata = buildWebsiteConnectionMetadata({
+      allowAllOrigins: params.allowAllOrigins,
+      allowedOrigins: params.allowedOrigins,
+    });
   } catch (error) {
     throw new APIError(
-      "ERR_WEBSITE_URL_INVALID",
-      error instanceof Error ? error.message : "Enter a valid website URL.",
+      "ERR_WEBSITE_ORIGINS_INVALID",
+      error instanceof Error ? error.message : "Enter a valid website domain.",
       400,
     );
   }
@@ -39,10 +41,6 @@ export async function createWebsiteConnection(
   if (!agent) {
     throw new APIError("ERR_AGENT_NOT_FOUND", "Agent not found.", 404);
   }
-
-  const metadata = buildWebsiteConnectionMetadata({
-    websiteUrl: normalized.websiteUrl,
-  });
 
   const [connection] = await db
     .insert(connections)

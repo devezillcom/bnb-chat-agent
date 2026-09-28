@@ -1,11 +1,5 @@
 import { getAdminAuth } from "@/lib/firebase/admin";
-import {
-  readFirebaseDatabaseUrl,
-  websiteEmbedAssistantMessageStreamUrl,
-} from "@/lib/chat-agent/utils/website-embed-rtdb";
 import { APIError } from "@/lib/exposers/api-error";
-
-import type { EmbedRtdbStreamAuth } from "../types";
 
 const IDENTITY_TOOLKIT_URL =
   "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken";
@@ -15,29 +9,30 @@ type CustomTokenExchange = {
   expiresIn?: string;
 };
 
+export type EmbedFirebaseIdToken = {
+  idToken: string;
+  expiresAt: string;
+};
+
 function readFirebaseApiKey() {
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim();
   return apiKey || null;
 }
 
-export async function createEmbedRtdbStreamAuth(params: {
-  connectionId: string;
+export async function createEmbedFirebaseIdToken(params: {
   visitorId: string;
-}): Promise<EmbedRtdbStreamAuth | null> {
-  const databaseUrl = readFirebaseDatabaseUrl();
+  claims: Record<string, string>;
+}): Promise<EmbedFirebaseIdToken | null> {
   const apiKey = readFirebaseApiKey();
   const auth = getAdminAuth();
 
-  if (!databaseUrl || !apiKey || !auth) {
+  if (!apiKey || !auth) {
     return null;
   }
 
   let customToken: string;
   try {
-    customToken = await auth.createCustomToken(params.visitorId, {
-      connectionId: params.connectionId,
-      visitorId: params.visitorId,
-    });
+    customToken = await auth.createCustomToken(params.visitorId, params.claims);
   } catch (error) {
     console.error(error);
     throw new APIError(
@@ -81,12 +76,7 @@ export async function createEmbedRtdbStreamAuth(params: {
       : 60 * 60;
 
   return {
-    streamUrl: websiteEmbedAssistantMessageStreamUrl({
-      databaseUrl,
-      connectionId: params.connectionId,
-      visitorId: params.visitorId,
-    }),
-    authToken: body.idToken,
+    idToken: body.idToken,
     expiresAt: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
   };
 }

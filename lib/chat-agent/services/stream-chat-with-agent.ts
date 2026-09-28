@@ -2,7 +2,6 @@ import { randomUUID } from "crypto";
 
 import type { ChatAgentImageAttachment, ChatAgentRunContext } from "../schema";
 import type { ChatAgentStreamEvent, ChatWithAgentParams } from "../types";
-import { publishWebsiteAssistantMessage } from "./publish-website-assistant-message";
 import { buildChatAgentHumanMessage } from "../utils/build-chat-agent-human-message";
 import { createAgentRunConfig } from "../utils/create-agent-run-config";
 import { extractMessageContent } from "../utils/extract-message-content";
@@ -108,33 +107,6 @@ export async function* streamAgentTurnTokens(params: {
     accumulatedText += text;
     yield text;
   }
-
-  const websiteTarget = readWebsiteEmbedTarget(params.runContext);
-  if (!websiteTarget) {
-    return;
-  }
-
-  try {
-    await publishWebsiteAssistantMessage({
-      connectionId: websiteTarget.connectionId,
-      visitorId: websiteTarget.visitorId,
-      sessionId: params.sessionId,
-      message: accumulatedText.trim() || "I am not sure how to answer that yet.",
-    });
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-function readWebsiteEmbedTarget(runContext: ChatAgentRunContext) {
-  if (!("connectionId" in runContext) || runContext.channelType !== "website") {
-    return null;
-  }
-
-  return {
-    connectionId: runContext.connectionId,
-    visitorId: runContext.externalParticipantId,
-  };
 }
 
 export async function* streamChatWithAgent(

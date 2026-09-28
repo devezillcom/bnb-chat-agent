@@ -7,7 +7,8 @@ describe("buildWebsiteEmbedCode", () => {
     const code = buildWebsiteEmbedCode({
       siteBaseUrl: "https://app.example.com/",
       publicKey: "pub_key",
-      allowedOrigin: "https://example.com",
+      allowAllOrigins: false,
+      allowedOrigins: ["https://example.com", "https://shop.example.com"],
       websiteName: "Booking site",
     });
 
@@ -18,7 +19,9 @@ describe("buildWebsiteEmbedCode", () => {
     );
     expect(code.popup).toContain('data-mode="popup"');
     expect(code.popup).not.toContain("data-target");
-    expect(code.codingAgentPrompt).toContain("https://example.com");
+    expect(code.codingAgentPrompt).toContain(
+      "https://example.com, https://shop.example.com",
+    );
     expect(code.codingAgentPrompt).toContain("Booking site");
     expect(code.codingAgentPrompt).toContain(code.inline);
     expect(code.codingAgentPrompt).toContain(code.popup);

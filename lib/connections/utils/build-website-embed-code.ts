@@ -6,10 +6,26 @@ export type WebsiteEmbedCode = {
   codingAgentPrompt: string;
 };
 
+function describeAllowedOrigins(params: {
+  allowAllOrigins: boolean;
+  allowedOrigins: string[];
+}) {
+  if (params.allowAllOrigins) {
+    return "The widget may load on any website.";
+  }
+
+  if (params.allowedOrigins.length === 1) {
+    return `The widget may load only on ${params.allowedOrigins[0]}. Do not add it on any other origin.`;
+  }
+
+  return `The widget may load only on these origins: ${params.allowedOrigins.join(", ")}. Do not add it on any other origin.`;
+}
+
 export function buildWebsiteEmbedCode(params: {
   siteBaseUrl: string;
   publicKey: string;
-  allowedOrigin: string;
+  allowAllOrigins: boolean;
+  allowedOrigins: string[];
   websiteName: string;
 }): WebsiteEmbedCode {
   const siteBaseUrl = params.siteBaseUrl.replace(/\/$/, "");
@@ -38,7 +54,7 @@ export function buildWebsiteEmbedCode(params: {
     `Add the chat widget for "${params.websiteName}" to this website.`,
     "",
     "Rules:",
-    `- The widget may load only on ${params.allowedOrigin}. Do not add it on any other origin.`,
+    `- ${describeAllowedOrigins(params)}`,
     "- Keep the public key exactly as written. Do not generate a new key.",
     `- Load the script from ${scriptUrl}. Do not copy or host the script yourself.`,
     "- Pick one placement:",

@@ -1,5 +1,65 @@
 import type { WebsiteConnectionMetadata } from "../types";
-import type { NormalizedWebsiteUrl } from "./normalize-website-url";
+import { normalizeWebsiteOrigin } from "./normalize-website-origin";
+
+function readLegacyWebsiteOrigin(
+  metadata: Record<string, unknown>,
+): WebsiteConnectionMetadata | null {
+  const allowedOrigin = metadata.allowed_origin;
+
+  if (typeof allowedOrigin !== "string" || !allowedOrigin.trim()) {
+    return null;
+  }
+
+  try {
+    return {
+      allow_all_origins: false,
+      allowed_origins: [normalizeWebsiteOrigin(allowedOrigin)],
+    };
+  } catch {
+    return null;
+  }
+}
+
+function readCurrentWebsiteOrigins(
+  metadata: Record<string, unknown>,
+): WebsiteConnectionMetadata | null {
+  if (metadata.allow_all_origins === true) {
+    return {
+      allow_all_origins: true,
+      allowed_origins: [],
+    };
+  }
+
+  if (!Array.isArray(metadata.allowed_origins)) {
+    return readLegacyWebsiteOrigin(metadata);
+  }
+
+  const allowedOrigins: string[] = [];
+
+  for (const item of metadata.allowed_origins) {
+    if (typeof item !== "string" || !item.trim()) {
+      continue;
+    }
+
+    try {
+      const origin = normalizeWebsiteOrigin(item);
+      if (!allowedOrigins.includes(origin)) {
+        allowedOrigins.push(origin);
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  if (allowedOrigins.length === 0) {
+    return readLegacyWebsiteOrigin(metadata);
+  }
+
+  return {
+    allow_all_origins: false,
+    allowed_origins: allowedOrigins,
+  };
+}
 
 export function readWebsiteConnectionMetadata(
   metadata: Record<string, unknown> | null | undefined,
@@ -8,36 +68,12 @@ export function readWebsiteConnectionMetadata(
     return null;
   }
 
-  const websiteUrl = metadata.website_url;
-  const allowedOrigin = metadata.allowed_origin;
-
   if (
-    typeof websiteUrl !== "string" ||
-    typeof allowedOrigin !== "string" ||
-    !websiteUrl.trim() ||
-    !allowedOrigin.trim()
+    typeof metadata.allow_all_origins === "boolean" ||
+    Array.isArray(metadata.allowed_origins)
   ) {
-    return null;
+    return readCurrentWebsiteOrigins(metadata);
   }
 
-  return {
-    website_url: websiteUrl.trim(),
-    allowed_origin: allowedOrigin.trim(),
-  };
-}
-
-export function replaceWebsiteUrlInMetadata(params: {
-  metadata: Record<string, unknown> | null | undefined;
-  normalized: NormalizedWebsiteUrl;
-}): WebsiteConnectionMetadata {
-  const existing = readWebsiteConnectionMetadata(params.metadata);
-
-  if (!existing) {
-    throw new Error("This website chat is missing its site address.");
-  }
-
-  return {
-    website_url: params.normalized.websiteUrl,
-    allowed_origin: params.normalized.allowedOrigin,
-  };
+  return readLegacyWebsiteOrigin(metadata);
 }

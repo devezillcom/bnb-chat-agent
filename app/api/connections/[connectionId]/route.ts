@@ -36,7 +36,13 @@ export const PATCH = createApiHandler(
       workspaceId: ctx.workspaceId,
       ...(params.name !== undefined ? { name: params.name } : {}),
       ...(params.agentId !== undefined ? { agentId: params.agentId } : {}),
-      ...(params.websiteUrl !== undefined ? { websiteUrl: params.websiteUrl } : {}),
+      ...(params.allowAllOrigins !== undefined &&
+      params.allowedOrigins !== undefined
+        ? {
+            allowAllOrigins: params.allowAllOrigins,
+            allowedOrigins: params.allowedOrigins,
+          }
+        : {}),
     }),
   {
     allowedRoles: ["user", "admin"],
