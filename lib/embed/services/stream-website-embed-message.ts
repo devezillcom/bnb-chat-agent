@@ -6,6 +6,7 @@ import { buildChatAgentSessionTitle } from "@/lib/chat-agent/utils/build-chat-ag
 
 import { EMBED_MESSAGE_RATE_LIMIT } from "../constants";
 import type { StreamWebsiteEmbedMessageParams } from "../types";
+import { assertEmbedImageAttachments } from "../utils/assert-embed-image-attachments";
 import { verifyEmbedToken } from "../utils/embed-token";
 import { assertEmbedRateLimit } from "./assert-embed-rate-limit";
 import { resolveWebsiteEmbedConnectionById } from "./resolve-website-embed-connection";
@@ -32,6 +33,10 @@ export async function streamWebsiteEmbedMessage(
     title: buildChatAgentSessionTitle(params.message),
   });
 
+  const images = assertEmbedImageAttachments({
+    images: params.images,
+    workspaceId: connection.workspaceId,
+  });
   const agentContext = await resolveChatAgentContext({
     agentId: connection.agentId,
     workspaceId: connection.workspaceId,
@@ -41,6 +46,7 @@ export async function streamWebsiteEmbedMessage(
   return streamEvents({
     sessionId: session.sessionId,
     message: params.message,
+    images,
     visitorId: params.visitorId,
     connectionId: connection.connectionId,
     workspaceId: connection.workspaceId,
@@ -52,6 +58,7 @@ export async function streamWebsiteEmbedMessage(
 async function* streamEvents(params: {
   sessionId: string;
   message: string;
+  images: ReturnType<typeof assertEmbedImageAttachments>;
   visitorId: string;
   connectionId: string;
   workspaceId: string;
@@ -64,6 +71,7 @@ async function* streamEvents(params: {
 
   for await (const token of streamAgentTurnTokens({
     message: params.message,
+    images: params.images,
     workspaceId: params.workspaceId,
     sessionId: params.sessionId,
     agentContext: params.agentContext,

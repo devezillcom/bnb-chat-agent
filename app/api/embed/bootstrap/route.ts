@@ -3,9 +3,9 @@ import { z } from "zod";
 
 import { bootstrapWebsiteEmbed } from "@/lib/embed/services/bootstrap-website-embed";
 import {
-  embedCorsHeaders,
   embedErrorResponse,
   embedJson,
+  embedPreflight,
   readEmbedClientKey,
   withEmbedCors,
 } from "@/lib/embed/utils/embed-http";
@@ -17,6 +17,7 @@ const bootstrapWebsiteEmbedSchema = z.object({
     .trim()
     .min(16, { error: "Chat key is invalid." })
     .max(128, { error: "Chat key is invalid." }),
+  visitorId: z.uuid({ error: "Visitor is invalid." }),
 });
 
 function exposesEmbedError(error: unknown) {
@@ -24,16 +25,7 @@ function exposesEmbedError(error: unknown) {
 }
 
 export function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get("origin");
-
-  if (!origin) {
-    return new Response(null, { status: 204 });
-  }
-
-  return new Response(null, {
-    status: 204,
-    headers: embedCorsHeaders(origin),
-  });
+  return embedPreflight(request);
 }
 
 export async function POST(request: NextRequest) {
@@ -51,6 +43,7 @@ export async function POST(request: NextRequest) {
       publicKey: body.publicKey,
       origin,
       clientKey: readEmbedClientKey(request),
+      visitorId: body.visitorId,
     });
 
     return withEmbedCors(embedJson(result), origin);

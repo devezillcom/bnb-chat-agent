@@ -7,6 +7,7 @@ import type {
 } from "../types";
 import { createEmbedToken } from "../utils/embed-token";
 import { assertEmbedRateLimit } from "./assert-embed-rate-limit";
+import { createEmbedRtdbStreamAuth } from "./create-embed-rtdb-stream-auth";
 import { lookupWebsiteEmbedByPublicKey } from "./resolve-website-embed-connection";
 
 export async function bootstrapWebsiteEmbed(
@@ -38,9 +39,14 @@ export async function bootstrapWebsiteEmbed(
 
   const issuedAt = Date.now();
   const token = createEmbedToken(connection.connectionId, issuedAt);
+  const rtdb = await createEmbedRtdbStreamAuth({
+    connectionId: connection.connectionId,
+    visitorId: params.visitorId,
+  });
 
   return {
     token,
     expiresAt: new Date(issuedAt + EMBED_TOKEN_TTL_SECONDS * 1000).toISOString(),
+    rtdb,
   };
 }

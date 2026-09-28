@@ -12,11 +12,32 @@ export function readEmbedClientKey(request: Request) {
 export function embedCorsHeaders(origin: string): Headers {
   const headers = new Headers();
   headers.set("Access-Control-Allow-Origin", origin);
-  headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  headers.set("Access-Control-Allow-Headers", "Content-Type");
+  headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  headers.set("Access-Control-Allow-Headers", "Authorization, Content-Type");
   headers.set("Access-Control-Max-Age", "600");
   headers.set("Vary", "Origin");
   return headers;
+}
+
+export function embedPreflight(request: Request) {
+  const origin = request.headers.get("origin");
+
+  if (!origin) {
+    return new Response(null, { status: 204 });
+  }
+
+  return new Response(null, {
+    status: 204,
+    headers: embedCorsHeaders(origin),
+  });
+}
+
+export function withEmbedCorsIfOrigin(response: Response, origin: string | null) {
+  if (!origin) {
+    return response;
+  }
+
+  return withEmbedCors(response, origin);
 }
 
 export function withEmbedCors(response: Response, origin: string) {

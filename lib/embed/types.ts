@@ -1,4 +1,7 @@
-import type { ChatAgentMessage } from "@/lib/chat-agent/schema";
+import type {
+  ChatAgentImageAttachment,
+  ChatAgentMessage,
+} from "@/lib/chat-agent/schema";
 
 export type WebsiteEmbedConnection = {
   connectionId: string;
@@ -18,11 +21,19 @@ export type BootstrapWebsiteEmbedParams = {
   publicKey: string;
   origin: string;
   clientKey: string;
+  visitorId: string;
+};
+
+export type EmbedRtdbStreamAuth = {
+  streamUrl: string;
+  authToken: string;
+  expiresAt: string;
 };
 
 export type BootstrapWebsiteEmbedResult = {
   token: string;
   expiresAt: string;
+  rtdb: EmbedRtdbStreamAuth | null;
 };
 
 export type GetWebsiteEmbedSessionParams = {
@@ -37,8 +48,16 @@ export type GetWebsiteEmbedSessionResult = {
   messages: ChatAgentMessage[];
 };
 
+export type CreateEmbedImageUploadUrlParams = {
+  token: string;
+  visitorId: string;
+  contentType: string;
+  contentLength: number;
+};
+
 export type StreamWebsiteEmbedMessageParams = {
   token: string;
   visitorId: string;
   message: string;
+  images?: ChatAgentImageAttachment[];
 };
