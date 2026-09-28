@@ -110,7 +110,7 @@
     "saved": "Đã cập nhật chat website.",
     "saveFailed": "Không lưu được chat website.",
     "embedTitle": "Mã nhúng",
-    "embedDescription": "Dán một đoạn mã vào website. Khách chưa thấy chat cho đến khi bật widget website.",
+    "embedDescription": "Dán một đoạn mã vào website. Khách trên site đó có thể chat với trợ lý.",
     "inlineTab": "Nhúng trong trang",
     "popupTab": "Nút góc trang",
     "inlineHelp": "Hiện khung chat ngay trong trang, tại chỗ bạn dán đoạn mã.",

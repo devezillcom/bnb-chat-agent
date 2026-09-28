@@ -14,7 +14,6 @@ import {
   MessageContent,
   MessageHeader,
 } from "@/components/ui/message";
-import type { AgentListItem } from "@/lib/agents/types";
 import { getAgentListLeading } from "@/lib/agents/utils/get-agent-list-leading";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +21,9 @@ import { AgentChatMarkdown } from "./agent-chat-markdown";
 import type { AgentChatMessage as AgentChatMessageType } from "./types";
 
 type AgentChatMessageProps = {
-  agent: AgentListItem;
+  agent: {
+    name: string;
+  };
   message: AgentChatMessageType;
   isStreaming: boolean;
 };

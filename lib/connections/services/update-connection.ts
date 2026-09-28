@@ -101,13 +101,15 @@ export async function updateConnection(
 
     try {
       normalized = normalizeWebsiteUrl(params.websiteUrl);
-      updates.metadata = {
+      const nextMetadata: Record<string, unknown> = {
         ...(existing.metadata ?? {}),
         ...replaceWebsiteUrlInMetadata({
           metadata: existing.metadata,
           normalized,
         }),
       };
+      delete nextMetadata.public_key;
+      updates.metadata = nextMetadata;
     } catch (error) {
       throw new APIError(
         "ERR_WEBSITE_URL_INVALID",

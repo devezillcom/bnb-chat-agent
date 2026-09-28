@@ -8,14 +8,14 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from "@/components/ui/message-scroller";
-import type { AgentListItem } from "@/lib/agents/types";
-
 import { AgentChatEmptyState } from "./agent-chat-empty-state";
 import { AgentChatMessage } from "./agent-chat-message";
 import type { AgentChatMessage as AgentChatMessageType } from "./types";
 
 type AgentChatMessageListProps = {
-  agent: AgentListItem;
+  agent: {
+    name: string;
+  };
   greeting: string;
   messages: AgentChatMessageType[];
   isSending: boolean;

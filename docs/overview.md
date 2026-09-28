@@ -22,3 +22,7 @@ A chat agent can be used in several ways:
 
 - [Facebook agent replies](./features/facebook-agent-replies.md) — Messenger webhook, QStash, session continuity
 - [Knowledge base ingestion](./features/knowledge-base-ingestion.md) — document upload, convert, chunk, Pinecone index pipeline
+
+## API docs
+
+- [Website embed API](./agent/website-embed.md) — bootstrap, session, and streaming messages for a custom website chat

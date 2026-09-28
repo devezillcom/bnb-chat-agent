@@ -177,17 +177,17 @@ export function WebsiteConnectionDetail({
   }, [metadata?.allowed_origin, websiteUrlValue]);
 
   const embedCode = React.useMemo(() => {
-    if (!metadata) {
+    if (!metadata || !connection.publicKey) {
       return null;
     }
 
     return buildWebsiteEmbedCode({
       siteBaseUrl: getSiteBaseUrl(),
-      publicKey: metadata.public_key,
+      publicKey: connection.publicKey,
       allowedOrigin: metadata.allowed_origin,
       websiteName: connection.name,
     });
-  }, [connection.name, metadata]);
+  }, [connection.name, connection.publicKey, metadata]);
 
   const saveMutation = useMutation({
     mutationFn: async (values: WebsiteConnectionFormValues) => {

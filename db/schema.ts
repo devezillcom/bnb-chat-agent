@@ -180,6 +180,8 @@ export const connections = pgTable(
       onDelete: "set null",
     }),
     channelType: text("channel_type").notNull(),
+    /** Public embed key for website chat. Null for other channel types. */
+    publicKey: text("public_key"),
     name: text("name").notNull(),
     encryptedAuthData: text("encrypted_auth_data").notNull(),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
@@ -196,6 +198,7 @@ export const connections = pgTable(
     index("connections_user_id_idx").on(table.userId),
     index("connections_agent_id_idx").on(table.agentId),
     index("connections_channel_type_idx").on(table.channelType),
+    uniqueIndex("connections_public_key_idx").on(table.publicKey),
   ],
 );
 

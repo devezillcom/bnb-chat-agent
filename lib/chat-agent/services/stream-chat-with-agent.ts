@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 
+import type { ChatAgentImageAttachment, ChatAgentRunContext } from "../schema";
 import type { ChatAgentStreamEvent, ChatWithAgentParams } from "../types";
 import { buildChatAgentHumanMessage } from "../utils/build-chat-agent-human-message";
 import { createAgentRunConfig } from "../utils/create-agent-run-config";
@@ -40,24 +41,22 @@ function separatorBeforeNextMessageToken(
   return " ";
 }
 
-async function* streamChatAgentTokens(
-  params: ChatWithAgentParams,
-  sessionId: string,
-  agentContext: ResolveChatAgentContextResult,
-): AsyncGenerator<string> {
-  const agent = await getChatAgent(agentContext);
-  const runConfig = createAgentRunConfig(sessionId, {
-    userId: params.userId,
-    workspaceId: params.workspaceId,
-    agentId: params.agentId,
-    chatEnv: params.chatEnv,
-  });
+export async function* streamAgentTurnTokens(params: {
+  message: string;
+  images?: ChatAgentImageAttachment[];
+  workspaceId: string;
+  sessionId: string;
+  agentContext: ResolveChatAgentContextResult;
+  runContext: ChatAgentRunContext;
+}): AsyncGenerator<string> {
+  const agent = await getChatAgent(params.agentContext);
+  const runConfig = createAgentRunConfig(params.sessionId, params.runContext);
 
   const humanMessage = await buildChatAgentHumanMessage(
     params.message,
     params.images,
     params.workspaceId,
-    agentContext.model,
+    params.agentContext.model,
   );
 
   const stream = await agent.stream(
@@ -133,11 +132,19 @@ export async function* streamChatWithAgent(
 
   let fullMessage = "";
 
-  for await (const token of streamChatAgentTokens(
-    params,
+  for await (const token of streamAgentTurnTokens({
+    message: params.message,
+    images: params.images,
+    workspaceId: params.workspaceId,
     sessionId,
     agentContext,
-  )) {
+    runContext: {
+      userId: params.userId,
+      workspaceId: params.workspaceId,
+      agentId: params.agentId,
+      chatEnv: params.chatEnv,
+    },
+  })) {
     fullMessage += token;
     yield { type: "token", content: token };
   }

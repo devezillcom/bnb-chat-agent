@@ -14,6 +14,7 @@ export async function getConnection(
       id: connections.id,
       channelType: connections.channelType,
       name: connections.name,
+      publicKey: connections.publicKey,
       metadata: connections.metadata,
       lastError: connections.lastError,
       createdAt: connections.createdAt,

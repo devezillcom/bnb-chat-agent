@@ -30,7 +30,6 @@ export type FacebookConnectionMetadata = {
 export type WebsiteConnectionMetadata = {
   website_url: string;
   allowed_origin: string;
-  public_key: string;
 };
 
 export type ConnectionAgentSummary = {
@@ -42,6 +41,7 @@ export type ConnectionListItem = {
   id: string;
   channelType: string;
   name: string;
+  publicKey: string | null;
   metadata: Record<string, unknown> | null;
   lastError: string | null;
   agent: ConnectionAgentSummary | null;

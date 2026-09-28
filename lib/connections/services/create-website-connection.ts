@@ -9,6 +9,7 @@ import type {
   CreateWebsiteConnectionParams,
 } from "../types";
 import { buildWebsiteConnectionMetadata } from "../utils/build-website-connection-metadata";
+import { createWebsitePublicKey } from "../utils/create-website-public-key";
 import { encryptConnectionAuthData } from "../utils/encrypt-connection-auth-data";
 import { normalizeWebsiteUrl } from "../utils/normalize-website-url";
 
@@ -52,6 +53,7 @@ export async function createWebsiteConnection(
       channelType: "website",
       name: params.name.trim(),
       encryptedAuthData: encryptConnectionAuthData({ channel: "website" }),
+      publicKey: createWebsitePublicKey(),
       metadata,
     })
     .returning({ id: connections.id });

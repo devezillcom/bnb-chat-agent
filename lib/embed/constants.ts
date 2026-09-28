@@ -1,0 +1,9 @@
+export const EMBED_TOKEN_TTL_SECONDS = 12 * 60 * 60;
+
+export const EMBED_MESSAGE_MAX_LENGTH = 4000;
+
+export const EMBED_BOOTSTRAP_RATE_LIMIT = 60;
+
+export const EMBED_MESSAGE_RATE_LIMIT = 20;
+
+export const EMBED_RATE_LIMIT_WINDOW_SECONDS = 60;

@@ -300,9 +300,13 @@ External channel connections for a workspace (Facebook pages, website chat, etc.
 | user_id | uuid | NO | — | User who created the connection (`users.id`) |
 | agent_id | uuid | YES | — | Assigned chat agent (`agents.id`) |
 | channel_type | text | NO | — | Channel identifier (`facebook`, `website`) |
+| public_key | text | YES | — | Public embed key for website chat. Null for other channels. Not a secret. |
 | name | text | NO | — | Display name (Facebook page name or website name) |
 | encrypted_auth_data | text | NO | — | AES-256-GCM encrypted channel auth. Facebook stores OAuth tokens. Website stores `{ channel: "website" }` because the column is required and the embed key is public. |
 | metadata | jsonb | YES | — | Non-sensitive channel metadata |
+| last_error | text | YES | — | Last refresh/connect failure message |
+| created_at | timestamptz | NO | `now()` | Row creation time |
+| updated_at | timestamptz | NO | `now()` | Last update time |
 
 **Website metadata** (`channel_type = website`)
 
@@ -310,10 +314,6 @@ External channel connections for a workspace (Facebook pages, website chat, etc.
 | --- | ----------- |
 | `website_url` | Site URL entered for the channel |
 | `allowed_origin` | Origin allowed to load the embed (`https://host[:port]`) |
-| `public_key` | Public embed key placed in the snippet. Not a secret. |
-| last_error | text | YES | — | Last refresh/connect failure message |
-| created_at | timestamptz | NO | `now()` | Row creation time |
-| updated_at | timestamptz | NO | `now()` | Last update time |
 
 **Indexes**
 
@@ -321,6 +321,7 @@ External channel connections for a workspace (Facebook pages, website chat, etc.
 - `connections_user_id_idx` — on `user_id`
 - `connections_agent_id_idx` — on `agent_id`
 - `connections_channel_type_idx` — on `channel_type`
+- `connections_public_key_idx` — UNIQUE on `public_key`. Null keys do not collide.
 
 **Relations**
 

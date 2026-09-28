@@ -4,6 +4,7 @@ type ConnectionRow = {
   id: string;
   channelType: string;
   name: string;
+  publicKey: string | null;
   metadata: Record<string, unknown> | null;
   lastError: string | null;
   createdAt: Date;
@@ -22,6 +23,7 @@ export function mapConnectionRow(row: ConnectionRow): ConnectionListItem {
     id: row.id,
     channelType: row.channelType,
     name: row.name,
+    publicKey: row.publicKey,
     metadata: row.metadata ?? null,
     lastError: row.lastError ?? null,
     agent,
@@ -34,6 +36,7 @@ export const connectionSelectFields = {
   id: true as const,
   channelType: true as const,
   name: true as const,
+  publicKey: true as const,
   metadata: true as const,
   lastError: true as const,
   createdAt: true as const,

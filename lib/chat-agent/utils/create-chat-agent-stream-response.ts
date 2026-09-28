@@ -5,13 +5,13 @@ function encodeStreamEvent(event: ChatAgentStreamEvent): Uint8Array {
   return new TextEncoder().encode(`${JSON.stringify(event)}\n`);
 }
 
-export function createChatAgentStreamResponse(
-  params: ChatWithAgentParams,
+export function createChatAgentEventStreamResponse(
+  events: AsyncIterable<ChatAgentStreamEvent>,
 ): Response {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        for await (const event of streamChatWithAgent(params)) {
+        for await (const event of events) {
           controller.enqueue(encodeStreamEvent(event));
         }
       } catch (error) {
@@ -36,4 +36,10 @@ export function createChatAgentStreamResponse(
       "Cache-Control": "no-cache, no-transform",
     },
   });
+}
+
+export function createChatAgentStreamResponse(
+  params: ChatWithAgentParams,
+): Response {
+  return createChatAgentEventStreamResponse(streamChatWithAgent(params));
 }

@@ -76,5 +76,5 @@ export const DEFAULT_CONNECTION_REFRESH_CRON_CONFIG = {
 
 export const CONNECTION_NAME_MAX_LENGTH = 120;
 
-/** Public script the website embed snippets load. The widget runtime is not served yet. */
+/** Script path advertised in dashboard embed snippets. This app does not serve it. */
 export const WEBSITE_EMBED_SCRIPT_PATH = "/embed/chat.js";

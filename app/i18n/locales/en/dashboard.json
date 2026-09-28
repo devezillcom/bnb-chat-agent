@@ -110,7 +110,7 @@
     "saved": "Website chat updated.",
     "saveFailed": "Could not save website chat.",
     "embedTitle": "Embed code",
-    "embedDescription": "Paste one snippet into your site. Visitors will not see a chat until the website widget is turned on.",
+    "embedDescription": "Paste one snippet into your site. Visitors can chat with the agent from that site.",
     "inlineTab": "Inline",
     "popupTab": "Popup button",
     "inlineHelp": "Shows the chat inside the page, in the box where you paste this snippet.",

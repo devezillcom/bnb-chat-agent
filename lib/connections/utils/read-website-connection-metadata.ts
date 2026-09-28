@@ -10,15 +10,12 @@ export function readWebsiteConnectionMetadata(
 
   const websiteUrl = metadata.website_url;
   const allowedOrigin = metadata.allowed_origin;
-  const publicKey = metadata.public_key;
 
   if (
     typeof websiteUrl !== "string" ||
     typeof allowedOrigin !== "string" ||
-    typeof publicKey !== "string" ||
     !websiteUrl.trim() ||
-    !allowedOrigin.trim() ||
-    !publicKey.trim()
+    !allowedOrigin.trim()
   ) {
     return null;
   }
@@ -26,7 +23,6 @@ export function readWebsiteConnectionMetadata(
   return {
     website_url: websiteUrl.trim(),
     allowed_origin: allowedOrigin.trim(),
-    public_key: publicKey.trim(),
   };
 }
 
@@ -37,11 +33,10 @@ export function replaceWebsiteUrlInMetadata(params: {
   const existing = readWebsiteConnectionMetadata(params.metadata);
 
   if (!existing) {
-    throw new Error("This website chat is missing its embed key.");
+    throw new Error("This website chat is missing its site address.");
   }
 
   return {
-    ...existing,
     website_url: params.normalized.websiteUrl,
     allowed_origin: params.normalized.allowedOrigin,
   };
