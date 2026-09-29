@@ -2,7 +2,7 @@
 
 API công khai để gắn chat agent vào một website. Client tự giữ `visitorId`, đổi public key lấy token, rồi gửi tin và đọc câu trả lời theo stream.
 
-Đoạn mã trong dashboard chỉ nhúng script `/embed/chat.js`. Tài liệu này là cho client tự gọi HTTP API.
+Đoạn mã trong dashboard nhúng `https://bnb-chat-agent-widget.bienhinh.vn/bnb-chat.js`. Script đó đọc `data-public-key`, `data-base-url` (origin của app), `data-mode` (`popup` hoặc `inline`), `data-target` (bắt buộc khi inline), `data-primary-color` (`#RRGGBB`), và `data-position` (`bottom-right` hoặc `bottom-left`, chỉ popup). Tài liệu này là cho client tự gọi HTTP API.
 
 Base URL là origin của app, ví dụ `https://chat.example.com`.
 

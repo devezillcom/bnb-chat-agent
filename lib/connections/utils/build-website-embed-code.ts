@@ -1,4 +1,8 @@
-import { WEBSITE_EMBED_SCRIPT_PATH } from "../constants";
+import {
+  WEBSITE_EMBED_DEFAULT_POSITION,
+  WEBSITE_EMBED_DEFAULT_PRIMARY_COLOR,
+  WEBSITE_EMBED_SCRIPT_URL,
+} from "../constants";
 
 export type WebsiteEmbedCode = {
   inline: string;
@@ -29,23 +33,27 @@ export function buildWebsiteEmbedCode(params: {
   websiteName: string;
 }): WebsiteEmbedCode {
   const siteBaseUrl = params.siteBaseUrl.replace(/\/$/, "");
-  const scriptUrl = `${siteBaseUrl}${WEBSITE_EMBED_SCRIPT_PATH}`;
   const targetId = "bnb-chat";
+  const scriptLines = [
+    "<script",
+    `  src="${WEBSITE_EMBED_SCRIPT_URL}"`,
+    `  data-public-key="${params.publicKey}"`,
+    `  data-base-url="${siteBaseUrl}"`,
+  ];
   const inline = [
     `<div id="${targetId}"></div>`,
-    "<script",
-    `  src="${scriptUrl}"`,
-    `  data-public-key="${params.publicKey}"`,
+    ...scriptLines,
     '  data-mode="inline"',
     `  data-target="${targetId}"`,
+    `  data-primary-color="${WEBSITE_EMBED_DEFAULT_PRIMARY_COLOR}"`,
     "  async",
     "></script>",
   ].join("\n");
   const popup = [
-    "<script",
-    `  src="${scriptUrl}"`,
-    `  data-public-key="${params.publicKey}"`,
+    ...scriptLines,
     '  data-mode="popup"',
+    `  data-primary-color="${WEBSITE_EMBED_DEFAULT_PRIMARY_COLOR}"`,
+    `  data-position="${WEBSITE_EMBED_DEFAULT_POSITION}"`,
     "  async",
     "></script>",
   ].join("\n");
@@ -56,7 +64,11 @@ export function buildWebsiteEmbedCode(params: {
     "Rules:",
     `- ${describeAllowedOrigins(params)}`,
     "- Keep the public key exactly as written. Do not generate a new key.",
-    `- Load the script from ${scriptUrl}. Do not copy or host the script yourself.`,
+    `- Load the script from ${WEBSITE_EMBED_SCRIPT_URL}. Do not copy or host the script yourself.`,
+    `- Keep data-base-url as ${siteBaseUrl}. That is the chat API origin.`,
+    `- data-primary-color is a #RRGGBB color. The default is ${WEBSITE_EMBED_DEFAULT_PRIMARY_COLOR}.`,
+    `- Popup data-position is ${WEBSITE_EMBED_DEFAULT_POSITION} or bottom-left. Do not set data-position on the inline snippet.`,
+    "- Inline data-target must match the element id.",
     "- Pick one placement:",
     "  1. Inline — put the chat inside a specific page.",
     "  2. Popup button — add a corner button that opens the chat, usually from the root layout so it shows on every page.",

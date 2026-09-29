@@ -79,5 +79,12 @@ export const CONNECTION_NAME_MAX_LENGTH = 120;
 /** How many website origins one channel can allow. */
 export const WEBSITE_ALLOWED_ORIGINS_MAX = 20;
 
-/** Script path advertised in dashboard embed snippets. This app does not serve it. */
-export const WEBSITE_EMBED_SCRIPT_PATH = "/embed/chat.js";
+/** Widget loader advertised in dashboard embed snippets. This app does not serve it. */
+export const WEBSITE_EMBED_SCRIPT_URL =
+  "https://bnb-chat-agent-widget.bienhinh.vn/bnb-chat.js";
+
+/** Matches the widget default when `data-primary-color` is omitted. */
+export const WEBSITE_EMBED_DEFAULT_PRIMARY_COLOR = "#18181b";
+
+/** Matches the widget default when popup `data-position` is omitted. */
+export const WEBSITE_EMBED_DEFAULT_POSITION = "bottom-right";
