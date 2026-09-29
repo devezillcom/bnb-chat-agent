@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
 import { agents, connections } from "@/db/schema";
+import { normalizeConversationStarters } from "@/lib/agents/utils/normalize-conversation-starters";
 import { readWebsiteConnectionMetadata } from "@/lib/connections/utils/read-website-connection-metadata";
 import { db } from "@/lib/db";
 import { APIError } from "@/lib/exposers/api-error";
@@ -14,6 +15,8 @@ type WebsiteEmbedConnectionRow = {
   metadata: Record<string, unknown> | null;
   agentName: string | null;
   firstMessage: string | null;
+  avatarUrl: string | null;
+  conversationStarters: string[] | null;
 };
 
 function mapWebsiteEmbedConnection(
@@ -47,6 +50,8 @@ const websiteEmbedConnectionSelect = {
   metadata: connections.metadata,
   agentName: agents.name,
   firstMessage: agents.firstMessage,
+  avatarUrl: agents.avatarUrl,
+  conversationStarters: agents.conversationStarters,
 };
 
 export async function lookupWebsiteEmbedByPublicKey(publicKey: string): Promise<{
@@ -54,6 +59,8 @@ export async function lookupWebsiteEmbedByPublicKey(publicKey: string): Promise<
   allowAllOrigins: boolean;
   allowedOrigins: string[];
   hasAgent: boolean;
+  avatarUrl: string | null;
+  conversationStarters: string[];
 } | null> {
   const [row] = await db
     .select(websiteEmbedConnectionSelect)
@@ -82,6 +89,10 @@ export async function lookupWebsiteEmbedByPublicKey(publicKey: string): Promise<
     allowAllOrigins: metadata.allow_all_origins,
     allowedOrigins: metadata.allowed_origins,
     hasAgent: Boolean(row.agentId && row.agentName),
+    avatarUrl: row.avatarUrl,
+    conversationStarters: normalizeConversationStarters(
+      row.conversationStarters,
+    ),
   };
 }
 

@@ -21,6 +21,7 @@ export const chatAgentMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
   content: z.string(),
   images: z.array(chatAgentImageAttachmentSchema).optional(),
+  createdAt: z.iso.datetime().optional(),
 });
 
 export const chatWithAgentRequestSchema = z

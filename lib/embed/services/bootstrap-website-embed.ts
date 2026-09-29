@@ -50,5 +50,7 @@ export async function bootstrapWebsiteEmbed(
   return {
     token,
     expiresAt: new Date(issuedAt + EMBED_TOKEN_TTL_SECONDS * 1000).toISOString(),
+    avatarUrl: connection.avatarUrl,
+    conversationStarters: connection.conversationStarters,
   };
 }

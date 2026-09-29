@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -153,6 +154,13 @@ export const agents = pgTable(
     model: text("model").notNull().default("claude-sonnet-4-6"),
     /** Greeting sent on Messenger Get Started (and similar channel openers). */
     firstMessage: text("first_message"),
+    /** Public image shown by channels that support an agent avatar. */
+    avatarUrl: text("avatar_url"),
+    /** Suggested prompts a visitor can send to open the chat. */
+    conversationStarters: text("conversation_starters")
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { AgentListItemWithCapabilities } from "@/lib/agents/types";
-import { getAgentAvatarUrl } from "@/lib/agents/utils/get-agent-avatar-url";
+import { resolveAgentAvatarUrl } from "@/lib/agents/utils/get-agent-avatar-url";
 import { cn } from "@/lib/utils";
 
 type AgentListCardProps = {
@@ -66,7 +66,10 @@ export function AgentListCard({
   detailHref,
 }: AgentListCardProps) {
   const { t } = useT("dashboard");
-  const avatarUrl = getAgentAvatarUrl(agent.name);
+  const avatarUrl = resolveAgentAvatarUrl({
+    name: agent.name,
+    avatarUrl: agent.avatarUrl,
+  });
   const hasDescription = Boolean(agent.description);
   const hasCapabilities =
     agent.tools.length > 0 ||

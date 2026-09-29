@@ -6,7 +6,7 @@ import { getT } from "next-i18next/server";
 import { AgentDetailNav } from "@/components/agents/agent-detail-nav";
 import { Button } from "@/components/ui/button";
 import { getAgent } from "@/lib/agents/services/get-agent";
-import { getAgentAvatarUrl } from "@/lib/agents/utils/get-agent-avatar-url";
+import { resolveAgentAvatarUrl } from "@/lib/agents/utils/get-agent-avatar-url";
 import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
 import { APIError } from "@/lib/exposers/api-error";
 import { getWorkspaceRouteContext } from "@/lib/workspaces/services/get-workspace-route-context";
@@ -27,11 +27,13 @@ export default async function AgentDetailLayout({
 
   let agentName = "";
   let agentDescription: string | null = null;
+  let agentAvatarUrl: string | null = null;
 
   try {
     const agent = await getAgent({ workspaceId: workspace.id, agentId });
     agentName = agent.name;
     agentDescription = agent.description;
+    agentAvatarUrl = agent.avatarUrl;
   } catch (error) {
     if (error instanceof APIError && error.statusCode === 404) {
       notFound();
@@ -43,7 +45,10 @@ export default async function AgentDetailLayout({
   const agentsHref = getDashboardNavHref(workspaceIndex, "agents");
   const agentHref = `${agentsHref}/${agentId}`;
   const chatHref = `${agentHref}/chat`;
-  const avatarUrl = getAgentAvatarUrl(agentName);
+  const avatarUrl = resolveAgentAvatarUrl({
+    name: agentName,
+    avatarUrl: agentAvatarUrl,
+  });
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-8">

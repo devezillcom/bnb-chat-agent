@@ -1,13 +1,12 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { useT } from "next-i18next/client";
 
-import { AgentModelField } from "@/components/agents/agent-model-field";
+import { AgentBasicsForm } from "@/components/agents/agent-basics-form";
+import { AgentGreetingForm } from "@/components/agents/agent-greeting-form";
 import { AgentPageHelper } from "@/components/agents/agent-page-helper";
 import {
   AlertDialog,
@@ -23,25 +22,12 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
-import {
-  createAgentFormSchema,
-  type CreateAgentFormValues,
-} from "@/lib/agents/schema";
 import type { AgentListItem } from "@/lib/agents/types";
 import { getDashboardNavHref } from "@/lib/dashboard/nav-items";
 import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
@@ -65,45 +51,6 @@ export function AgentGeneralPage({
   const [clearingContext, setClearingContext] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  const form = useForm<CreateAgentFormValues>({
-    resolver: zodResolver(createAgentFormSchema),
-    defaultValues: {
-      name: agent.name,
-      description: agent.description ?? "",
-      // Carried unchanged so the full PATCH payload stays valid; the system
-      // prompt is edited on the Instructions page.
-      systemPrompt: agent.systemPrompt,
-      model: agent.model,
-      firstMessage: agent.firstMessage ?? "",
-    },
-  });
-
-  const isSubmitting = form.formState.isSubmitting;
-  const nameError = form.formState.errors.name;
-  const descriptionError = form.formState.errors.description;
-  const firstMessageError = form.formState.errors.firstMessage;
-
-  async function onSubmit(values: CreateAgentFormValues) {
-    const res = await workspaceFetch(workspaceId, `/api/agents/${agent.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-    const data = (await res.json()) as { message?: string; error?: string };
-
-    if (res.ok) {
-      toast.add({ title: data.message ?? "Assistant updated.", type: "success" });
-      form.reset(values);
-      router.refresh();
-      return;
-    }
-
-    toast.add({
-      title: data.error ?? data.message ?? "Something went wrong.",
-      type: "error",
-    });
-  }
 
   async function handleClearContext() {
     setClearingContext(true);
@@ -166,118 +113,9 @@ export function AgentGeneralPage({
         description={t("agentDetail.general.helperDescription")}
       />
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("agentDetail.general.sectionTitle")}</CardTitle>
-            <CardDescription>
-              {t("agentDetail.general.sectionDescription")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FieldGroup>
-              <Field data-invalid={!!nameError || undefined}>
-                <FieldLabel htmlFor="agent-name">
-                  {t("agentDetail.general.name")}
-                </FieldLabel>
-                <Input
-                  id="agent-name"
-                  autoComplete="off"
-                  aria-invalid={!!nameError}
-                  disabled={isSubmitting}
-                  {...form.register("name")}
-                />
-                <FieldError errors={[nameError]} />
-              </Field>
-
-              <Field data-invalid={!!descriptionError || undefined}>
-                <FieldLabel htmlFor="agent-description">
-                  {t("agentDetail.general.description")}
-                </FieldLabel>
-                <Input
-                  id="agent-description"
-                  autoComplete="off"
-                  aria-invalid={!!descriptionError}
-                  disabled={isSubmitting}
-                  {...form.register("description")}
-                />
-                <FieldError errors={[descriptionError]} />
-              </Field>
-
-              <AgentModelField
-                control={form.control}
-                name="model"
-                id="agent-model"
-                disabled={isSubmitting}
-              />
-            </FieldGroup>
-          </CardContent>
-          <CardFooter className="justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isSubmitting || !form.formState.isDirty}
-              onClick={() => form.reset()}
-            >
-              {t("agentDetail.reset")}
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2Icon className="animate-spin" data-icon="inline-start" />
-                  {t("agentDetail.saving")}
-                </>
-              ) : (
-                t("agentDetail.save")
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("agentDetail.general.firstMessageTitle")}</CardTitle>
-            <CardDescription>
-              {t("agentDetail.general.firstMessageDescription")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Field data-invalid={!!firstMessageError || undefined}>
-              <FieldLabel htmlFor="agent-first-message" className="sr-only">
-                {t("agentDetail.general.firstMessageTitle")}
-              </FieldLabel>
-              <Textarea
-                id="agent-first-message"
-                rows={3}
-                placeholder={t("agentDetail.general.firstMessagePlaceholder")}
-                aria-invalid={!!firstMessageError}
-                disabled={isSubmitting}
-                {...form.register("firstMessage")}
-              />
-              <FieldError errors={[firstMessageError]} />
-            </Field>
-          </CardContent>
-          <CardFooter className="justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isSubmitting || !form.formState.isDirty}
-              onClick={() => form.reset()}
-            >
-              {t("agentDetail.reset")}
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2Icon className="animate-spin" data-icon="inline-start" />
-                  {t("agentDetail.saving")}
-                </>
-              ) : (
-                t("agentDetail.save")
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
+      <div className="space-y-6">
+        <AgentBasicsForm agent={agent} workspaceId={workspaceId} />
+        <AgentGreetingForm agent={agent} workspaceId={workspaceId} />
 
         <Card>
           <CardHeader>
@@ -385,7 +223,7 @@ export function AgentGeneralPage({
             </AlertDialog>
           </CardFooter>
         </Card>
-      </form>
+      </div>
     </>
   );
 }

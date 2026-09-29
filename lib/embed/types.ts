@@ -33,6 +33,8 @@ export type EmbedRtdbStreamAuth = {
 export type BootstrapWebsiteEmbedResult = {
   token: string;
   expiresAt: string;
+  avatarUrl: string | null;
+  conversationStarters: string[];
 };
 
 export type GetWebsiteEmbedSessionParams = {
@@ -60,4 +62,14 @@ export type StreamWebsiteEmbedMessageParams = {
   visitorId: string;
   message: string;
   images?: ChatAgentImageAttachment[];
+};
+
+export type ClearWebsiteEmbedMessagesParams = {
+  token: string;
+  visitorId: string;
+};
+
+export type ClearWebsiteEmbedMessagesResult = {
+  cleared: true;
+  sessionId: string | null;
 };

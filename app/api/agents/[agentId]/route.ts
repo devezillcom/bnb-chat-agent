@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { createAgentFormSchema } from "@/lib/agents/schema";
+import { updateAgentRequestSchema } from "@/lib/agents/schema";
 import { deleteAgent } from "@/lib/agents/services/delete-agent";
 import { getAgent } from "@/lib/agents/services/get-agent";
 import { updateAgent } from "@/lib/agents/services/update-agent";
@@ -28,7 +28,7 @@ export const GET = createApiHandler(
 export const PATCH = createApiHandler(
   {
     parameters: getAgentRouteParamsSchema,
-    requestBody: createAgentFormSchema,
+    requestBody: updateAgentRequestSchema,
   },
   (params, ctx) =>
     updateAgent({
@@ -37,6 +37,8 @@ export const PATCH = createApiHandler(
       systemPrompt: params.systemPrompt,
       model: params.model,
       firstMessage: params.firstMessage,
+      avatarUrl: params.avatarUrl,
+      conversationStarters: params.conversationStarters,
       workspaceId: ctx.workspaceId,
       agentId: params.agentId,
     }),

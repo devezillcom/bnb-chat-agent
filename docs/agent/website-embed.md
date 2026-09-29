@@ -24,18 +24,19 @@ Kênh chưa gán agent thì bootstrap trả `409`. Session và gửi tin cũng b
 ## Luồng gọi
 
 1. Tạo `visitorId` (UUID) và lưu trên trình duyệt của khách, ví dụ `localStorage`. Cùng một id thì cùng một hội thoại.
-2. `POST /api/embed/bootstrap` với public key và header `Origin`. Nhận `token` (hiệu lực 12 giờ).
+2. `POST /api/embed/bootstrap` với public key và header `Origin`. Nhận `token` (hiệu lực 12 giờ), ảnh đại diện, và câu gợi ý mở đầu.
 3. `GET /api/embed/session` để lấy tên agent, câu chào, lịch sử nếu khách đã chat, và stream notification của hội thoại.
 4. Mở `EventSource` tới `notification.streamUrl` để nghe tin assistant cuối. Mỗi lượt chat xong, và mỗi tin assistant do job nền ghi sau đó, đều ghi đè cùng kênh này.
 5. `POST /api/embed/messages` để gửi một lượt. Tab vừa gửi tin đọc stream NDJSON cho đến event `done`.
 6. Khi event `session` mang một `sessionId` mới, gọi lại `GET /api/embed/session` để lấy `notification`, rồi mở EventSource kênh đó.
-7. Khi gặp `ERR_EMBED_TOKEN_EXPIRED`, gọi lại bootstrap. Stream notification hết hạn hoặc báo `auth_revoked` thì gọi lại `GET /api/embed/session`.
+7. `POST /api/embed/messages/clear` để xóa lịch sử của khách này. `sessionId` giữ nguyên. Xóa tin đang hiện trên widget. Giữ EventSource.
+8. Khi gặp `ERR_EMBED_TOKEN_EXPIRED`, gọi lại bootstrap. Stream notification hết hạn hoặc báo `auth_revoked` thì gọi lại `GET /api/embed/session`.
 
 ```text
 visitorId (UUID, giữ lại)
         │
         ▼
-POST /api/embed/bootstrap ──► token, expiresAt
+POST /api/embed/bootstrap ──► token, expiresAt, avatarUrl, conversationStarters
         │
         ▼
 GET  /api/embed/session    ──► agentName, firstMessage, messages, notification
@@ -43,11 +44,12 @@ GET  /api/embed/session    ──► agentName, firstMessage, messages, notifica
         ├─ EventSource(notification.streamUrl?auth=) ──► tin assistant cuối
         ▼
 POST /api/embed/messages   ──► NDJSON: session → token* → done
+POST /api/embed/messages/clear ──► { cleared: true, sessionId }
 ```
 
 ## CORS
 
-`bootstrap`, `session`, `messages`, và `images` phản chiếu header `Origin` của request vào `Access-Control-Allow-Origin`. Preflight `OPTIONS` cho phép `GET`, `POST`, và các header `Authorization`, `Content-Type`.
+`bootstrap`, `session`, `messages`, `messages/clear`, và `images` phản chiếu header `Origin` của request vào `Access-Control-Allow-Origin`. Preflight `OPTIONS` cho phép `GET`, `POST`, và các header `Authorization`, `Content-Type`.
 
 Widget trên origin khác, kể cả `http://localhost:5173`, gọi được các endpoint này từ trình duyệt. `PUT` file lên URL của R2 là request khác: bucket R2 phải cho phép `PUT` từ origin của site khách.
 
@@ -72,11 +74,21 @@ Content-Type: application/json
 ```json
 {
   "token": "opaque-token",
-  "expiresAt": "2026-09-28T17:00:00.000Z"
+  "expiresAt": "2026-09-28T17:00:00.000Z",
+  "avatarUrl": "https://cdn.example.com/workspaces/workspace-id/agent-avatars/image.webp",
+  "conversationStarters": [
+    "Còn phòng cuối tuần không?",
+    "Giờ nhận phòng là mấy giờ?"
+  ]
 }
 ```
 
 `token` là chuỗi opaque. Gửi nguyên văn, không tách hay sửa. `expiresAt` là hạn của token phiên, ISO 8601, 12 giờ sau lúc cấp. Bootstrap không cấp stream RTDB. Tin assistant cuối nằm ở `notification` của `GET /api/embed/session`.
+
+| Trường | Ý nghĩa |
+| --- | --- |
+| `avatarUrl` | Ảnh đại diện của agent. `null` nếu agent chưa tải ảnh. Widget tự chọn ảnh thay thế khi giá trị là `null`. |
+| `conversationStarters` | Các câu gợi ý khách có thể bấm để gửi tin mở đầu. Mảng rỗng nếu agent không đặt. API không tự đưa các câu này vào hội thoại. |
 
 Preflight:
 
@@ -113,8 +125,16 @@ Authorization: Bearer <token>
   "firstMessage": "Xin chào, tôi có thể giúp gì?",
   "sessionId": "0d5b9c2e-1f4a-4c8b-9a77-6e2d0c8b11aa",
   "messages": [
-    { "role": "user", "content": "Còn phòng cuối tuần không?" },
-    { "role": "assistant", "content": "Cuối tuần này còn phòng deluxe." }
+    {
+      "role": "user",
+      "content": "Còn phòng cuối tuần không?",
+      "createdAt": "2026-09-29T04:12:00.000Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Cuối tuần này còn phòng deluxe.",
+      "createdAt": "2026-09-29T04:12:08.000Z"
+    }
   ],
   "notification": {
     "streamUrl": "https://your-project-default-rtdb.firebaseio.com/channel-notifications/agent-session-0d5b9c2e-1f4a-4c8b-9a77-6e2d0c8b11aa.json",
@@ -129,7 +149,7 @@ Authorization: Bearer <token>
 | `agentName` | Tên agent đang trả lời. |
 | `firstMessage` | Câu chào để hiện trước tin đầu tiên. `null` nếu agent không đặt câu chào. API không tự gửi câu này vào hội thoại. |
 | `sessionId` | Id hội thoại hiện tại, hoặc `null` nếu khách chưa chat. |
-| `messages` | Lịch sử đã lưu. `role` là `user` hoặc `assistant`. Tin của khách có thể có `images`: `{ "url", "key", "mimeType", "fileName" }`. |
+| `messages` | Lịch sử đã lưu. `role` là `user` hoặc `assistant`. `createdAt` là thời điểm gửi, ISO 8601, và có thể thiếu với tin cũ. Tin của khách có thể có `images`: `{ "url", "key", "mimeType", "fileName" }`. |
 | `notification` | Stream RTDB của tin assistant cuối trên hội thoại này. `null` khi chưa có hội thoại, hoặc khi Firebase chưa được cấu hình. |
 
 `sessionId` là `null`, `messages` rỗng, và `notification` là `null` khi chưa có hội thoại, hoặc khi kênh đã được gán sang agent khác. Tin tiếp theo sẽ mở hội thoại mới. Sau event NDJSON `session` của tin đó, gọi lại endpoint này để lấy `notification`.
@@ -245,6 +265,33 @@ Lỗi kiểm tra input, token, hoặc rate limit trả JSON thường (mục mã
 
 Cùng `visitorId` trên cùng kênh thì các lượt sau nối tiếp hội thoại đó. Đổi agent của kênh thì lượt gửi tiếp theo xóa hội thoại cũ và tạo hội thoại mới.
 
+## `POST /api/embed/messages/clear`
+
+Xóa lịch sử chat của một khách trên kênh này và giữ nguyên `sessionId`. Agent không còn nhớ các lượt trước. Khách chưa từng chat vẫn nhận `200`, với `sessionId` là `null`.
+
+```http
+POST /api/embed/messages/clear
+Content-Type: application/json
+
+{
+  "token": "<token>",
+  "visitorId": "6f1c2a30-7b4e-4d1a-9c3e-2a8b6d0e1f44"
+}
+```
+
+Token nằm trong body. `visitorId` bắt buộc và phải là UUID.
+
+`200`:
+
+```json
+{
+  "cleared": true,
+  "sessionId": "0d5b9c2e-1f4a-4c8b-9a77-6e2d0c8b11aa"
+}
+```
+
+`sessionId` là hội thoại hiện tại. Sau khi xóa, `GET /api/embed/session` trả cùng `sessionId`, `messages` rỗng, và cùng `notification`. Giữ EventSource. Tin tiếp theo nối tiếp hội thoại này, với ngữ cảnh trống.
+
 ## `POST /api/embed/images`
 
 Xin URL để widget tải ảnh thẳng lên kho file. Gọi một lần cho mỗi ảnh, trước khi gửi tin.
@@ -285,6 +332,7 @@ Khi rate limit đang bật, cửa sổ là 60 giây:
 | Bootstrap theo IP (`X-Forwarded-For`, hop đầu) | 60 request |
 | Bootstrap theo từng website chat | 60 request |
 | Gửi tin theo từng cặp kênh + `visitorId` | 20 request |
+| Xóa lịch sử theo từng cặp kênh + `visitorId` | 20 request |
 | Xin URL upload ảnh theo từng cặp kênh + `visitorId` | 30 request |
 
 Vượt giới hạn trả `429` / `ERR_EMBED_RATE_LIMIT`.
@@ -349,6 +397,16 @@ async function loadSession(token, visitorId) {
   url.searchParams.set("visitorId", visitorId);
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw await response.json();
+  return response.json();
+}
+
+async function clearMessages(token, visitorId) {
+  const response = await fetch(`${baseUrl}/api/embed/messages/clear`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, visitorId }),
   });
   if (!response.ok) throw await response.json();
   return response.json();

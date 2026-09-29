@@ -14,6 +14,7 @@ import { buildChatAgentKnowledgeTool } from "../tools/build-chat-agent-knowledge
 import { buildChatAgentTools } from "../tools/build-chat-agent-tools";
 import { buildChatAgentToolsPrompt } from "../tools/build-chat-agent-tools-prompt";
 import { getChatAgentCheckpointer } from "../utils/get-chat-agent-checkpointer";
+import { messageCreatedAtMiddleware } from "../utils/message-created-at-middleware";
 
 type ChatAgent = Awaited<ReturnType<typeof buildChatAgent>>;
 
@@ -53,6 +54,7 @@ async function buildChatAgent(config: ChatAgentConfig) {
     tools,
     contextSchema: chatAgentRunContextSchema,
     middleware: [
+      messageCreatedAtMiddleware,
       dynamicSystemPromptMiddleware(() =>
         [config.systemPrompt, toolsPrompt].filter(Boolean).join("\n\n"),
       ),

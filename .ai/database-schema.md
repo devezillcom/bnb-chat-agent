@@ -159,6 +159,8 @@ Configured chat agents for a workspace.
 | system_prompt | text | NO | — | Instructions that define agent behavior |
 | model | text | NO | `claude-sonnet-4-6` | Registry chat model id used for this agent |
 | first_message | text | YES | — | Greeting for channel openers (e.g. Messenger Get Started) |
+| avatar_url | text | YES | — | Public image URL for channels that show an agent avatar |
+| conversation_starters | text[] | NO | `'{}'` | Suggested prompts a visitor can send to open the chat |
 | created_at | timestamptz | NO | `now()` | Row creation time |
 | updated_at | timestamptz | NO | `now()` | Last update time |
 

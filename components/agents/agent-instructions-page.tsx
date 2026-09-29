@@ -25,15 +25,15 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import {
-  createAgentFormSchema,
-  type CreateAgentFormValues,
+  agentInstructionsFormSchema,
+  type AgentInstructionsFormValues,
 } from "@/lib/agents/schema";
 import type { AgentListItem } from "@/lib/agents/types";
+import { patchAgent } from "@/lib/agents/utils/patch-agent";
 import {
   agentMentionItemsQueryKey,
   fetchAgentMentionItems,
 } from "@/lib/agents/utils/fetch-agent-mention-items";
-import { workspaceFetch } from "@/lib/workspaces/utils/workspace-fetch";
 
 type AgentInstructionsPageProps = {
   agent: AgentListItem;
@@ -52,16 +52,10 @@ export function AgentInstructionsPage({
     queryFn: () => fetchAgentMentionItems(workspaceId, agent.id),
   });
 
-  const form = useForm<CreateAgentFormValues>({
-    resolver: zodResolver(createAgentFormSchema),
+  const form = useForm<AgentInstructionsFormValues>({
+    resolver: zodResolver(agentInstructionsFormSchema),
     defaultValues: {
-      // Carried unchanged so the full PATCH payload stays valid; these are
-      // edited on the General page.
-      name: agent.name,
-      description: agent.description ?? "",
       systemPrompt: agent.systemPrompt,
-      model: agent.model,
-      firstMessage: agent.firstMessage ?? "",
     },
   });
 
@@ -82,28 +76,21 @@ export function AgentInstructionsPage({
     });
   }
 
-  async function onSubmit(values: CreateAgentFormValues) {
-    const res = await workspaceFetch(workspaceId, `/api/agents/${agent.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
+  async function onSubmit(values: AgentInstructionsFormValues) {
+    const result = await patchAgent({
+      workspaceId,
+      agentId: agent.id,
+      body: { systemPrompt: values.systemPrompt },
     });
-    const data = (await res.json()) as { message?: string; error?: string };
 
-    if (res.ok) {
-      toast.add({
-        title: data.message ?? "Assistant updated.",
-        type: "success",
-      });
+    if (result.ok) {
+      toast.add({ title: result.message, type: "success" });
       form.reset(values);
       router.refresh();
       return;
     }
 
-    toast.add({
-      title: data.error ?? data.message ?? "Something went wrong.",
-      type: "error",
-    });
+    toast.add({ title: result.message, type: "error" });
   }
 
   return (

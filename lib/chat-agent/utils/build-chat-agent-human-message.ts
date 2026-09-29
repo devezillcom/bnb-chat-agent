@@ -9,6 +9,7 @@ import {
 
 import { wrapAttachedImage } from "./attached-image-tag";
 import { downloadAttachments } from "./download-attachments";
+import { withMessageCreatedAt } from "./message-created-at";
 
 import type { ChatAgentImageAttachment } from "../schema";
 
@@ -24,9 +25,13 @@ export async function buildChatAgentHumanMessage(
 ): Promise<HumanMessage> {
   let trimmed = message.trim();
   const attachments = images ?? [];
+  const additional_kwargs = withMessageCreatedAt(
+    undefined,
+    new Date().toISOString(),
+  );
 
   if (attachments.length === 0) {
-    return new HumanMessage(trimmed);
+    return new HumanMessage({ content: trimmed, additional_kwargs });
   }
 
   const resolvedAttachments = await downloadAttachments({
@@ -47,12 +52,12 @@ export async function buildChatAgentHumanMessage(
   }
 
   if (!supportsVision) {
-    return new HumanMessage(trimmed);
+    return new HumanMessage({ content: trimmed, additional_kwargs });
   }
 
   if (trimmed) {
     content.push({ type: "text", text: trimmed });
   }
 
-  return new HumanMessage({ content });
+  return new HumanMessage({ content, additional_kwargs });
 }

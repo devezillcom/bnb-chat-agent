@@ -6,6 +6,7 @@ import { APIError } from "@/lib/exposers/api-error";
 import { parseChatModel } from "@/lib/langchain/models/registry";
 
 import type { GetAgentParams, GetAgentResult } from "../types";
+import { normalizeConversationStarters } from "../utils/normalize-conversation-starters";
 
 export async function getAgent(params: GetAgentParams): Promise<GetAgentResult> {
   const [row] = await db
@@ -16,6 +17,8 @@ export async function getAgent(params: GetAgentParams): Promise<GetAgentResult> 
       systemPrompt: agents.systemPrompt,
       model: agents.model,
       firstMessage: agents.firstMessage,
+      avatarUrl: agents.avatarUrl,
+      conversationStarters: agents.conversationStarters,
       createdAt: agents.createdAt,
       updatedAt: agents.updatedAt,
     })
@@ -39,6 +42,10 @@ export async function getAgent(params: GetAgentParams): Promise<GetAgentResult> 
     systemPrompt: row.systemPrompt,
     model: parseChatModel(row.model),
     firstMessage: row.firstMessage,
+    avatarUrl: row.avatarUrl,
+    conversationStarters: normalizeConversationStarters(
+      row.conversationStarters,
+    ),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

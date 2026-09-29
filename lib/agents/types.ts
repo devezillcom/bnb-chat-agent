@@ -3,7 +3,7 @@ import type { ChatModelId } from "@/lib/langchain/models/registry";
 import type { SkillFormValues } from "@/lib/skills/schema";
 import type { CreateToolFormValues } from "@/lib/tools/schema";
 
-import type { CreateAgentFormValues } from "./schema";
+import type { CreateAgentFormValues, UpdateAgentRequest } from "./schema";
 
 export type AgentListItem = {
   id: string;
@@ -12,6 +12,8 @@ export type AgentListItem = {
   systemPrompt: string;
   model: ChatModelId;
   firstMessage: string | null;
+  avatarUrl: string | null;
+  conversationStarters: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -92,7 +94,7 @@ export type CreateAgentResult = {
   message: string;
 };
 
-export type UpdateAgentParams = CreateAgentFormValues & {
+export type UpdateAgentParams = UpdateAgentRequest & {
   workspaceId: string;
   agentId: string;
 };

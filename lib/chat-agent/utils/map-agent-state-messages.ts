@@ -4,6 +4,7 @@ import type {
 } from "../schema";
 import { stripAttachedImageTags } from "./attached-image-tag";
 import { extractMessageContent } from "./extract-message-content";
+import { readMessageCreatedAt } from "./message-created-at";
 import { stripSystemEventTags } from "./system-event-tag";
 
 type AgentStateMessage = {
@@ -12,6 +13,7 @@ type AgentStateMessage = {
   content?: unknown;
   additional_kwargs?: {
     lc_source?: unknown;
+    createdAt?: unknown;
   };
 };
 
@@ -96,13 +98,24 @@ export function mapAgentStateMessagesToChatMessages(
       : undefined;
     if (!content && !images) continue;
 
+    const createdAt = readMessageCreatedAt(message.additional_kwargs);
+
     if (isUserMessageType(type)) {
-      result.push({ role: "user", content, images });
+      result.push({
+        role: "user",
+        content,
+        images,
+        ...(createdAt ? { createdAt } : {}),
+      });
       continue;
     }
 
     if (isAssistantMessageType(type)) {
-      result.push({ role: "assistant", content });
+      result.push({
+        role: "assistant",
+        content,
+        ...(createdAt ? { createdAt } : {}),
+      });
     }
   }
 

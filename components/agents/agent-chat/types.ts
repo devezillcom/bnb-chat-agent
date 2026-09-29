@@ -5,6 +5,7 @@ export type AgentChatMessage = {
   role: "user" | "assistant";
   content: string;
   images?: ChatAgentImageAttachment[];
+  createdAt?: string;
 };
 
 export type PendingChatImage = {

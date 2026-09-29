@@ -88,7 +88,8 @@ export function useAgentChat({
         {
           id: createMessageId(),
           role: "assistant",
-          content: payload.message
+          content: payload.message,
+          createdAt: new Date().toISOString(),
         },
       ]);
     },
@@ -145,11 +146,23 @@ export function useAgentChat({
       if (lastMessage?.role !== "assistant") {
         return [
           ...current,
-          { id: createMessageId(), role: "assistant", content },
+          {
+            id: createMessageId(),
+            role: "assistant",
+            content,
+            createdAt: new Date().toISOString(),
+          },
         ];
       }
 
-      return [...current.slice(0, -1), { ...lastMessage, content }];
+      return [
+        ...current.slice(0, -1),
+        {
+          ...lastMessage,
+          content,
+          createdAt: lastMessage.createdAt ?? new Date().toISOString(),
+        },
+      ];
     });
   }, []);
 
@@ -308,6 +321,7 @@ export function useAgentChat({
           id: createMessageId(),
           role: "user",
           content: trimmedMessage,
+          createdAt: new Date().toISOString(),
           ...(images.length > 0 ? { images } : {}),
         },
         { id: createMessageId(), role: "assistant", content: "" },
@@ -415,6 +429,7 @@ export function useAgentChat({
             role: message.role,
             content: message.content,
             ...(message.images?.length ? { images: message.images } : {}),
+            ...(message.createdAt ? { createdAt: message.createdAt } : {}),
           })),
         );
       } catch {
