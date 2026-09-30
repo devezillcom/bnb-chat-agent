@@ -15,6 +15,10 @@ import type { User } from "firebase/auth";
 import { onIdTokenChanged } from "firebase/auth";
 
 import { signOutAction, syncSessionAction } from "@/lib/auth/actions";
+import {
+  getSyncedToken,
+  setSyncedToken,
+} from "@/lib/auth/synced-session-client";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 
 type AuthContextValue = {
@@ -36,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const auth = getFirebaseAuth();
     if (auth) await auth.signOut();
     await signOutAction();
+    setSyncedToken(null);
     queryClient.clear();
     previousUidRef.current = null;
     setUser(null);
@@ -58,23 +63,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const previousUid = previousUidRef.current;
       if (newUid !== previousUid) {
         previousUidRef.current = newUid;
+        setSyncedToken(null, { silent: true });
         queryClient.clear();
       }
 
       if (fbUser) {
         try {
           const token = await fbUser.getIdToken();
-          console.log("syncing token", token);
           await syncSessionAction(token);
+          setSyncedToken(token);
         } catch {
-          console.error("Sync failed; cookie may be stale.");
-          // Sync failed; cookie may be stale.
+          // Sync failed; cookie may be stale. Re-notify waiters without changing token.
+          setSyncedToken(getSyncedToken());
         }
       } else {
         await signOutAction();
+        setSyncedToken(null);
       }
 
-      console.log("setUser", fbUser);
       setUser(fbUser);
       setLoading(false);
     });
